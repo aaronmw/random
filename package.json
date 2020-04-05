@@ -1,0 +1,40 @@
+{
+    "name": "random-sizer",
+    "version": "1.0.1",
+    "description": "A Figma plugin to zoom at smaller increments",
+    "main": "code.js",
+    "scripts": {
+        "build": "npx webpack --mode=production",
+        "dev": "npx webpack --mode=development --watch",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@figma-plugin/helpers": "^0.1.0",
+        "@types/react": "^16.8.23",
+        "@types/react-dom": "^16.8.5",
+        "css-loader": "^3.1.0",
+        "html-webpack-inline-source-plugin": "0.0.10",
+        "html-webpack-plugin": "^3.2.0",
+        "lodash": "^4.17.15",
+        "react": "^16.8.6",
+        "react-dom": "^16.8.6",
+        "style-loader": "^0.23.1",
+        "ts-loader": "^6.0.4",
+        "typescript": "^3.5.3",
+        "url-loader": "^2.1.0",
+        "webpack": "^4.38.0",
+        "webpack-cli": "^3.3.6"
+    },
+    "devDependencies": {
+        "prettier": "^2.0.2",
+        "styled-components": "^5.0.1"
+    },
+    "prettier": {
+        "trailingComma": "all",
+        "tabWidth": 4,
+        "semi": true,
+        "singleQuote": true
+    }
+}

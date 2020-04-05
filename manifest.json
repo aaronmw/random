@@ -1,0 +1,7 @@
+{
+  "name": "RandomSizer",
+  "id": "825026336882449602",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html"
+}
