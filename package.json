@@ -1,7 +1,7 @@
 {
     "name": "random-sizer",
     "version": "1.0.1",
-    "description": "A Figma plugin to zoom at smaller increments",
+    "description": "A Figma plugin to randomize one or more properties of your selected elements",
     "main": "code.js",
     "scripts": {
         "build": "npx webpack --mode=production",
@@ -32,6 +32,7 @@
         "styled-components": "^5.0.1"
     },
     "prettier": {
+        "arrowParens": "avoid",
         "trailingComma": "all",
         "tabWidth": 4,
         "semi": true,
