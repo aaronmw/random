@@ -34,15 +34,15 @@ const toColor = hex => {
         : null;
 };
 const toDegrees = degrees => {
-    // const safeDegrees = clamp(degrees, 0, 360);
-    // const degreesAsPercentage = safeDegrees / 360;
     return (Math.PI / 180) * degrees;
 };
 const toFloat = val => parseFloat(val);
 const toInteger = val => parseInt(val);
 const toPercentage = val => clamp(toFloat(val) / 100, 0, 1);
+const toThousandsGroupedNumber = val =>
+    val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-const transformProp = ({ node, propDefinition, propName }) => {
+const transformProp = async ({ node, propDefinition, propName }) => {
     const { method } = propDefinition;
     const currentPropValue = node[propName];
     const randomValue =
@@ -50,11 +50,27 @@ const transformProp = ({ node, propDefinition, propName }) => {
             ? random(propDefinition[method].min, propDefinition[method].max)
             : sample(propDefinition[method]);
     const newPropValue =
-        ['set', 'range'].indexOf(method) !== -1
+        ['set', 'range'].indexOf(method) !== -1 ||
+        currentPropValue === undefined
             ? randomValue
             : currentPropValue * randomValue;
 
     switch (propName) {
+        case 'text':
+            const chars = node.characters;
+            const numChars = chars.length;
+            const { prefix, suffix } = propDefinition;
+            const valueToPrint = propDefinition.groupThousands
+                ? toThousandsGroupedNumber(newPropValue)
+                : newPropValue;
+
+            for (let i = 0; i < numChars; i++) {
+                await figma.loadFontAsync(node.getRangeFontName(i, i + 1));
+            }
+
+            node.characters = `${prefix}${valueToPrint}${suffix}`;
+            break;
+
         case 'width':
             node.resize(toInteger(newPropValue), node.height);
             break;
@@ -91,14 +107,12 @@ const transformProp = ({ node, propDefinition, propName }) => {
             const arcDataForStartingAngle = cloneDeep(node.arcData);
             arcDataForStartingAngle.startingAngle = toDegrees(newPropValue);
             node.arcData = arcDataForStartingAngle;
-            console.log(arcDataForStartingAngle);
             break;
 
         case 'arcEndingAngle':
             const arcDataForEndingAngle = cloneDeep(node.arcData);
             arcDataForEndingAngle.endingAngle = toDegrees(newPropValue);
             node.arcData = arcDataForEndingAngle;
-            console.log(arcDataForEndingAngle);
             break;
 
         case 'x':
@@ -116,7 +130,9 @@ const transformProp = ({ node, propDefinition, propName }) => {
 
 figma.ui.onmessage = async msg => {
     if (msg.type === 'init') {
-        await resetState();
+        if (msg.reset) {
+            await resetState();
+        }
         const savedState = await retrieveClientData('pluginState');
         figma.ui.postMessage(savedState);
     }
@@ -132,8 +148,8 @@ figma.ui.onmessage = async msg => {
         Object.keys(propDefinitions).map(propName => {
             const propDefinition = propDefinitions[propName];
             if (propDefinition.isActive) {
-                selectedNodes.map(node => {
-                    transformProp({
+                selectedNodes.map(async node => {
+                    await transformProp({
                         node,
                         propDefinition,
                         propName,

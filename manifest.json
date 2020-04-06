@@ -1,6 +1,6 @@
 {
-  "name": "RandomSizer",
-  "id": "825026336882449602",
+  "name": "Random",
+  "id": "829089184334973766",
   "api": "1.0.0",
   "main": "dist/code.js",
   "ui": "dist/ui.html"

@@ -9,6 +9,22 @@ const COLOR_TEXT = '#333333';
 const COLOR_TEXT_LIGHT = '#b3b3b3';
 const FONT_WEIGHT_BOLD = 600;
 
+const STRING = {
+    method: 'set',
+    multiplier: {
+        min: 0.1,
+        max: 2,
+    },
+    range: {
+        min: 50,
+        max: 200,
+    },
+    groupThousands: true,
+    prefix: '',
+    suffix: '',
+    set: ['John Doe', 'Jane Smith', 'Randy Randomson'],
+};
+
 const INTEGER = {
     method: 'range',
     multiplier: {
@@ -46,17 +62,18 @@ const COLOR = {
 };
 
 const DEFAULT_PROP_DEFINITIONS = {
+    text: { ...STRING },
     width: { ...INTEGER },
     height: { ...INTEGER },
     x: { ...INTEGER },
     y: { ...INTEGER },
-    rotation: { ...DEGREES },
     opacity: { ...PERCENTAGE },
+    rotation: { ...DEGREES },
+    fillColor: { ...COLOR },
+    fillOpacity: { ...PERCENTAGE },
     strokeColor: { ...COLOR },
     strokeOpacity: { ...PERCENTAGE },
     strokeWeight: { ...INTEGER },
-    fillColor: { ...COLOR },
-    fillOpacity: { ...PERCENTAGE },
     arcStartingAngle: { ...DEGREES },
     arcEndingAngle: { ...DEGREES },
 };
@@ -115,6 +132,7 @@ const RunButton = styled.button`
     background: ${COLOR_BLUE};
     color: white;
     border: 2px solid transparent;
+    line-height: 0;
 
     &:active {
         background: #1170ae;
@@ -191,7 +209,11 @@ const PropMethodTab = styled.button`
 const Columns = styled.div`
     display: flex;
     align-items: center;
+    justify-content: flex-end;
 
+    & + * {
+        margin-top: 8px;
+    }
     & > * {
         margin-left: 8px;
 
@@ -207,12 +229,37 @@ const Rows = styled.div`
     align-items: stretch;
     justify-content: center;
 
+    & + * {
+        margin-top: 8px;
+    }
     & > * {
         margin-top: 4px;
 
         &:first-child {
             margin-top: 0;
         }
+    }
+`;
+
+const ToggleSwitch = styled.div`
+    border: 2px solid
+        ${props => (props.isActive ? COLOR_BLUE : COLOR_TEXT_LIGHT)};
+    border-radius: 100px;
+    width: 30px;
+    height: 17px;
+    padding: 2px;
+    display: flex;
+    justify-content: ${props => (props.isActive ? 'flex-end' : 'flex-start')};
+    margin-left: 8px;
+
+    &:before {
+        content: '';
+        display: block;
+        width: 9px;
+        height: 9px;
+        border-radius: 100px;
+        background-color: ${props =>
+            props.isActive ? COLOR_BLUE : COLOR_TEXT_LIGHT};
     }
 `;
 
@@ -259,6 +306,56 @@ const DeleteButton = styled(PlusButton)`
         transform: rotate(45deg);
     }
 `;
+
+const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
+    const handleChange = (evt, prefixOrSuffix) => {
+        const newValue = evt.currentTarget.value;
+        onUpdateState({
+            path: ['propDefinitions', 'text', prefixOrSuffix],
+            newValue,
+        });
+    };
+
+    return (
+        <Columns>
+            <Input
+                placeholder="prefix"
+                type="text"
+                value={prefix}
+                onChange={evt => handleChange(evt, 'prefix')}
+            />
+            <Input
+                placeholder="suffix"
+                type="text"
+                value={suffix}
+                onChange={evt => handleChange(evt, 'suffix')}
+            />
+        </Columns>
+    );
+};
+
+const NumberFormatter = ({ isActive, onUpdateState }) => {
+    const handleChange = () => {
+        onUpdateState({
+            path: ['propDefinitions', 'text', 'groupThousands'],
+            newValue: !isActive,
+        });
+    };
+
+    return (
+        <Columns>
+            <label>
+                <input
+                    type="checkbox"
+                    value="true"
+                    checked={isActive}
+                    onChange={handleChange}
+                />{' '}
+                Format with Commas
+            </label>
+        </Columns>
+    );
+};
 
 const SetBuilder = ({ propName, set, onUpdateState }) => {
     const updateSet = newValue => {
@@ -365,11 +462,14 @@ const Prop = ({
         range: { min: -1, max: 1 },
         set: [],
         multiplier: { min: -1, max: 1 },
+        prefix: '',
+        suffix: '',
+        groupThousands: null,
     },
     name,
     onUpdateState,
 }) => {
-    const { isActive, method, range, set, multiplier } = definition;
+    const { isActive, method, set } = definition;
 
     const handlePropHeaderClick = () => {
         onUpdateState({
@@ -393,10 +493,9 @@ const Prop = ({
         <PropContainer {...commonProps}>
             <PropHeader onClick={handlePropHeaderClick} {...commonProps}>
                 {name}
-                {!isActive && <PlusIcon />}
-                {isActive && (
-                    <PropMethodTabs>
-                        {['multiplier', 'set', 'range'].map(methodName => {
+                <PropMethodTabs>
+                    {isActive &&
+                        ['multiplier', 'set', 'range'].map(methodName => {
                             if (definition[methodName]) {
                                 const isTabActive = methodName === method;
 
@@ -420,12 +519,19 @@ const Prop = ({
                                 );
                             }
                         })}
-                    </PropMethodTabs>
-                )}
+                    <ToggleSwitch isActive={isActive} />
+                </PropMethodTabs>
             </PropHeader>
 
             {isActive && (
                 <PropBody>
+                    {name === 'text' && (
+                        <PrefixSuffixBuilder
+                            prefix={definition.prefix}
+                            suffix={definition.suffix}
+                            onUpdateState={onUpdateState}
+                        />
+                    )}
                     {method === 'set' ? (
                         <SetBuilder
                             propName={name}
@@ -441,6 +547,13 @@ const Prop = ({
                             onUpdateState={onUpdateState}
                         />
                     )}
+                    {name === 'text' &&
+                        ['range', 'multiplier'].indexOf(method) !== -1 && (
+                            <NumberFormatter
+                                isActive={definition.groupThousands}
+                                onUpdateState={onUpdateState}
+                            />
+                        )}
                 </PropBody>
             )}
         </PropContainer>
@@ -532,7 +645,7 @@ const App = () => {
                             onUpdateState={onUpdateState}
                         />
                     ))}
-                    <RunButton type="submit">Get Randy</RunButton>
+                    <RunButton type="submit">Randomize</RunButton>
                 </form>
             )}
         </StyledAppContainer>

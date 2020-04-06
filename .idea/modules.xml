@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/random-resizer.iml" filepath="$PROJECT_DIR$/.idea/random-resizer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../random/.idea/random.iml" filepath="$PROJECT_DIR$/../random/.idea/random.iml" />
     </modules>
   </component>
 </project>

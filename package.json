@@ -1,5 +1,5 @@
 {
-    "name": "random-sizer",
+    "name": "random",
     "version": "1.0.1",
     "description": "A Figma plugin to randomize one or more properties of your selected elements",
     "main": "code.js",
