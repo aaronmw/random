@@ -52,8 +52,13 @@ const DEFAULT_PROP_DEFINITIONS = {
     y: { ...INTEGER },
     rotation: { ...DEGREES },
     opacity: { ...PERCENTAGE },
+    strokeColor: { ...COLOR },
+    strokeOpacity: { ...PERCENTAGE },
     strokeWeight: { ...INTEGER },
+    fillColor: { ...COLOR },
     fillOpacity: { ...PERCENTAGE },
+    arcStartingAngle: { ...DEGREES },
+    arcEndingAngle: { ...DEGREES },
 };
 
 const GlobalStyles = createGlobalStyle`
@@ -75,6 +80,7 @@ const GlobalStyles = createGlobalStyle`
         user-select: none;
         color: ${COLOR_TEXT};
         -webkit-font-smoothing: subpixel-antialiased;
+        padding-bottom: 30px;
     }
 `;
 
