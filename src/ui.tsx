@@ -777,7 +777,7 @@ const App = () => {
     React.useEffect(() => {
         sendMessage({
             type: 'init',
-            reset: true,
+            reset: null,
         });
     }, []);
 
