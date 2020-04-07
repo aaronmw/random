@@ -83,10 +83,10 @@ const COLOR = {
 
 const DEFAULT_PROP_DEFINITIONS = {
     text: { ...STRING },
-    width: { ...INTEGER },
-    height: { ...INTEGER },
-    x: { ...INTEGER },
-    y: { ...INTEGER },
+    width: { ...INTEGER, linkedProp: 'height', linked: false },
+    height: { ...INTEGER, linkedProp: 'width', linked: false },
+    x: { ...INTEGER, linkedProp: 'y', linked: false },
+    y: { ...INTEGER, linkedProp: 'x', linked: false },
     opacity: { ...PERCENTAGE },
     rotation: { ...DEGREES },
     fillColor: { ...COLOR },
@@ -94,6 +94,7 @@ const DEFAULT_PROP_DEFINITIONS = {
     strokeColor: { ...COLOR },
     strokeOpacity: { ...PERCENTAGE },
     strokeWeight: { ...INTEGER },
+    layerBlur: { ...INTEGER },
     arcStartingAngle: { ...DEGREES },
     arcEndingAngle: { ...DEGREES },
 };
@@ -366,14 +367,12 @@ const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
         <Columns>
             <InputLabel>prefix:</InputLabel>
             <Input
-                placeholder="prefix"
                 type="text"
                 value={prefix}
                 onChange={evt => handleChange(evt, 'prefix')}
             />
             <InputLabel>suffix:</InputLabel>
             <Input
-                placeholder="suffix"
                 type="text"
                 value={suffix}
                 onChange={evt => handleChange(evt, 'suffix')}
@@ -413,6 +412,28 @@ const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
                 <span>Format with Commas</span>
             </Label>
         </Columns>
+    );
+};
+
+const LinkOptions = ({ propName, linkedProp, isLinked, onUpdateState }) => {
+    const updateLinkedStatus = () => {
+        onUpdateState({
+            path: ['propDefinitions', propName, 'linked'],
+            newValue: !isLinked,
+        });
+    };
+
+    return (
+        <Label>
+            <input
+                type="checkbox"
+                checked={isLinked}
+                onChange={updateLinkedStatus}
+            />{' '}
+            <span>
+                Link with <strong>{linkedProp}</strong>
+            </span>
+        </Label>
     );
 };
 
@@ -502,7 +523,6 @@ const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
             <InputLabel>min:</InputLabel>
             <Input
                 data-name="min"
-                placeholder="min"
                 type="number"
                 value={min}
                 onChange={handleChange}
@@ -510,7 +530,6 @@ const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
             <InputLabel>max:</InputLabel>
             <Input
                 data-name="max"
-                placeholder="max"
                 type="number"
                 value={max}
                 onChange={handleChange}
@@ -542,7 +561,6 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
                 <InputLabel>min:</InputLabel>
                 <Input
                     data-name="min"
-                    placeholder="min"
                     type="number"
                     value={min}
                     onChange={updateMinOrMax}
@@ -550,7 +568,6 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
                 <InputLabel>max:</InputLabel>
                 <Input
                     data-name="max"
-                    placeholder="max"
                     type="number"
                     value={max}
                     onChange={updateMinOrMax}
@@ -597,17 +614,25 @@ const Prop = ({
         prefix: '',
         suffix: '',
         groupThousands: null,
+        linkedProp: '',
+        linked: null,
     },
     name,
     onUpdateState,
 }) => {
-    const { isActive, method, list } = definition;
+    const isActive = get(definition, 'isActive');
+    const groupThousands = get(definition, 'groupThousands');
+    const linked = get(definition, 'linked');
+    const linkedProp = get(definition, 'linkedProp');
+    const list = get(definition, 'list');
+    const method = get(definition, 'method');
     const operator = get(definition, ['calc', 'operator']);
-    const decimalPlaces = get(definition, ['calc', 'decimalPlaces'], 0);
-    const { min, max } = get(definition, ['calc', operator], {
-        min: null,
-        max: null,
-    });
+    const calcMin = get(definition, ['calc', operator, 'min']);
+    const calcMax = get(definition, ['calc', operator, 'max']);
+    const prefix = get(definition, 'prefix');
+    const rangeMin = get(definition, ['range', 'min']);
+    const rangeMax = get(definition, ['range', 'max']);
+    const suffix = get(definition, 'suffix');
 
     const handlePropHeaderClick = () => {
         onUpdateState({
@@ -663,13 +688,6 @@ const Prop = ({
 
             {isActive && (
                 <PropBody>
-                    {name === 'text' && (
-                        <PrefixSuffixBuilder
-                            prefix={definition.prefix}
-                            suffix={definition.suffix}
-                            onUpdateState={onUpdateState}
-                        />
-                    )}
                     {method === 'list' ? (
                         <ListBuilder
                             propName={name}
@@ -679,23 +697,42 @@ const Prop = ({
                     ) : method === 'range' ? (
                         <RangeBuilder
                             propName={name}
-                            min={definition[method].min}
-                            max={definition[method].max}
+                            min={rangeMin}
+                            max={rangeMax}
                             onUpdateState={onUpdateState}
                         />
                     ) : (
                         <CalcBuilder
                             propName={name}
                             operator={operator}
-                            min={min}
-                            max={max}
+                            min={calcMin}
+                            max={calcMax}
+                            onUpdateState={onUpdateState}
+                        />
+                    )}
+                    {definition.linkedProp && (
+                        <LinkOptions
+                            propName={name}
+                            linkedProp={linkedProp}
+                            isLinked={linked}
                             onUpdateState={onUpdateState}
                         />
                     )}
                     {name === 'text' && method === 'calc' && (
                         <FormatOptions
-                            decimalPlaces={definition[method].decimalPlaces}
-                            groupThousands={definition.groupThousands}
+                            decimalPlaces={get(
+                                definition,
+                                ['calc', 'decimalPlaces'],
+                                0,
+                            )}
+                            groupThousands={groupThousands}
+                            onUpdateState={onUpdateState}
+                        />
+                    )}
+                    {name === 'text' && (
+                        <PrefixSuffixBuilder
+                            prefix={prefix}
+                            suffix={suffix}
                             onUpdateState={onUpdateState}
                         />
                     )}
@@ -741,7 +778,7 @@ const App = () => {
     React.useEffect(() => {
         sendMessage({
             type: 'init',
-            reset: null,
+            reset: true,
         });
     }, []);
 

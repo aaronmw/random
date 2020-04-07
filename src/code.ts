@@ -81,7 +81,9 @@ const transformProp = async ({ node, propDefinition, propName }) => {
                     : currentPropValue * randomValue;
 
             if (propName === 'text') {
-                newPropValue = newPropValue.toFixed(propDefinition['calc'].decimalPlaces);
+                newPropValue = newPropValue.toFixed(
+                    propDefinition['calc'].decimalPlaces,
+                );
             }
             break;
 
@@ -108,11 +110,38 @@ const transformProp = async ({ node, propDefinition, propName }) => {
             break;
 
         case 'width':
-            node.resize(toInteger(newPropValue), node.height);
+            const randomWidth = toInteger(newPropValue);
+            node.resize(
+                randomWidth,
+                propDefinition.linked ? randomWidth : node.height,
+            );
             break;
 
         case 'height':
-            node.resize(node.width, toInteger(newPropValue));
+            const randomHeight = toInteger(newPropValue);
+            node.resize(
+                propDefinition.linked ? randomHeight : node.width,
+                randomHeight,
+            );
+            break;
+
+        case 'x':
+        case 'y':
+            const randomXorY = toInteger(newPropValue);
+            node[propName] = randomXorY;
+            if (propDefinition.linked) {
+                node[propDefinition.linkedProp] = randomXorY;
+            }
+            break;
+
+        case 'layerBlur':
+            const effects = cloneDeep(node.effects);
+            effects[0] = {
+                type: 'LAYER_BLUR',
+                radius: toInteger(newPropValue),
+                visible: true,
+            };
+            node.effects = effects;
             break;
 
         case 'fillColor':
@@ -151,8 +180,6 @@ const transformProp = async ({ node, propDefinition, propName }) => {
             node.arcData = arcDataForEndingAngle;
             break;
 
-        case 'x':
-        case 'y':
         case 'rotation':
         case 'strokeWeight':
             node[propName] = toInteger(newPropValue);
