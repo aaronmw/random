@@ -166,6 +166,7 @@ const InputLabel = styled.span`
     flex-shrink: 0;
     flex-grow: 1;
     width: 35px;
+    text-align: right;
 `;
 
 const RunButton = styled.button`

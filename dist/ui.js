@@ -53,6 +53,7 @@ object-assign
     flex-shrink: 0;
     flex-grow: 1;
     width: 35px;
+    text-align: right;
 `,C=i.b.button`
     ${x}
     position: fixed;
