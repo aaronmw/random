@@ -40,7 +40,7 @@ const toFloat = val => parseFloat(val);
 const toInteger = val => parseInt(val);
 const toPercentage = val => clamp(toFloat(val) / 100, 0, 1);
 const toThousandsGroupedNumber = val =>
-    val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    val.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ',');
 
 const transformProp = async ({ node, propDefinition, propName }) => {
     const { method } = propDefinition;
