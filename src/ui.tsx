@@ -6,18 +6,7 @@ import setWith from 'lodash/setWith';
 import clone from 'lodash/clone';
 
 /* TODO:
-    - Retool method tabs to include:
-        - list
-        - calc
-            - add
-                - min
-                - max
-            - multiply
-                - min
-                - max
-            - replace
-                - min
-                - max
+    - Dance 👯
  */
 
 const COLOR_BLUE = '#18a0fb';
@@ -32,6 +21,7 @@ const STRING = {
     suffix: '',
     calc: {
         operator: 'add',
+        decimalPlaces: 0,
         add: {
             min: -50,
             max: 50,
@@ -154,7 +144,28 @@ const StyledInput = styled.input`
 const Input = props => <StyledInput {...props} />;
 
 const Label = styled.label`
+    display: flex;
+    white-space: nowrap;
     margin-top: 8px;
+    align-items: center;
+
+    & > :first-child {
+        margin-right: 4px;
+    }
+    & > [type='radio'] {
+        position: relative;
+        top: -1px;
+    }
+    & + & {
+        margin-left: 15px !important;
+    }
+`;
+
+const InputLabel = styled.span`
+    display: inline-block;
+    flex-shrink: 0;
+    flex-grow: 1;
+    width: 35px;
 `;
 
 const RunButton = styled.button`
@@ -352,12 +363,14 @@ const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
 
     return (
         <Columns>
+            <InputLabel>prefix:</InputLabel>
             <Input
                 placeholder="prefix"
                 type="text"
                 value={prefix}
                 onChange={evt => handleChange(evt, 'prefix')}
             />
+            <InputLabel>suffix:</InputLabel>
             <Input
                 placeholder="suffix"
                 type="text"
@@ -368,31 +381,42 @@ const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
     );
 };
 
-const GroupThousands = ({ isActive, onUpdateState }) => {
-    const handleChange = () => {
+const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
+    const updateGroupThousands = () => {
         onUpdateState({
             path: ['propDefinitions', 'text', 'groupThousands'],
-            newValue: !isActive,
+            newValue: !groupThousands,
+        });
+    };
+
+    const updateDecimalPlaces = evt => {
+        onUpdateState({
+            path: ['propDefinitions', 'text', 'calc', 'decimalPlaces'],
+            newValue: evt.currentTarget.value,
         });
     };
 
     return (
         <Columns>
             <Label>
+                <span>Decimal Places:</span>{' '}
+                <Input value={decimalPlaces} onChange={updateDecimalPlaces} />
+            </Label>
+            <Label>
                 <input
                     type="checkbox"
                     value="true"
-                    checked={isActive}
-                    onChange={handleChange}
+                    checked={groupThousands}
+                    onChange={updateGroupThousands}
                 />{' '}
-                Format with Commas
+                <span>Format with Commas</span>
             </Label>
         </Columns>
     );
 };
 
 const ListBuilder = ({ propName, list, onUpdateState }) => {
-    const updatelist = newValue => {
+    const updateList = newValue => {
         onUpdateState({
             path: ['propDefinitions', propName, 'list'],
             newValue,
@@ -400,7 +424,7 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
     };
 
     const handleBlur = () => {
-        updatelist(
+        updateList(
             list
                 .filter(item => item !== '')
                 .sort((a, b) =>
@@ -412,7 +436,7 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
     const handleChange = evt => {
         const target = evt.currentTarget;
         const indexToUpdate = parseInt(target.dataset.index);
-        updatelist(
+        updateList(
             list.map((item, index) =>
                 index === indexToUpdate ? target.value : item,
             ),
@@ -421,13 +445,13 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
 
     const handleClickDelete = evt => {
         const indexToDelete = parseInt(evt.currentTarget.dataset.index);
-        updatelist(
+        updateList(
             list.filter((item, itemIndex) => itemIndex !== indexToDelete),
         );
     };
 
     const handleClickPlus = () => {
-        updatelist(list.concat('new'));
+        updateList(list.concat('new'));
     };
 
     return (
@@ -474,6 +498,7 @@ const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
 
     return (
         <Columns>
+            <InputLabel>min:</InputLabel>
             <Input
                 data-name="min"
                 placeholder="min"
@@ -481,6 +506,7 @@ const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
                 value={min}
                 onChange={handleChange}
             />
+            <InputLabel>max:</InputLabel>
             <Input
                 data-name="max"
                 placeholder="max"
@@ -512,6 +538,7 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
     return (
         <>
             <Columns>
+                <InputLabel>min:</InputLabel>
                 <Input
                     data-name="min"
                     placeholder="min"
@@ -519,6 +546,7 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
                     value={min}
                     onChange={updateMinOrMax}
                 />
+                <InputLabel>max:</InputLabel>
                 <Input
                     data-name="max"
                     placeholder="max"
@@ -536,7 +564,7 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
                         value="add"
                         onChange={updateOperator}
                     />{' '}
-                    Add
+                    <span>Add</span>
                 </Label>
                 <Label>
                     <input
@@ -546,7 +574,7 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
                         value="multiply"
                         onChange={updateOperator}
                     />{' '}
-                    Multiply
+                    <span>Multiply</span>
                 </Label>
             </Columns>
         </>
@@ -561,6 +589,7 @@ const Prop = ({
         list: [],
         calc: {
             operator: '',
+            decimalPlaces: 0,
             add: { min: 0, max: 0 },
             multiply: { min: 0, max: 0 },
         },
@@ -573,6 +602,7 @@ const Prop = ({
 }) => {
     const { isActive, method, list } = definition;
     const operator = get(definition, ['calc', 'operator']);
+    const decimalPlaces = get(definition, ['calc', 'decimalPlaces'], 0);
     const { min, max } = get(definition, ['calc', operator], {
         min: null,
         max: null,
@@ -661,13 +691,13 @@ const Prop = ({
                             onUpdateState={onUpdateState}
                         />
                     )}
-                    {name === 'text' &&
-                        ['range', 'calc'].indexOf(method) !== -1 && (
-                            <GroupThousands
-                                isActive={definition.groupThousands}
-                                onUpdateState={onUpdateState}
-                            />
-                        )}
+                    {name === 'text' && method === 'calc' && (
+                        <FormatOptions
+                            decimalPlaces={definition[method].decimalPlaces}
+                            groupThousands={definition.groupThousands}
+                            onUpdateState={onUpdateState}
+                        />
+                    )}
                 </PropBody>
             )}
         </PropContainer>

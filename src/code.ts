@@ -1,5 +1,6 @@
 import clamp from 'lodash/clamp';
 import cloneDeep from 'lodash/cloneDeep';
+import get from 'lodash/get';
 import random from 'lodash/random';
 import sample from 'lodash/sample';
 
@@ -44,7 +45,6 @@ const toThousandsGroupedNumber = val =>
 
 const transformProp = async ({ node, propDefinition, propName }) => {
     const { method } = propDefinition;
-    const currentPropValue = node[propName];
 
     let randomValue;
     let newPropValue;
@@ -61,6 +61,17 @@ const transformProp = async ({ node, propDefinition, propName }) => {
             const { min: calcMin, max: calcMax } = propDefinition['calc'][
                 operator
             ];
+            const currentPropValue =
+                propName === 'text'
+                    ? toInteger(
+                          get(
+                              node.characters.match(/[0-9,]+(\.[0-9]+)?/),
+                              '0',
+                              0,
+                          ).replace(/,/g, ''),
+                      )
+                    : node[propName];
+
             randomValue = random(calcMin, calcMax);
             newPropValue =
                 currentPropValue === undefined
@@ -68,6 +79,10 @@ const transformProp = async ({ node, propDefinition, propName }) => {
                     : operator === 'add'
                     ? currentPropValue + randomValue
                     : currentPropValue * randomValue;
+
+            if (propName === 'text') {
+                newPropValue = newPropValue.toFixed(propDefinition['calc'].decimalPlaces);
+            }
             break;
 
         case 'list':
