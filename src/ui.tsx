@@ -1,8 +1,24 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import styled, { createGlobalStyle } from 'styled-components';
+import get from 'lodash/get';
 import setWith from 'lodash/setWith';
 import clone from 'lodash/clone';
+
+/* TODO:
+    - Retool method tabs to include:
+        - list
+        - calc
+            - add
+                - min
+                - max
+            - multiply
+                - min
+                - max
+            - replace
+                - min
+                - max
+ */
 
 const COLOR_BLUE = '#18a0fb';
 const COLOR_TEXT = '#333333';
@@ -10,32 +26,46 @@ const COLOR_TEXT_LIGHT = '#b3b3b3';
 const FONT_WEIGHT_BOLD = 600;
 
 const STRING = {
-    method: 'set',
-    multiplier: {
-        min: 0.1,
-        max: 2,
+    method: 'list',
+    groupThousands: true,
+    prefix: '',
+    suffix: '',
+    calc: {
+        operator: 'add',
+        add: {
+            min: -50,
+            max: 50,
+        },
+        multiply: {
+            min: 0.5,
+            max: 1.5,
+        },
     },
     range: {
         min: 50,
         max: 200,
     },
-    groupThousands: true,
-    prefix: '',
-    suffix: '',
-    set: ['John Doe', 'Jane Smith', 'Randy Randomson'],
+    list: ['John Doe', 'Jane Smith', 'Randy Randomson'],
 };
 
 const INTEGER = {
     method: 'range',
-    multiplier: {
-        min: 0.1,
-        max: 2,
+    calc: {
+        operator: 'add',
+        add: {
+            min: -50,
+            max: 50,
+        },
+        multiply: {
+            min: 0.5,
+            max: 1.5,
+        },
     },
     range: {
         min: 50,
         max: 200,
     },
-    set: [50, 100, 200],
+    list: [50, 100, 200],
 };
 
 const DEGREES = {
@@ -44,7 +74,7 @@ const DEGREES = {
         min: 0,
         max: 360,
     },
-    set: [0, 45, 90, 135, 180, 225, 270, 315, 360],
+    list: [0, 45, 90, 135, 180, 225, 270, 315, 360],
 };
 
 const PERCENTAGE = {
@@ -53,12 +83,12 @@ const PERCENTAGE = {
         min: 0,
         max: 100,
     },
-    set: [0, 25, 50, 75, 100],
+    list: [0, 25, 50, 75, 100],
 };
 
 const COLOR = {
-    method: 'set',
-    set: ['#000000', '#FF0000', '#00FF00', '#0000FF'],
+    method: 'list',
+    list: ['#000000', '#FF0000', '#00FF00', '#0000FF'],
 };
 
 const DEFAULT_PROP_DEFINITIONS = {
@@ -122,6 +152,10 @@ const StyledInput = styled.input`
 `;
 
 const Input = props => <StyledInput {...props} />;
+
+const Label = styled.label`
+    margin-top: 8px;
+`;
 
 const RunButton = styled.button`
     ${commonStyles}
@@ -209,7 +243,7 @@ const PropMethodTab = styled.button`
 const Columns = styled.div`
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex- ${props => (props.align ? props.align : 'end')};
 
     & + * {
         margin-top: 8px;
@@ -334,7 +368,7 @@ const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
     );
 };
 
-const NumberFormatter = ({ isActive, onUpdateState }) => {
+const GroupThousands = ({ isActive, onUpdateState }) => {
     const handleChange = () => {
         onUpdateState({
             path: ['propDefinitions', 'text', 'groupThousands'],
@@ -344,7 +378,7 @@ const NumberFormatter = ({ isActive, onUpdateState }) => {
 
     return (
         <Columns>
-            <label>
+            <Label>
                 <input
                     type="checkbox"
                     value="true"
@@ -352,22 +386,22 @@ const NumberFormatter = ({ isActive, onUpdateState }) => {
                     onChange={handleChange}
                 />{' '}
                 Format with Commas
-            </label>
+            </Label>
         </Columns>
     );
 };
 
-const SetBuilder = ({ propName, set, onUpdateState }) => {
-    const updateSet = newValue => {
+const ListBuilder = ({ propName, list, onUpdateState }) => {
+    const updatelist = newValue => {
         onUpdateState({
-            path: ['propDefinitions', propName, 'set'],
+            path: ['propDefinitions', propName, 'list'],
             newValue,
         });
     };
 
     const handleBlur = () => {
-        updateSet(
-            set
+        updatelist(
+            list
                 .filter(item => item !== '')
                 .sort((a, b) =>
                     `${a}`.localeCompare(b, undefined, { numeric: true }),
@@ -378,9 +412,8 @@ const SetBuilder = ({ propName, set, onUpdateState }) => {
     const handleChange = evt => {
         const target = evt.currentTarget;
         const indexToUpdate = parseInt(target.dataset.index);
-        console.log(target, indexToUpdate);
-        updateSet(
-            set.map((item, index) =>
+        updatelist(
+            list.map((item, index) =>
                 index === indexToUpdate ? target.value : item,
             ),
         );
@@ -388,16 +421,18 @@ const SetBuilder = ({ propName, set, onUpdateState }) => {
 
     const handleClickDelete = evt => {
         const indexToDelete = parseInt(evt.currentTarget.dataset.index);
-        updateSet(set.filter((item, itemIndex) => itemIndex !== indexToDelete));
+        updatelist(
+            list.filter((item, itemIndex) => itemIndex !== indexToDelete),
+        );
     };
 
     const handleClickPlus = () => {
-        updateSet(set.concat('new'));
+        updatelist(list.concat('new'));
     };
 
     return (
         <Rows>
-            {set.map((item, index) => (
+            {list.map((item, index) => (
                 <Columns key={index}>
                     <Input
                         data-index={index}
@@ -413,9 +448,11 @@ const SetBuilder = ({ propName, set, onUpdateState }) => {
                     <PlusButton
                         style={{
                             visibility:
-                                index !== set.length - 1 ? 'hidden' : 'visible',
+                                index !== list.length - 1
+                                    ? 'hidden'
+                                    : 'visible',
                             pointerEvents:
-                                index !== set.length - 1 ? 'none' : 'all',
+                                index !== list.length - 1 ? 'none' : 'all',
                         }}
                         onClick={handleClickPlus}
                     />
@@ -425,12 +462,12 @@ const SetBuilder = ({ propName, set, onUpdateState }) => {
     );
 };
 
-const RangeBuilder = ({ propName, methodName, min, max, onUpdateState }) => {
+const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
     const handleChange = evt => {
         const target = evt.currentTarget;
-        const rangeSide = target.dataset.name;
+        const minOrMax = target.dataset.name;
         onUpdateState({
-            path: ['propDefinitions', propName, methodName, rangeSide],
+            path: ['propDefinitions', propName, 'range', minOrMax],
             newValue: target.value,
         });
     };
@@ -455,13 +492,78 @@ const RangeBuilder = ({ propName, methodName, min, max, onUpdateState }) => {
     );
 };
 
+const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
+    const updateMinOrMax = evt => {
+        const target = evt.currentTarget;
+        const minOrMax = target.dataset.name;
+        onUpdateState({
+            path: ['propDefinitions', propName, 'calc', operator, minOrMax],
+            newValue: target.value,
+        });
+    };
+
+    const updateOperator = evt => {
+        onUpdateState({
+            path: ['propDefinitions', propName, 'calc', 'operator'],
+            newValue: evt.currentTarget.value,
+        });
+    };
+
+    return (
+        <>
+            <Columns>
+                <Input
+                    data-name="min"
+                    placeholder="min"
+                    type="number"
+                    value={min}
+                    onChange={updateMinOrMax}
+                />
+                <Input
+                    data-name="max"
+                    placeholder="max"
+                    type="number"
+                    value={max}
+                    onChange={updateMinOrMax}
+                />
+            </Columns>
+            <Columns align="start">
+                <Label>
+                    <input
+                        name={`${propName}-operator`}
+                        type="radio"
+                        checked={operator === 'add'}
+                        value="add"
+                        onChange={updateOperator}
+                    />{' '}
+                    Add
+                </Label>
+                <Label>
+                    <input
+                        name={`${propName}-operator`}
+                        type="radio"
+                        checked={operator === 'multiply'}
+                        value="multiply"
+                        onChange={updateOperator}
+                    />{' '}
+                    Multiply
+                </Label>
+            </Columns>
+        </>
+    );
+};
+
 const Prop = ({
     definition = {
         isActive: false,
         method: '',
         range: { min: -1, max: 1 },
-        set: [],
-        multiplier: { min: -1, max: 1 },
+        list: [],
+        calc: {
+            operator: '',
+            add: { min: 0, max: 0 },
+            multiply: { min: 0, max: 0 },
+        },
         prefix: '',
         suffix: '',
         groupThousands: null,
@@ -469,7 +571,12 @@ const Prop = ({
     name,
     onUpdateState,
 }) => {
-    const { isActive, method, set } = definition;
+    const { isActive, method, list } = definition;
+    const operator = get(definition, ['calc', 'operator']);
+    const { min, max } = get(definition, ['calc', operator], {
+        min: null,
+        max: null,
+    });
 
     const handlePropHeaderClick = () => {
         onUpdateState({
@@ -495,7 +602,7 @@ const Prop = ({
                 {name}
                 <PropMethodTabs>
                     {isActive &&
-                        ['multiplier', 'set', 'range'].map(methodName => {
+                        ['calc', 'list', 'range'].map(methodName => {
                             if (definition[methodName]) {
                                 const isTabActive = methodName === method;
 
@@ -532,24 +639,31 @@ const Prop = ({
                             onUpdateState={onUpdateState}
                         />
                     )}
-                    {method === 'set' ? (
-                        <SetBuilder
+                    {method === 'list' ? (
+                        <ListBuilder
                             propName={name}
-                            set={set}
+                            list={list}
                             onUpdateState={onUpdateState}
                         />
-                    ) : (
+                    ) : method === 'range' ? (
                         <RangeBuilder
                             propName={name}
-                            methodName={method}
                             min={definition[method].min}
                             max={definition[method].max}
                             onUpdateState={onUpdateState}
                         />
+                    ) : (
+                        <CalcBuilder
+                            propName={name}
+                            operator={operator}
+                            min={min}
+                            max={max}
+                            onUpdateState={onUpdateState}
+                        />
                     )}
                     {name === 'text' &&
-                        ['range', 'multiplier'].indexOf(method) !== -1 && (
-                            <NumberFormatter
+                        ['range', 'calc'].indexOf(method) !== -1 && (
+                            <GroupThousands
                                 isActive={definition.groupThousands}
                                 onUpdateState={onUpdateState}
                             />
@@ -596,6 +710,7 @@ const App = () => {
     React.useEffect(() => {
         sendMessage({
             type: 'init',
+            reset: null,
         });
     }, []);
 

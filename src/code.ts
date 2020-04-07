@@ -45,15 +45,36 @@ const toThousandsGroupedNumber = val =>
 const transformProp = async ({ node, propDefinition, propName }) => {
     const { method } = propDefinition;
     const currentPropValue = node[propName];
-    const randomValue =
-        ['range', 'multiplier'].indexOf(method) !== -1
-            ? random(propDefinition[method].min, propDefinition[method].max)
-            : sample(propDefinition[method]);
-    const newPropValue =
-        ['set', 'range'].indexOf(method) !== -1 ||
-        currentPropValue === undefined
-            ? randomValue
-            : currentPropValue * randomValue;
+
+    let randomValue;
+    let newPropValue;
+
+    switch (method) {
+        case 'range':
+            const { min: rangeMin, max: rangeMax } = propDefinition['range'];
+            randomValue = random(rangeMin, rangeMax);
+            newPropValue = randomValue;
+            break;
+
+        case 'calc':
+            const operator = propDefinition['calc'].operator;
+            const { min: calcMin, max: calcMax } = propDefinition['calc'][
+                operator
+            ];
+            randomValue = random(calcMin, calcMax);
+            newPropValue =
+                currentPropValue === undefined
+                    ? randomValue
+                    : operator === 'add'
+                    ? currentPropValue + randomValue
+                    : currentPropValue * randomValue;
+            break;
+
+        case 'list':
+            randomValue = sample(propDefinition['list']);
+            newPropValue = randomValue;
+            break;
+    }
 
     switch (propName) {
         case 'text':
