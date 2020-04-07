@@ -83,10 +83,10 @@ const COLOR = {
 
 const DEFAULT_PROP_DEFINITIONS = {
     text: { ...STRING },
-    width: { ...INTEGER, linkedProp: 'height', linked: false },
-    height: { ...INTEGER, linkedProp: 'width', linked: false },
-    x: { ...INTEGER, linkedProp: 'y', linked: false },
-    y: { ...INTEGER, linkedProp: 'x', linked: false },
+    width: { ...INTEGER, preserveAspectRatio: false },
+    height: { ...INTEGER, preserveAspectRatio: false },
+    x: { ...INTEGER },
+    y: { ...INTEGER },
     opacity: { ...PERCENTAGE },
     rotation: { ...DEGREES },
     fillColor: { ...COLOR },
@@ -415,11 +415,11 @@ const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
     );
 };
 
-const LinkOptions = ({ propName, linkedProp, isLinked, onUpdateState }) => {
-    const updateLinkedStatus = () => {
+const ResizeOptions = ({ propName, preserveAspectRatio, onUpdateState }) => {
+    const updatePreserveAspectRatio = () => {
         onUpdateState({
-            path: ['propDefinitions', propName, 'linked'],
-            newValue: !isLinked,
+            path: ['propDefinitions', propName, 'preserveAspectRatio'],
+            newValue: !preserveAspectRatio,
         });
     };
 
@@ -427,12 +427,10 @@ const LinkOptions = ({ propName, linkedProp, isLinked, onUpdateState }) => {
         <Label>
             <input
                 type="checkbox"
-                checked={isLinked}
-                onChange={updateLinkedStatus}
+                checked={preserveAspectRatio}
+                onChange={updatePreserveAspectRatio}
             />{' '}
-            <span>
-                Link with <strong>{linkedProp}</strong>
-            </span>
+            <span>Preserve Aspect Ratio</span>
         </Label>
     );
 };
@@ -614,16 +612,18 @@ const Prop = ({
         prefix: '',
         suffix: '',
         groupThousands: null,
-        linkedProp: '',
-        linked: null,
+        preserveAspectRatio: null,
     },
     name,
     onUpdateState,
 }) => {
     const isActive = get(definition, 'isActive');
     const groupThousands = get(definition, 'groupThousands');
-    const linked = get(definition, 'linked');
-    const linkedProp = get(definition, 'linkedProp');
+    const preserveAspectRatio = get(
+        definition,
+        'preserveAspectRatio',
+        undefined,
+    );
     const list = get(definition, 'list');
     const method = get(definition, 'method');
     const operator = get(definition, ['calc', 'operator']);
@@ -710,11 +710,10 @@ const Prop = ({
                             onUpdateState={onUpdateState}
                         />
                     )}
-                    {definition.linkedProp && (
-                        <LinkOptions
+                    {preserveAspectRatio !== undefined && (
+                        <ResizeOptions
                             propName={name}
-                            linkedProp={linkedProp}
-                            isLinked={linked}
+                            preserveAspectRatio={preserveAspectRatio}
                             onUpdateState={onUpdateState}
                         />
                     )}

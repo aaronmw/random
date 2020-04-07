@@ -110,28 +110,27 @@ const transformProp = async ({ node, propDefinition, propName }) => {
             break;
 
         case 'width':
+            const currentWidth = node.width;
             const randomWidth = toInteger(newPropValue);
+            const widthScaleFactor = randomWidth / currentWidth;
             node.resize(
                 randomWidth,
-                propDefinition.linked ? randomWidth : node.height,
+                propDefinition.preserveAspectRatio
+                    ? node.height * widthScaleFactor
+                    : node.height,
             );
             break;
 
         case 'height':
+            const currentHeight = node.height;
             const randomHeight = toInteger(newPropValue);
+            const heightScaleFactor = randomHeight / currentHeight;
             node.resize(
-                propDefinition.linked ? randomHeight : node.width,
+                propDefinition.preserveAspectRatio
+                    ? node.width * heightScaleFactor
+                    : node.width,
                 randomHeight,
             );
-            break;
-
-        case 'x':
-        case 'y':
-            const randomXorY = toInteger(newPropValue);
-            node[propName] = randomXorY;
-            if (propDefinition.linked) {
-                node[propDefinition.linkedProp] = randomXorY;
-            }
             break;
 
         case 'layerBlur':
@@ -180,6 +179,8 @@ const transformProp = async ({ node, propDefinition, propName }) => {
             node.arcData = arcDataForEndingAngle;
             break;
 
+        case 'x':
+        case 'y':
         case 'rotation':
         case 'strokeWeight':
             node[propName] = toInteger(newPropValue);
