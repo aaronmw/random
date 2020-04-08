@@ -15,6 +15,7 @@ const COLOR_TEXT_LIGHT = '#b3b3b3';
 const FONT_WEIGHT_BOLD = 600;
 
 const STRING = {
+    listFieldType: 'text',
     method: 'list',
     groupThousands: true,
     prefix: '',
@@ -39,6 +40,7 @@ const STRING = {
 };
 
 const INTEGER = {
+    listFieldType: 'number',
     method: 'range',
     calc: {
         operator: 'add',
@@ -59,6 +61,7 @@ const INTEGER = {
 };
 
 const DEGREES = {
+    listFieldType: 'number',
     method: 'range',
     range: {
         min: 0,
@@ -68,6 +71,7 @@ const DEGREES = {
 };
 
 const PERCENTAGE = {
+    listFieldType: 'number',
     method: 'range',
     range: {
         min: 0,
@@ -77,6 +81,7 @@ const PERCENTAGE = {
 };
 
 const COLOR = {
+    listFieldType: 'text',
     method: 'list',
     list: ['#000000', '#FF0000', '#00FF00', '#0000FF'],
 };
@@ -142,7 +147,31 @@ const StyledInput = styled.input`
     }
 `;
 
-const Input = props => <StyledInput {...props} />;
+const ColorSwatch = styled.div`
+    position: relative;
+    width: 100%;
+    &:before {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 22px;
+        height: 22px;
+        background-color: ${props => props.color};
+        border-radius: 2px;
+    }
+`;
+
+const Input = props => {
+    const { value } = props;
+    const isColor = `${value}`.trim().match(/^#[0-9a-f]{3,6}$/i);
+    const InputEl = <StyledInput {...props} />;
+    return isColor ? (
+        <ColorSwatch color={value}>{InputEl}</ColorSwatch>
+    ) : (
+        InputEl
+    );
+};
 
 const Label = styled.label`
     display: flex;
@@ -435,7 +464,7 @@ const ResizeOptions = ({ propName, preserveAspectRatio, onUpdateState }) => {
     );
 };
 
-const ListBuilder = ({ propName, list, onUpdateState }) => {
+const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
     const updateList = newValue => {
         onUpdateState({
             path: ['propDefinitions', propName, 'list'],
@@ -480,7 +509,7 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
                 <Columns key={index}>
                     <Input
                         data-index={index}
-                        type="text"
+                        type={listFieldType}
                         value={item}
                         onBlur={handleBlur}
                         onChange={handleChange}
@@ -599,6 +628,7 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
 
 const Prop = ({
     definition = {
+        listFieldType: '',
         isActive: false,
         method: '',
         range: { min: -1, max: 1 },
@@ -617,6 +647,7 @@ const Prop = ({
     name,
     onUpdateState,
 }) => {
+    const listFieldType = get(definition, 'listFieldType');
     const isActive = get(definition, 'isActive');
     const groupThousands = get(definition, 'groupThousands');
     const preserveAspectRatio = get(
@@ -692,6 +723,7 @@ const Prop = ({
                         <ListBuilder
                             propName={name}
                             list={list}
+                            listFieldType={listFieldType}
                             onUpdateState={onUpdateState}
                         />
                     ) : method === 'range' ? (
@@ -777,7 +809,7 @@ const App = () => {
     React.useEffect(() => {
         sendMessage({
             type: 'init',
-            reset: null,
+            initialState: INITIAL_STATE,
         });
     }, []);
 

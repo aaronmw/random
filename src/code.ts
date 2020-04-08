@@ -1,6 +1,7 @@
 import clamp from 'lodash/clamp';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
+import merge from 'lodash/merge';
 import random from 'lodash/random';
 import sample from 'lodash/sample';
 
@@ -194,10 +195,10 @@ const transformProp = async ({ node, propDefinition, propName }) => {
 
 figma.ui.onmessage = async msg => {
     if (msg.type === 'init') {
-        if (msg.reset) {
-            await resetState();
-        }
-        const savedState = await retrieveClientData('pluginState');
+        const savedState = merge(
+            msg.initialState,
+            await retrieveClientData('pluginState'),
+        );
         figma.ui.postMessage(savedState);
     }
 
