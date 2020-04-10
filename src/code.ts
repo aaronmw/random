@@ -1,7 +1,9 @@
 import clamp from 'lodash/clamp';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
+import isArray from 'lodash/isArray';
 import merge from 'lodash/merge';
+import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
 import sample from 'lodash/sample';
 
@@ -312,11 +314,19 @@ const transformProp = async ({ node, propDefinition, propName }) => {
 
 figma.ui.onmessage = async msg => {
     if (msg.type === 'init') {
-        const savedState = merge(
+        const newState = {};
+        const savedState = await retrieveClientData('pluginState');
+        mergeWith(
+            newState,
             msg.initialState,
-            await retrieveClientData('pluginState'),
+            savedState,
+            (objValue, srcValue, key, object, source, stack) => {
+                if (isArray(objValue) && isArray(srcValue)) {
+                    return srcValue;
+                }
+            },
         );
-        figma.ui.postMessage(savedState);
+        figma.ui.postMessage(newState);
     }
 
     if (msg.type === 'saveState') {
