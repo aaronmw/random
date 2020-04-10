@@ -8,6 +8,109 @@ import sample from 'lodash/sample';
 const WINDOW_WIDTH = 290;
 const WINDOW_HEIGHT = 600;
 
+const RANDOM_THINGS = [
+    'a camera 📸',
+    'a checkbook',
+    'a blanket 🥶',
+    'some deodorant 💩🧼',
+    'some teddies 🧸🧸',
+    'a radio 📻',
+    'some video games 🎮',
+    'some sand paper',
+    'a book 📙',
+    'a tree 🌲',
+    'a ring 💍',
+    'a toe ring 💍',
+    'a clamp 🗜',
+    'some toothpaste 🦷',
+    'some perfume 💩🧼',
+    'some beef 🐄',
+    'a bottle 🍾',
+    'a window',
+    'a car 🚗',
+    'a sailboat ⛵️',
+    'a spring',
+    'a pool stick',
+    'some tooth picks 🦷',
+    'the floor',
+    'some tweezers 👃😳',
+    'some money 💰',
+    'a sharpie ',
+    'a charger 🔌',
+    'a USB drive',
+    'a purse 👛',
+    'a thermostat 🥶',
+    'some coasters',
+    'a sponge 🧽',
+    'an outlet 🔌',
+    'a bottle cap',
+    'a balloon 🎈',
+    'a bed 🛏',
+    'some pants 👖',
+    'some fake flowers 💐',
+    'a puddle',
+    'a pencil ✏️',
+    'some shoes 👟👟',
+    'a hair tie',
+    'some face wash 🧼',
+    'a plastic fork 🍔🍟',
+    'some food 🌽',
+    'some leg warmers 🔥🦵🦵',
+    'a thread 🧵',
+    'a bookmark',
+    'a doll 🎎',
+    'an air freshener 🕯',
+    'a monitor 🖥',
+    'a tomato 🍅',
+    'some milk 🥛',
+    'a water bottle 💦',
+    'some socks 🧦',
+    'a towel 🏖',
+    'some lip gloss ✨👄✨',
+    'some speakers 🔈🔈',
+    'some headphones 🎧',
+    'a cork',
+    'a desk',
+    'a keyboard ⌨️',
+    'some glasses 🤓',
+    'a rusty nail',
+    'a cup 🍵',
+    'a door 🚪',
+    'some white out',
+    'some paper 🧻',
+    'some broccoli 🥦',
+    'a box 📦',
+    'a vase 🏺',
+    'a watch ⌚️',
+    'a model car 🚕',
+    'a wagon 🎠',
+    'some clothes 🧢👕👖🧦',
+    'a cell phone ☎️',
+    'a rug',
+    'a nail file',
+    'a slipper 🥿',
+    'a clay pot 🚽',
+    'a rubber band',
+    'an MP3 player',
+    'a mirror',
+    'a sketch pad 📓',
+    'some conditioner',
+    'a zipper 🤐',
+    'a CD 💿',
+    'some stockings 🦵🦵',
+    'some flowers 🌸🌺🌼',
+    'a bow 🏹',
+    'a bracelet ⌚️',
+    'a couch 🛋',
+    'an iPod 📱',
+    'a boom box 🔊',
+    'a blouse',
+    'a key chain 🔑',
+    'a playing card 🃏',
+    'some grid paper 📈',
+    'some nail clippers 💅',
+];
+
 figma.showUI(__html__, {
     width: WINDOW_WIDTH,
     height: WINDOW_HEIGHT,
@@ -111,27 +214,41 @@ const transformProp = async ({ node, propDefinition, propName }) => {
             break;
 
         case 'width':
-            const currentWidth = node.width;
-            const randomWidth = toInteger(newPropValue);
-            const widthScaleFactor = randomWidth / currentWidth;
-            node.resize(
-                randomWidth,
-                propDefinition.preserveAspectRatio
-                    ? node.height * widthScaleFactor
-                    : node.height,
-            );
-            break;
-
         case 'height':
+            const oppositeDimension = propName === 'width' ? 'height' : 'width';
+            const currentValue = node[propName];
+            const currentOppositeValue = node[oppositeDimension];
+            const newValue = toInteger(newPropValue);
+            const scaleFactor = newValue / currentValue;
+            const newOppositeValue =
+                propDefinition.preserveAspectRatio === true
+                    ? currentOppositeValue * scaleFactor
+                    : currentOppositeValue;
+            const [
+                verticalOriginName,
+                horizontalOriginName,
+            ] = propDefinition.selectedOrigin.split('-');
+            const currentWidth = node.width;
             const currentHeight = node.height;
-            const randomHeight = toInteger(newPropValue);
-            const heightScaleFactor = randomHeight / currentHeight;
-            node.resize(
-                propDefinition.preserveAspectRatio
-                    ? node.width * heightScaleFactor
-                    : node.width,
-                randomHeight,
-            );
+            const newWidth = propName === 'width' ? newValue : newOppositeValue;
+            const newHeight =
+                propName === 'width' ? newOppositeValue : newValue;
+
+            node.resize(newWidth, newHeight);
+
+            node.x =
+                horizontalOriginName === 'center'
+                    ? node.x + (newWidth - currentWidth) / -2
+                    : horizontalOriginName === 'right'
+                    ? node.x + (newWidth - currentWidth) / -1
+                    : node.x;
+
+            node.y =
+                verticalOriginName === 'middle'
+                    ? node.y + (newHeight - currentHeight) / -2
+                    : verticalOriginName === 'bottom'
+                    ? node.y + (newHeight - currentHeight) / -1
+                    : node.y;
             break;
 
         case 'layerBlur':
@@ -208,6 +325,17 @@ figma.ui.onmessage = async msg => {
 
     if (msg.type === 'run') {
         const selectedNodes = figma.currentPage.selection;
+
+        if (selectedNodes.length === 0) {
+            // STILL no idea why I need to cast this...
+            (figma as any).notify(
+                `You have nothing selected, but here's a random thing anyway: ${sample(
+                    RANDOM_THINGS,
+                )}`,
+            );
+            return;
+        }
+
         const { propDefinitions } = msg.params;
 
         Object.keys(propDefinitions).map(propName => {

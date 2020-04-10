@@ -88,8 +88,16 @@ const COLOR = {
 
 const DEFAULT_PROP_DEFINITIONS = {
     text: { ...STRING },
-    width: { ...INTEGER, preserveAspectRatio: false },
-    height: { ...INTEGER, preserveAspectRatio: false },
+    width: {
+        ...INTEGER,
+        preserveAspectRatio: false,
+        selectedOrigin: 'middle-center',
+    },
+    height: {
+        ...INTEGER,
+        preserveAspectRatio: false,
+        selectedOrigin: 'middle-center',
+    },
     x: { ...INTEGER },
     y: { ...INTEGER },
     opacity: { ...PERCENTAGE },
@@ -285,7 +293,7 @@ const PropMethodTab = styled.button`
 const Columns = styled.div`
     display: flex;
     align-items: center;
-    justify-content: flex- ${props => (props.align ? props.align : 'end')};
+    justify-content: ${props => (props.align ? props.align : 'flex-end')};
 
     & + * {
         margin-top: 8px;
@@ -444,23 +452,182 @@ const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
     );
 };
 
-const ResizeOptions = ({ propName, preserveAspectRatio, onUpdateState }) => {
-    const updatePreserveAspectRatio = () => {
+const StyledResizeOriginContainer = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 30px;
+`;
+
+const StyledResizeOriginRow = styled.div`
+    display: flex;
+    justify-content: space-between;
+`;
+
+const StyledResizeOrigin = styled.div`
+    ${({ isActive, isSelectable }) => `
+        width: 10px;
+        height: 10px;
+        display: block;
+        justify-content: center;
+        align-items: center;
+        cursor: ${!isActive && isSelectable ? 'pointer' : 'default'};
+    
+        &:before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 4px;
+            border: 1px solid
+                ${isActive ? COLOR_BLUE : COLOR_TEXT_LIGHT};
+            background-color: ${
+                isSelectable
+                    ? isActive
+                        ? COLOR_BLUE
+                        : 'transparent'
+                    : COLOR_TEXT_LIGHT
+            };
+            opacity: ${isSelectable ? 1 : 0.25};
+            transition: all 0.2s ease-in-out;
+        }
+        
+        ${
+            isSelectable &&
+            !isActive &&
+            `
+        &:hover:before {
+            transform: scale(1.5);
+        }`
+        }
+    `}
+`;
+
+const ResizeOriginSelector = ({
+    preserveAspectRatio,
+    propName,
+    selectedOrigin,
+    onUpdateState,
+}) => {
+    const isWidth = propName === 'width';
+    const isHeight = propName === 'height';
+    const verticalOriginNames = ['top', 'middle', 'bottom'];
+    const horizontalOriginNames = ['left', 'center', 'right'];
+
+    const handleSaveTransformOrigin = originName => {
         onUpdateState({
-            path: ['propDefinitions', propName, 'preserveAspectRatio'],
-            newValue: !preserveAspectRatio,
+            path: ['propDefinitions', propName, 'selectedOrigin'],
+            newValue: originName,
         });
     };
 
     return (
-        <Label>
-            <input
-                type="checkbox"
-                checked={preserveAspectRatio}
-                onChange={updatePreserveAspectRatio}
-            />{' '}
-            <span>Preserve Aspect Ratio</span>
-        </Label>
+        <StyledResizeOriginContainer>
+            {verticalOriginNames.map(verticalOriginName => (
+                <StyledResizeOriginRow key={verticalOriginName}>
+                    {horizontalOriginNames.map(horizontalOriginName => {
+                        const originName = `${verticalOriginName}-${horizontalOriginName}`;
+                        const isSelectable =
+                            (isWidth && verticalOriginName === 'middle') ||
+                            (isHeight && horizontalOriginName === 'center') ||
+                            preserveAspectRatio ||
+                            (verticalOriginName === 'middle' &&
+                                horizontalOriginName === 'center');
+
+                        return (
+                            <StyledResizeOrigin
+                                key={horizontalOriginName}
+                                isActive={selectedOrigin === originName}
+                                isSelectable={isSelectable}
+                                onClick={
+                                    isSelectable
+                                        ? handleSaveTransformOrigin.bind(
+                                              this,
+                                              originName,
+                                          )
+                                        : null
+                                }
+                            />
+                        );
+                    })}
+                </StyledResizeOriginRow>
+            ))}
+        </StyledResizeOriginContainer>
+    );
+};
+
+const ResizeOptions = ({
+    propName,
+    preserveAspectRatio,
+    selectedOrigin,
+    onUpdateState,
+}) => {
+    const updatePreserveAspectRatio = () => {
+        const newPreserveAspectRatio = !preserveAspectRatio;
+        const [verticalOriginName, horizontalOriginName] = selectedOrigin.split(
+            '-',
+        );
+        const newVerticalOriginName =
+            !newPreserveAspectRatio &&
+            propName === 'width' &&
+            ['top', 'bottom'].indexOf(verticalOriginName) !== -1
+                ? 'middle'
+                : verticalOriginName;
+        const newHorizontalOriginName =
+            !newPreserveAspectRatio &&
+            propName === 'height' &&
+            ['left', 'right'].indexOf(horizontalOriginName) !== -1
+                ? 'center'
+                : horizontalOriginName;
+        const newSelectedOrigin = `${newVerticalOriginName}-${newHorizontalOriginName}`;
+        const oppositePropName = propName === 'width' ? 'height' : 'width';
+
+        onUpdateState({
+            path: ['propDefinitions', propName, 'preserveAspectRatio'],
+            newValue: newPreserveAspectRatio,
+        });
+
+        if (newSelectedOrigin !== selectedOrigin) {
+            onUpdateState({
+                path: ['propDefinitions', propName, 'selectedOrigin'],
+                newValue: newSelectedOrigin,
+            });
+        }
+
+        if (newPreserveAspectRatio === true) {
+            onUpdateState({
+                path: ['propDefinitions', oppositePropName, 'isActive'],
+                newValue: false,
+            });
+        }
+    };
+
+    return (
+        <Columns align="space-between">
+            <Label>
+                <input
+                    type="checkbox"
+                    checked={preserveAspectRatio}
+                    onChange={updatePreserveAspectRatio}
+                />{' '}
+                <span>Preserve Aspect Ratio</span>
+            </Label>
+            <Label>
+                <span
+                    style={{
+                        marginRight: '15px',
+                    }}
+                >
+                    Anchor:
+                </span>
+                <ResizeOriginSelector
+                    preserveAspectRatio={preserveAspectRatio}
+                    propName={propName}
+                    selectedOrigin={selectedOrigin}
+                    onUpdateState={onUpdateState}
+                />
+            </Label>
+        </Columns>
     );
 };
 
@@ -600,7 +767,7 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
                     onChange={updateMinOrMax}
                 />
             </Columns>
-            <Columns align="start">
+            <Columns align="flex-start">
                 <Label>
                     <input
                         name={`${propName}-operator`}
@@ -626,27 +793,8 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
     );
 };
 
-const Prop = ({
-    definition = {
-        listFieldType: '',
-        isActive: false,
-        method: '',
-        range: { min: -1, max: 1 },
-        list: [],
-        calc: {
-            operator: '',
-            decimalPlaces: 0,
-            add: { min: 0, max: 0 },
-            multiply: { min: 0, max: 0 },
-        },
-        prefix: '',
-        suffix: '',
-        groupThousands: null,
-        preserveAspectRatio: null,
-    },
-    name,
-    onUpdateState,
-}) => {
+const Prop = ({ name, propDefinitions, onUpdateState }) => {
+    const definition = propDefinitions[name];
     const listFieldType = get(definition, 'listFieldType');
     const isActive = get(definition, 'isActive');
     const groupThousands = get(definition, 'groupThousands');
@@ -664,11 +812,36 @@ const Prop = ({
     const rangeMin = get(definition, ['range', 'min']);
     const rangeMax = get(definition, ['range', 'max']);
     const suffix = get(definition, 'suffix');
+    const selectedOrigin = get(definition, 'selectedOrigin');
 
     const handlePropHeaderClick = () => {
+        const newIsActive = !isActive;
+
+        if (['height', 'width'].indexOf(name) !== -1) {
+            const oppositePropName = name === 'width' ? 'height' : 'width';
+            const oppositeIsPreservingAspectRatio =
+                propDefinitions[oppositePropName].preserveAspectRatio === true;
+
+            if (oppositeIsPreservingAspectRatio) {
+                onUpdateState({
+                    path: [
+                        'propDefinitions',
+                        oppositePropName,
+                        'preserveAspectRatio',
+                    ],
+                    newValue: false,
+                });
+            } else if (preserveAspectRatio) {
+                onUpdateState({
+                    path: ['propDefinitions', oppositePropName, 'isActive'],
+                    newValue: false,
+                });
+            }
+        }
+
         onUpdateState({
             path: ['propDefinitions', name, 'isActive'],
-            newValue: !isActive,
+            newValue: newIsActive,
         });
     };
 
@@ -746,6 +919,7 @@ const Prop = ({
                         <ResizeOptions
                             propName={name}
                             preserveAspectRatio={preserveAspectRatio}
+                            selectedOrigin={selectedOrigin}
                             onUpdateState={onUpdateState}
                         />
                     )}
@@ -790,7 +964,7 @@ const INITIAL_STATE = {
 
 const App = () => {
     const [isLoaded, setIsLoaded] = React.useState(false);
-    const [pluginState, setPluginState] = React.useState(null);
+    const [pluginState, setPluginState] = React.useState(INITIAL_STATE);
     const initialFocusRef = { current: null };
 
     onmessage = message => {
@@ -846,15 +1020,17 @@ const App = () => {
         );
     };
 
+    const propDefinitions = pluginState.propDefinitions;
+
     return (
         <StyledAppContainer onKeyDown={handleKeyDown}>
             <GlobalStyles />
             {isLoaded && (
                 <form onSubmit={handleSubmit}>
-                    {Object.keys(pluginState.propDefinitions).map(propName => (
+                    {Object.keys(propDefinitions).map(propName => (
                         <Prop
                             key={propName}
-                            definition={pluginState.propDefinitions[propName]}
+                            propDefinitions={propDefinitions}
                             name={propName}
                             onUpdateState={onUpdateState}
                         />
