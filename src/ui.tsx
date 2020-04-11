@@ -2,9 +2,12 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import setWith from 'lodash/setWith';
 import clone from 'lodash/clone';
+import About from './components/About';
 import { RunButton } from './components/controls';
 import { GlobalStyles, StyledAppContainer } from './components/layout';
+import { NavBar, Route } from './components/Navigation';
 import { PropConfigurator } from './components/PropConfigurator';
+import SavedConfigs from './components/SavedConfigs';
 import { DEFAULT_PROP_DEFINITIONS } from './prop-definitions';
 
 const sendMessage = payload => {
@@ -20,6 +23,8 @@ const sendMessage = payload => {
 
 const INITIAL_STATE = {
     propDefinitions: DEFAULT_PROP_DEFINITIONS,
+    savedPropDefinitions: [],
+    activeRoute: 'randomizer',
 };
 
 const App = () => {
@@ -69,7 +74,10 @@ const App = () => {
     };
 
     const handleKeyDown = evt => {
-        if (evt.key === 'Escape') {
+        if (
+            evt.target.tagName.toLowerCase() !== 'input' &&
+            evt.key === 'Escape'
+        ) {
             sendMessage({ type: 'close' });
         }
     };
@@ -81,11 +89,13 @@ const App = () => {
     };
 
     const propDefinitions = pluginState.propDefinitions;
+    const activeRoute = pluginState.activeRoute;
 
     return (
         <StyledAppContainer onKeyDown={handleKeyDown}>
             <GlobalStyles />
-            {isLoaded && (
+            <NavBar activeRoute={activeRoute} onUpdateState={onUpdateState} />
+            {activeRoute === 'randomizer' && isLoaded && (
                 <form onSubmit={handleSubmit}>
                     {Object.keys(propDefinitions).map(propName => (
                         <PropConfigurator
@@ -98,6 +108,13 @@ const App = () => {
                     <RunButton type="submit">Randomize</RunButton>
                 </form>
             )}
+            {activeRoute === 'saved-configs' && (
+                <SavedConfigs
+                    pluginState={pluginState}
+                    onUpdateState={onUpdateState}
+                />
+            )}
+            {activeRoute === 'about' && <About />}
         </StyledAppContainer>
     );
 };

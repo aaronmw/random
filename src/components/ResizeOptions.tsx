@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import { Label } from './controls';
-import { COLOR_BLUE, COLOR_TEXT_LIGHT, Columns } from './layout';
+import { COLOR_TEXT, COLOR_TEXT_LIGHT, Columns } from './layout';
 
 const StyledResizeOriginContainer = styled.div`
     display: flex;
@@ -31,11 +31,11 @@ const StyledResizeOrigin = styled.div`
             width: 4px;
             height: 4px;
             border: 1px solid
-                ${isActive ? COLOR_BLUE : COLOR_TEXT_LIGHT};
+                ${isActive ? COLOR_TEXT : COLOR_TEXT_LIGHT};
             background-color: ${
                 isSelectable
                     ? isActive
-                        ? COLOR_BLUE
+                        ? COLOR_TEXT
                         : 'transparent'
                     : COLOR_TEXT_LIGHT
             };

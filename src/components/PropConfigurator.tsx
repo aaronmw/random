@@ -8,17 +8,24 @@ import ListBuilder from './ListBuilder';
 import PrefixSuffixBuilder from './PrefixSuffixBuilder';
 import RangeBuilder from './RangeBuilder';
 import ResizeOptions from './ResizeOptions';
-import { COLOR_BLUE, COLOR_TEXT, FONT_WEIGHT_BOLD } from './layout';
+import {
+    COLOR_BLUE,
+    COLOR_BORDER,
+    COLOR_HOVER_BG,
+    COLOR_TEXT,
+    COLOR_TEXT_LIGHT,
+    FONT_WEIGHT_BOLD,
+    Row,
+} from './layout';
 
 const PropContainer = styled.div`
     background-color: white;
     padding: 15px;
+    border-top: 1px solid transparent;
+    border-bottom: 1px solid transparent;
 
     &.is-active {
-        &:not(:first-child) {
-            border-top: 1px solid #dfdfdf;
-        }
-        border-bottom: 1px solid #dfdfdf;
+        border-color: ${COLOR_BORDER};
 
         & + .is-active {
             border-top: 0;
@@ -31,12 +38,12 @@ const PropHeader = styled.div`
     justify-content: space-between;
     align-items: center;
     font-weight: 400;
-    color: ${COLOR_BLUE};
     cursor: pointer;
+    color: ${COLOR_TEXT_LIGHT};
 
     &.is-active {
-        font-weight: ${FONT_WEIGHT_BOLD};
         color: ${COLOR_TEXT};
+        font-weight: ${FONT_WEIGHT_BOLD};
     }
 `;
 
@@ -65,8 +72,8 @@ const PropMethodTab = styled.button`
 
     &.is-active {
         font-weight: ${FONT_WEIGHT_BOLD};
-        background-color: ${COLOR_BLUE};
-        color: white;
+        background-color: ${COLOR_HOVER_BG};
+        color: ${COLOR_TEXT};
     }
 
     &:focus {
@@ -173,54 +180,62 @@ export const PropConfigurator = ({ name, propDefinitions, onUpdateState }) => {
 
             {isActive && (
                 <PropBody>
-                    {method === 'list' ? (
-                        <ListBuilder
-                            propName={name}
-                            list={list}
-                            listFieldType={listFieldType}
-                            onUpdateState={onUpdateState}
-                        />
-                    ) : method === 'range' ? (
-                        <RangeBuilder
-                            propName={name}
-                            min={rangeMin}
-                            max={rangeMax}
-                            onUpdateState={onUpdateState}
-                        />
-                    ) : (
-                        <CalcBuilder
-                            propName={name}
-                            operator={operator}
-                            min={calcMin}
-                            max={calcMax}
-                            onUpdateState={onUpdateState}
-                        />
-                    )}
+                    <Row>
+                        {method === 'list' ? (
+                            <ListBuilder
+                                propName={name}
+                                list={list}
+                                listFieldType={listFieldType}
+                                onUpdateState={onUpdateState}
+                            />
+                        ) : method === 'range' ? (
+                            <RangeBuilder
+                                propName={name}
+                                min={rangeMin}
+                                max={rangeMax}
+                                onUpdateState={onUpdateState}
+                            />
+                        ) : (
+                            <CalcBuilder
+                                propName={name}
+                                operator={operator}
+                                min={calcMin}
+                                max={calcMax}
+                                onUpdateState={onUpdateState}
+                            />
+                        )}
+                    </Row>
                     {preserveAspectRatio !== undefined && (
-                        <ResizeOptions
-                            propName={name}
-                            preserveAspectRatio={preserveAspectRatio}
-                            selectedOrigin={selectedOrigin}
-                            onUpdateState={onUpdateState}
-                        />
+                        <Row>
+                            <ResizeOptions
+                                propName={name}
+                                preserveAspectRatio={preserveAspectRatio}
+                                selectedOrigin={selectedOrigin}
+                                onUpdateState={onUpdateState}
+                            />
+                        </Row>
                     )}
                     {name === 'text' && method === 'calc' && (
-                        <FormatOptions
-                            decimalPlaces={get(
-                                definition,
-                                ['calc', 'decimalPlaces'],
-                                0,
-                            )}
-                            groupThousands={groupThousands}
-                            onUpdateState={onUpdateState}
-                        />
+                        <Row>
+                            <FormatOptions
+                                decimalPlaces={get(
+                                    definition,
+                                    ['calc', 'decimalPlaces'],
+                                    0,
+                                )}
+                                groupThousands={groupThousands}
+                                onUpdateState={onUpdateState}
+                            />
+                        </Row>
                     )}
                     {name === 'text' && (
-                        <PrefixSuffixBuilder
-                            prefix={prefix}
-                            suffix={suffix}
-                            onUpdateState={onUpdateState}
-                        />
+                        <Row>
+                            <PrefixSuffixBuilder
+                                prefix={prefix}
+                                suffix={suffix}
+                                onUpdateState={onUpdateState}
+                            />
+                        </Row>
                     )}
                 </PropBody>
             )}

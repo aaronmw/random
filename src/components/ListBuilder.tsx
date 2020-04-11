@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { DeleteButton, Input, PlusButton } from './controls';
-import { Columns, Rows } from './layout';
+import { IconButton, Input } from './controls';
+import { Columns, Row } from './layout';
 
 const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
     const updateList = newValue => {
@@ -41,36 +41,34 @@ const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
         updateList(list.concat('new'));
     };
 
-    return (
-        <Rows>
-            {list.map((item, index) => (
-                <Columns key={index}>
-                    <Input
-                        data-index={index}
-                        type={listFieldType}
-                        value={item}
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                    />
-                    <DeleteButton
-                        data-index={index}
-                        onClick={handleClickDelete}
-                    />
-                    <PlusButton
-                        style={{
-                            visibility:
-                                index !== list.length - 1
-                                    ? 'hidden'
-                                    : 'visible',
-                            pointerEvents:
-                                index !== list.length - 1 ? 'none' : 'all',
-                        }}
-                        onClick={handleClickPlus}
-                    />
-                </Columns>
-            ))}
-        </Rows>
-    );
+    return list.map((item, index) => (
+        <Row key={index}>
+            <Columns>
+                <Input
+                    data-index={index}
+                    type={listFieldType}
+                    value={item}
+                    onBlur={handleBlur}
+                    onChange={handleChange}
+                />
+                <IconButton
+                    iconName="times"
+                    data-index={index}
+                    onClick={handleClickDelete}
+                />
+                <IconButton
+                    iconName="plus"
+                    style={{
+                        visibility:
+                            index !== list.length - 1 ? 'hidden' : 'visible',
+                        pointerEvents:
+                            index !== list.length - 1 ? 'none' : 'all',
+                    }}
+                    onClick={handleClickPlus}
+                />
+            </Columns>
+        </Row>
+    ));
 };
 
 export default ListBuilder;

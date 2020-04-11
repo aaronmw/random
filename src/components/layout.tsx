@@ -1,8 +1,10 @@
 import styled, { createGlobalStyle } from 'styled-components';
 
 export const COLOR_BLUE = '#18a0fb';
+export const COLOR_BORDER = '#dfdfdf';
 export const COLOR_TEXT = '#333333';
 export const COLOR_TEXT_LIGHT = '#b3b3b3';
+export const COLOR_HOVER_BG = '#f2f2f2';
 export const FONT_WEIGHT_BOLD = 600;
 
 export const GlobalStyles = createGlobalStyle`
@@ -14,10 +16,10 @@ export const GlobalStyles = createGlobalStyle`
         background-color: inherit;
         border: none;
         font-size: 1rem;
-        line-height: 1rem;
+        font-family: Inter, sans-serif;
     }
     :root {
-        font-family: Inter, sans-serif;
+        line-height: 1.1rem;
         font-size: 11px;
         letter-spacing: 0.5;
         background: radial-gradient(white, hsl(0, 0%, 95%));
@@ -26,18 +28,20 @@ export const GlobalStyles = createGlobalStyle`
         -webkit-font-smoothing: subpixel-antialiased;
         padding-bottom: 30px;
     }
+    strong {
+        font-weight: ${FONT_WEIGHT_BOLD};
+    }
 `;
 
 export const StyledAppContainer = styled.div``;
 
 export const Columns = styled.div`
+    flex-shrink: 1;
+    flex-grow: 1;
     display: flex;
     align-items: center;
     justify-content: ${props => (props.align ? props.align : 'flex-end')};
 
-    & + * {
-        margin-top: 8px;
-    }
     & > * {
         margin-left: 8px;
 
@@ -47,20 +51,8 @@ export const Columns = styled.div`
     }
 `;
 
-export const Rows = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: center;
-
-    & + * {
+export const Row = styled.div`
+    & + & {
         margin-top: 8px;
-    }
-    & > * {
-        margin-top: 4px;
-
-        &:first-child {
-            margin-top: 0;
-        }
     }
 `;
