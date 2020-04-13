@@ -31,8 +31,8 @@ const ColorSwatch = styled.div`
     width: 100%;
 
     ${props =>
-        props.color
-            ? `
+        props.color !== null &&
+        `
         text-transform: uppercase;
         
         &:before {
@@ -42,16 +42,15 @@ const ColorSwatch = styled.div`
             top: 5px;
             width: 18px;
             height: 18px;
-            background-color: ${props => props.color};
+            background-color: ${props.color};
             border: 1px solid ${COLOR_HOVER_BG};
         }
-    `
-            : ''}
+    `}
 `;
 
 export const Input = props => {
     const { value } = props;
-    const isColor = `${value}`.trim().match(/^\\#[0-9a-f]{6}?$/i);
+    const isColor = `${value}`.trim().match(/^#[0-9a-f]{6}?$/i);
     const InputEl = <StyledInput {...props} />;
 
     return <ColorSwatch color={isColor ? value : null}>{InputEl}</ColorSwatch>;

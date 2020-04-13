@@ -91,7 +91,7 @@ export const DEFAULT_CONFIG = {
     strokeColor: { ...COLOR },
     strokeOpacity: { ...PERCENTAGE },
     strokeWeight: { ...INTEGER },
-    layerBlur: { ...INTEGER },
+    layerBlur: { ...INTEGER, range: { min: 0, max: 10 } },
     arcStartingAngle: { ...DEGREES },
     arcEndingAngle: { ...DEGREES },
 };
