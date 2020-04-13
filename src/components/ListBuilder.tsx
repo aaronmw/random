@@ -3,67 +3,104 @@ import { IconButton, Input } from './controls';
 import { Columns, Row } from './layout';
 
 const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
+    const [sortedList, setSortedList] = React.useState(list);
+
+    React.useEffect(() => {
+        setSortedList(
+            list.sort((a, b) =>
+                `${a}`.localeCompare(b, undefined, { numeric: true }),
+            ),
+        );
+    }, [list]);
+
+    React.useEffect(() => {
+        const newLabelInput = document.getElementsByClassName(
+            'is-new-label-input',
+        );
+
+        if (newLabelInput.length) {
+            (newLabelInput[0] as any).focus();
+        }
+    }, [sortedList]);
+
     const updateList = newValue => {
         onUpdateState({
-            path: ['propDefinitions', propName, 'list'],
+            path: ['config', propName, 'list'],
             newValue,
         });
     };
 
     const handleBlur = () => {
-        updateList(
-            list
-                .filter(item => item !== '')
-                .sort((a, b) =>
-                    `${a}`.localeCompare(b, undefined, { numeric: true }),
-                ),
-        );
+        updateList(sortedList.filter(item => item !== ''));
     };
 
-    const handleChange = evt => {
+    const handleChange = (targetIndex, evt) => {
         const target = evt.currentTarget;
-        const indexToUpdate = parseInt(target.dataset.index);
-        updateList(
-            list.map((item, index) =>
-                index === indexToUpdate ? target.value : item,
+
+        setSortedList(
+            sortedList.map((item, index) =>
+                index === targetIndex ? target.value : item,
             ),
         );
     };
 
-    const handleClickDelete = evt => {
-        const indexToDelete = parseInt(evt.currentTarget.dataset.index);
-        updateList(
-            list.filter((item, itemIndex) => itemIndex !== indexToDelete),
-        );
+    const handleClickDelete = targetIndex => {
+        updateList(list.filter((item, itemIndex) => itemIndex !== targetIndex));
     };
 
     const handleClickPlus = () => {
-        updateList(list.concat('new'));
+        setSortedList(sortedList.concat(''));
     };
 
-    return list.map((item, index) => (
+    const handleFocus = (targetIndex, evt) => {
+        const target = evt.target;
+        target.dataset.valueUponFocus = target.value;
+    };
+
+    const handleKeyDown = (targetIndex, evt) => {
+        const targetElement = evt.target;
+
+        switch (evt.key) {
+            case 'Enter':
+                targetElement.blur();
+                break;
+            case 'Escape':
+                const { valueUponFocus } = targetElement.dataset;
+                if (valueUponFocus === '') {
+                    handleClickDelete(targetIndex);
+                } else {
+                    targetElement.value = valueUponFocus;
+                }
+                break;
+        }
+    };
+
+    return sortedList.map((item, index) => (
         <Row key={index}>
             <Columns>
                 <Input
-                    data-index={index}
+                    className={item === '' ? 'is-new-label-input' : null}
                     type={listFieldType}
                     value={item}
-                    onBlur={handleBlur}
-                    onChange={handleChange}
+                    onBlur={handleBlur.bind(this, index)}
+                    onChange={handleChange.bind(this, index)}
+                    onFocus={handleFocus.bind(this, index)}
+                    onKeyDown={handleKeyDown.bind(this, index)}
                 />
                 <IconButton
                     iconName="times"
-                    data-index={index}
-                    onClick={handleClickDelete}
+                    onClick={handleClickDelete.bind(this, index)}
                 />
                 <IconButton
                     iconName="plus"
-                    style={{
-                        visibility:
-                            index !== list.length - 1 ? 'hidden' : 'visible',
-                        pointerEvents:
-                            index !== list.length - 1 ? 'none' : 'all',
-                    }}
+                    style={
+                        index !== sortedList.length - 1
+                            ? {
+                                  visibility: 'hidden',
+                                  pointerEvents: 'none',
+                              }
+                            : null
+                    }
                     onClick={handleClickPlus}
                 />
             </Columns>

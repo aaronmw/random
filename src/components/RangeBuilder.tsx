@@ -7,7 +7,7 @@ const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
         const target = evt.currentTarget;
         const minOrMax = target.dataset.name;
         onUpdateState({
-            path: ['propDefinitions', propName, 'range', minOrMax],
+            path: ['config', propName, 'range', minOrMax],
             newValue: target.value,
         });
     };

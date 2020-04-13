@@ -320,7 +320,7 @@ figma.ui.onmessage = async msg => {
             newState,
             msg.initialState,
             savedState,
-            (objValue, srcValue, key, object, source, stack) => {
+            (objValue, srcValue) => {
                 if (isArray(objValue) && isArray(srcValue)) {
                     return srcValue;
                 }
@@ -346,10 +346,10 @@ figma.ui.onmessage = async msg => {
             return;
         }
 
-        const { propDefinitions } = msg.params;
+        const { config } = msg.params;
 
-        Object.keys(propDefinitions).map(propName => {
-            const propDefinition = propDefinitions[propName];
+        Object.keys(config).map(propName => {
+            const propDefinition = config[propName];
             if (propDefinition.isActive) {
                 selectedNodes.map(async node => {
                     await transformProp({

@@ -67,10 +67,10 @@ export const PERCENTAGE = {
 export const COLOR = {
     listFieldType: 'text',
     method: 'list',
-    list: ['#000000', '#FF0000', '#00FF00', '#0000FF'],
+    list: ['#f23b27', '#fd605b', '#9851f9', '#1ab7fa', '#1bca7c'],
 };
 
-export const DEFAULT_PROP_DEFINITIONS = {
+export const DEFAULT_CONFIG = {
     text: { ...STRING },
     width: {
         ...INTEGER,

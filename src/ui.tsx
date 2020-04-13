@@ -5,10 +5,10 @@ import clone from 'lodash/clone';
 import About from './components/About';
 import { RunButton } from './components/controls';
 import { GlobalStyles, StyledAppContainer } from './components/layout';
-import { NavBar, Route } from './components/Navigation';
+import { NavBar } from './components/Navigation';
 import { PropConfigurator } from './components/PropConfigurator';
 import SavedConfigs from './components/SavedConfigs';
-import { DEFAULT_PROP_DEFINITIONS } from './prop-definitions';
+import { DEFAULT_CONFIG } from './config';
 
 const sendMessage = payload => {
     parent.postMessage(
@@ -22,8 +22,8 @@ const sendMessage = payload => {
 };
 
 const INITIAL_STATE = {
-    propDefinitions: DEFAULT_PROP_DEFINITIONS,
-    savedPropDefinitions: [],
+    config: DEFAULT_CONFIG,
+    savedConfigs: [],
     activeRoute: 'randomizer',
 };
 
@@ -88,7 +88,7 @@ const App = () => {
         );
     };
 
-    const propDefinitions = pluginState.propDefinitions;
+    const config = pluginState.config;
     const activeRoute = pluginState.activeRoute;
 
     return (
@@ -97,10 +97,10 @@ const App = () => {
             <NavBar activeRoute={activeRoute} onUpdateState={onUpdateState} />
             {activeRoute === 'randomizer' && isLoaded && (
                 <form onSubmit={handleSubmit}>
-                    {Object.keys(propDefinitions).map(propName => (
+                    {Object.keys(config).map(propName => (
                         <PropConfigurator
                             key={propName}
-                            propDefinitions={propDefinitions}
+                            config={config}
                             name={propName}
                             onUpdateState={onUpdateState}
                         />

@@ -29,22 +29,25 @@ const StyledInput = styled.input`
 const ColorSwatch = styled.div`
     position: relative;
     width: 100%;
+    text-transform: ${props => (props.color ? 'uppercase' : 'none')};
+
     &:before {
         content: '';
         position: absolute;
-        left: 4px;
-        top: 4px;
-        width: 22px;
-        height: 22px;
+        left: 6px;
+        top: 5px;
+        width: 18px;
+        height: 18px;
         background-color: ${props => props.color};
-        border-radius: 2px;
+        border: 1px solid ${COLOR_HOVER_BG};
     }
 `;
 
 export const Input = props => {
     const { value } = props;
-    const isColor = `${value}`.trim().match(/^#[0-9a-f]{3,6}?$/i);
+    const isColor = `${value}`.trim().match(/^#[0-9a-f]{6}?$/i);
     const InputEl = <StyledInput {...props} />;
+
     return <ColorSwatch color={isColor ? value : null}>{InputEl}</ColorSwatch>;
 };
 
@@ -161,6 +164,7 @@ const ICON_MAP = {
         data:
             'M376 232H216V72c0-4.42-3.58-8-8-8h-32c-4.42 0-8 3.58-8 8v160H8c-4.42 0-8 3.58-8 8v32c0 4.42 3.58 8 8 8h160v160c0 4.42 3.58 8 8 8h32c4.42 0 8-3.58 8-8V280h160c4.42 0 8-3.58 8-8v-32c0-4.42-3.58-8-8-8z',
         label: 'Add',
+        viewBoxWidth: 384,
     },
     randomize: {
         data:
@@ -176,6 +180,7 @@ const ICON_MAP = {
         data:
             'M193.94 256L296.5 153.44l21.15-21.15c3.12-3.12 3.12-8.19 0-11.31l-22.63-22.63c-3.12-3.12-8.19-3.12-11.31 0L160 222.06 36.29 98.34c-3.12-3.12-8.19-3.12-11.31 0L2.34 120.97c-3.12 3.12-3.12 8.19 0 11.31L126.06 256 2.34 379.71c-3.12 3.12-3.12 8.19 0 11.31l22.63 22.63c3.12 3.12 8.19 3.12 11.31 0L160 289.94 262.56 392.5l21.15 21.15c3.12 3.12 8.19 3.12 11.31 0l22.63-22.63c3.12-3.12 3.12-8.19 0-11.31L193.94 256z',
         label: 'Delete',
+        viewBoxWidth: 320,
     },
     twitter: {
         data:
@@ -184,11 +189,12 @@ const ICON_MAP = {
     },
 };
 
-export const Icon = ({ name }) => (
+export const Icon = ({ name, className = '' }) => (
     <svg
+        className={className}
         width={ICON_SIZE}
         height={ICON_SIZE}
-        viewBox="0 0 512 512"
+        viewBox={`0 0 ${ICON_MAP[name].viewBoxWidth || 512} 512`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
     >

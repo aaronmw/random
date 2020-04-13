@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import { Button, Icon, IconButton, Input } from './controls';
-import { COLOR_TEXT_LIGHT, Columns } from './layout';
+import { COLOR_BLUE, COLOR_TEXT, COLOR_TEXT_LIGHT, Columns } from './layout';
 import { Route } from './Navigation';
 
 const EmptyMessage = styled(Columns).attrs({
@@ -22,6 +22,20 @@ const StyledSavedConfig = styled(Columns).attrs({
     height: 30px;
     padding-right: 45px;
     cursor: pointer;
+`;
+
+const SAVE_CONFIRMATION_DURATION = 750;
+
+const SaveStatusIcon = styled(Icon).attrs({
+    name: 'floppy-disc',
+})`
+    transition: all 0.2s ease-in-out;
+    transform: ${props =>
+        props.isFlashing ? 'scale(2) rotate(-25deg)' : 'none'};
+
+    & > path {
+        fill: ${props => (props.isFlashing ? COLOR_BLUE : COLOR_TEXT)};
+    }
 `;
 
 const ButtonBar = styled(Columns)`
@@ -56,18 +70,28 @@ const ButtonBar = styled(Columns)`
 `;
 
 const SavedConfigs = ({ pluginState, onUpdateState }) => {
-    const [isEditingPropId, setIsEditingPropId] = React.useState(null);
+    const [isEditingConfigId, setIsEditingConfigId] = React.useState(null);
+    const [lastSavedConfigId, setLastSavedConfigId] = React.useState(null);
     const [tempNewLabel, setTempNewLabel] = React.useState('Untitled Config');
-    const savedPropDefinitions = pluginState.savedPropDefinitions;
-    const hasSavedConfigs = savedPropDefinitions.length >= 1;
+    const savedConfigs = pluginState.savedConfigs;
+    const hasSavedConfigs = savedConfigs.length >= 1;
 
     React.useEffect(() => {
-        if (isEditingPropId) {
+        if (isEditingConfigId) {
             const newLabelInput = document.getElementById('js-new-label-input');
             newLabelInput.focus();
             (newLabelInput as any).select();
         }
-    }, [isEditingPropId]);
+    }, [isEditingConfigId]);
+
+    React.useEffect(() => {
+        if (lastSavedConfigId !== null) {
+            setTimeout(
+                () => setLastSavedConfigId(null),
+                SAVE_CONFIRMATION_DURATION,
+            );
+        }
+    }, [lastSavedConfigId]);
 
     const goToRandomizer = () =>
         onUpdateState({
@@ -79,7 +103,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
         evt.stopPropagation();
 
         if (
-            isEditingPropId === id ||
+            isEditingConfigId === id ||
             !confirm(
                 `Are you sure you want to delete "${label}" from your saved configs? 🤔`,
             )
@@ -88,68 +112,69 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
         }
 
         onUpdateState({
-            path: ['savedPropDefinitions'],
-            newValue: savedPropDefinitions.filter(
+            path: ['savedConfigs'],
+            newValue: savedConfigs.filter(
                 savedPropDefinition => savedPropDefinition.id !== id,
             ),
         });
     };
 
-    const updateSavedPropDefinition = updatedPropDefinition =>
+    const updateSavedConfig = updatedPropDefinition =>
         onUpdateState({
-            path: ['savedPropDefinitions'],
-            newValue: savedPropDefinitions.map(propDefinition =>
-                propDefinition.id === updatedPropDefinition.id
+            path: ['savedConfigs'],
+            newValue: savedConfigs.map(savedConfig =>
+                savedConfig.id === updatedPropDefinition.id
                     ? updatedPropDefinition
-                    : propDefinition,
+                    : savedConfig,
             ),
         });
 
     const handleClickEdit = ({ id, label }, evt) => {
         evt.stopPropagation();
-        setIsEditingPropId(id);
+        setIsEditingConfigId(id);
         setTempNewLabel(label);
     };
 
-    const handleNewLabelKeyDown = (propDefinition, evt) => {
+    const handleNewLabelKeyDown = (savedConfig, evt) => {
         evt.stopPropagation();
 
         switch (evt.key) {
             case 'Enter':
-                handleClickSaveNewLabel(propDefinition, evt);
+                handleClickSaveNewLabel(savedConfig, evt);
                 break;
             case 'Escape':
-                setIsEditingPropId(null);
+                setIsEditingConfigId(null);
                 break;
         }
     };
 
-    const handleClickSaveNewLabel = (propDefinition, evt) => {
+    const handleClickSaveNewLabel = (savedConfig, evt) => {
         evt.stopPropagation();
 
         const newLabel = tempNewLabel.trim();
 
-        updateSavedPropDefinition({
-            ...propDefinition,
-            label: newLabel.length ? newLabel : propDefinition.label,
+        updateSavedConfig({
+            ...savedConfig,
+            label: newLabel.length ? newLabel : savedConfig.label,
         });
 
-        setIsEditingPropId(null);
+        setIsEditingConfigId(null);
+        setLastSavedConfigId(savedConfig.id);
     };
 
-    const handleClickUpdate = (propDefinition, evt) => {
+    const handleClickReSave = (savedConfig, evt) => {
         evt.stopPropagation();
-        updateSavedPropDefinition({
-            ...propDefinition,
-            data: pluginState.propDefinitions,
+        updateSavedConfig({
+            ...savedConfig,
+            data: pluginState.config,
         });
-        goToRandomizer();
+        setLastSavedConfigId(savedConfig.id);
     };
 
-    const handleClickRandomize = propDefinition => {
+    const handleClickRandomize = savedConfig => {
         onUpdateState({
-            path: ['propDefinitions'],
-            newValue: propDefinition.data,
+            path: ['config'],
+            newValue: savedConfig.data,
         });
         goToRandomizer();
     };
@@ -158,18 +183,18 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
         const id = Date.now();
 
         onUpdateState({
-            path: ['savedPropDefinitions'],
+            path: ['savedConfigs'],
             newValue: [
-                ...savedPropDefinitions,
+                ...savedConfigs,
                 {
                     id: id,
                     label: 'Untitled',
-                    data: pluginState.propDefinitions,
+                    data: pluginState.config,
                 },
             ],
         });
 
-        setIsEditingPropId(id);
+        setIsEditingConfigId(id);
     };
 
     return (
@@ -180,12 +205,14 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                 </EmptyMessage>
             )}
             {hasSavedConfigs &&
-                pluginState.savedPropDefinitions.map(propDefinition => {
-                    const { id, label } = propDefinition;
+                pluginState.savedConfigs.map(savedConfig => {
+                    const { id, label } = savedConfig;
+
+                    console.log(lastSavedConfigId === id, id);
 
                     const applyPropDefinition = () =>
-                        isEditingPropId === null &&
-                        handleClickRandomize(propDefinition);
+                        isEditingConfigId === null &&
+                        handleClickRandomize(savedConfig);
 
                     return (
                         <StyledSavedConfig
@@ -193,8 +220,10 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                             onClick={applyPropDefinition}
                         >
                             <Columns align="flex-start">
-                                <Icon name="floppy-disc" />{' '}
-                                {isEditingPropId === id ? (
+                                <SaveStatusIcon
+                                    isFlashing={lastSavedConfigId === id}
+                                />{' '}
+                                {isEditingConfigId === id ? (
                                     <Input
                                         id="js-new-label-input"
                                         value={tempNewLabel}
@@ -203,7 +232,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                                         }
                                         onKeyDown={handleNewLabelKeyDown.bind(
                                             this,
-                                            propDefinition,
+                                            savedConfig,
                                         )}
                                     />
                                 ) : (
@@ -211,13 +240,13 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                                 )}
                             </Columns>
                             <ButtonBar>
-                                {isEditingPropId === id ? (
+                                {isEditingConfigId === id ? (
                                     <IconButton
                                         className="neverHide"
                                         iconName="check"
                                         onClick={handleClickSaveNewLabel.bind(
                                             this,
-                                            propDefinition,
+                                            savedConfig,
                                         )}
                                     />
                                 ) : (
@@ -226,21 +255,21 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                                             iconName="times"
                                             onMouseDown={handleClickDelete.bind(
                                                 this,
-                                                propDefinition,
+                                                savedConfig,
                                             )}
                                         />
                                         <IconButton
                                             iconName="pencil"
                                             onClick={handleClickEdit.bind(
                                                 this,
-                                                propDefinition,
+                                                savedConfig,
                                             )}
                                         />
                                         <IconButton
                                             iconName="sync"
-                                            onClick={handleClickUpdate.bind(
+                                            onClick={handleClickReSave.bind(
                                                 this,
-                                                propDefinition,
+                                                savedConfig,
                                             )}
                                         />
                                         <IconButton

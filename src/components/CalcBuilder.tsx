@@ -7,14 +7,14 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
         const target = evt.currentTarget;
         const minOrMax = target.dataset.name;
         onUpdateState({
-            path: ['propDefinitions', propName, 'calc', operator, minOrMax],
+            path: ['config', propName, 'calc', operator, minOrMax],
             newValue: target.value,
         });
     };
 
     const updateOperator = evt => {
         onUpdateState({
-            path: ['propDefinitions', propName, 'calc', 'operator'],
+            path: ['config', propName, 'calc', 'operator'],
             newValue: evt.currentTarget.value,
         });
     };

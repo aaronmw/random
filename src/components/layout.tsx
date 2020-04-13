@@ -17,6 +17,7 @@ export const GlobalStyles = createGlobalStyle`
         border: none;
         font-size: 1rem;
         font-family: Inter, sans-serif;
+        text-transform: inherit;
     }
     :root {
         line-height: 1.1rem;

@@ -67,7 +67,7 @@ const ResizeOriginSelector = ({
 
     const handleSaveTransformOrigin = originName => {
         onUpdateState({
-            path: ['propDefinitions', propName, 'selectedOrigin'],
+            path: ['config', propName, 'selectedOrigin'],
             newValue: originName,
         });
     };
@@ -134,20 +134,20 @@ const ResizeOptions = ({
         const oppositePropName = propName === 'width' ? 'height' : 'width';
 
         onUpdateState({
-            path: ['propDefinitions', propName, 'preserveAspectRatio'],
+            path: ['config', propName, 'preserveAspectRatio'],
             newValue: newPreserveAspectRatio,
         });
 
         if (newSelectedOrigin !== selectedOrigin) {
             onUpdateState({
-                path: ['propDefinitions', propName, 'selectedOrigin'],
+                path: ['config', propName, 'selectedOrigin'],
                 newValue: newSelectedOrigin,
             });
         }
 
         if (newPreserveAspectRatio === true) {
             onUpdateState({
-                path: ['propDefinitions', oppositePropName, 'isActive'],
+                path: ['config', oppositePropName, 'isActive'],
                 newValue: false,
             });
         }

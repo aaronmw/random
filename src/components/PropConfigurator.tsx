@@ -81,26 +81,26 @@ const PropMethodTab = styled.button`
     }
 `;
 
-export const PropConfigurator = ({ name, propDefinitions, onUpdateState }) => {
-    const definition = propDefinitions[name];
-    const listFieldType = get(definition, 'listFieldType');
-    const isActive = get(definition, 'isActive');
-    const groupThousands = get(definition, 'groupThousands');
+export const PropConfigurator = ({ name, config, onUpdateState }) => {
+    const propConfig = config[name];
+    const listFieldType = get(propConfig, 'listFieldType');
+    const isActive = get(propConfig, 'isActive');
+    const groupThousands = get(propConfig, 'groupThousands');
     const preserveAspectRatio = get(
-        definition,
+        propConfig,
         'preserveAspectRatio',
         undefined,
     );
-    const list = get(definition, 'list');
-    const method = get(definition, 'method');
-    const operator = get(definition, ['calc', 'operator']);
-    const calcMin = get(definition, ['calc', operator, 'min']);
-    const calcMax = get(definition, ['calc', operator, 'max']);
-    const prefix = get(definition, 'prefix');
-    const rangeMin = get(definition, ['range', 'min']);
-    const rangeMax = get(definition, ['range', 'max']);
-    const suffix = get(definition, 'suffix');
-    const selectedOrigin = get(definition, 'selectedOrigin');
+    const list = get(propConfig, 'list');
+    const method = get(propConfig, 'method');
+    const operator = get(propConfig, ['calc', 'operator']);
+    const calcMin = get(propConfig, ['calc', operator, 'min']);
+    const calcMax = get(propConfig, ['calc', operator, 'max']);
+    const prefix = get(propConfig, 'prefix');
+    const rangeMin = get(propConfig, ['range', 'min']);
+    const rangeMax = get(propConfig, ['range', 'max']);
+    const suffix = get(propConfig, 'suffix');
+    const selectedOrigin = get(propConfig, 'selectedOrigin');
 
     const handlePropHeaderClick = () => {
         const newIsActive = !isActive;
@@ -108,34 +108,30 @@ export const PropConfigurator = ({ name, propDefinitions, onUpdateState }) => {
         if (['height', 'width'].indexOf(name) !== -1) {
             const oppositePropName = name === 'width' ? 'height' : 'width';
             const oppositeIsPreservingAspectRatio =
-                propDefinitions[oppositePropName].preserveAspectRatio === true;
+                config[oppositePropName].preserveAspectRatio === true;
 
             if (oppositeIsPreservingAspectRatio) {
                 onUpdateState({
-                    path: [
-                        'propDefinitions',
-                        oppositePropName,
-                        'preserveAspectRatio',
-                    ],
+                    path: ['config', oppositePropName, 'preserveAspectRatio'],
                     newValue: false,
                 });
             } else if (preserveAspectRatio) {
                 onUpdateState({
-                    path: ['propDefinitions', oppositePropName, 'isActive'],
+                    path: ['config', oppositePropName, 'isActive'],
                     newValue: false,
                 });
             }
         }
 
         onUpdateState({
-            path: ['propDefinitions', name, 'isActive'],
+            path: ['config', name, 'isActive'],
             newValue: newIsActive,
         });
     };
 
     const handleMethodTabClick = ({ methodName }) => {
         onUpdateState({
-            path: ['propDefinitions', name, 'method'],
+            path: ['config', name, 'method'],
             newValue: methodName,
         });
     };
@@ -151,7 +147,7 @@ export const PropConfigurator = ({ name, propDefinitions, onUpdateState }) => {
                 <PropMethodTabs>
                     {isActive &&
                         ['calc', 'list', 'range'].map(methodName => {
-                            if (definition[methodName]) {
+                            if (propConfig[methodName]) {
                                 const isTabActive = methodName === method;
 
                                 return (
@@ -219,7 +215,7 @@ export const PropConfigurator = ({ name, propDefinitions, onUpdateState }) => {
                         <Row>
                             <FormatOptions
                                 decimalPlaces={get(
-                                    definition,
+                                    propConfig,
                                     ['calc', 'decimalPlaces'],
                                     0,
                                 )}

@@ -6,7 +6,7 @@ const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
     const handleChange = (evt, prefixOrSuffix) => {
         const newValue = evt.currentTarget.value;
         onUpdateState({
-            path: ['propDefinitions', 'text', prefixOrSuffix],
+            path: ['config', 'text', prefixOrSuffix],
             newValue,
         });
     };

@@ -5,14 +5,14 @@ import { Columns } from './layout';
 const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
     const updateGroupThousands = () => {
         onUpdateState({
-            path: ['propDefinitions', 'text', 'groupThousands'],
+            path: ['config', 'text', 'groupThousands'],
             newValue: !groupThousands,
         });
     };
 
     const updateDecimalPlaces = evt => {
         onUpdateState({
-            path: ['propDefinitions', 'text', 'calc', 'decimalPlaces'],
+            path: ['config', 'text', 'calc', 'decimalPlaces'],
             newValue: evt.currentTarget.value,
         });
     };
