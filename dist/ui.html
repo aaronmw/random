@@ -92,19 +92,9 @@ Object.defineProperty(t,"__esModule",{value:!0});var n=null,r=!1,a=3,o=-1,i=-1,l
 `,g=c.b.div`
     position: relative;
     width: 100%;
-    text-transform: ${e=>e.color?"uppercase":"none"};
 
-    &:before {
-        content: '';
-        position: absolute;
-        left: 6px;
-        top: 5px;
-        width: 18px;
-        height: 18px;
-        background-color: ${e=>e.color};
-        border: 1px solid ${"#f2f2f2"};
-    }
-`,b=e=>{const{value:t}=e,n=`${t}`.trim().match(/^#[0-9a-f]{6}?$/i),a=r.createElement(v,Object.assign({},e));return r.createElement(g,{color:n?t:null},a)},y=c.b.label`
+    ${e=>e.color?`\n        text-transform: uppercase;\n        \n        &:before {\n            content: '';\n            position: absolute;\n            left: 6px;\n            top: 5px;\n            width: 18px;\n            height: 18px;\n            background-color: ${e=>e.color};\n            border: 1px solid #f2f2f2;\n        }\n    `:""}
+`,b=e=>{const{value:t}=e,n=`${t}`.trim().match(/^\\#[0-9a-f]{6}?$/i),a=r.createElement(v,Object.assign({},e));return r.createElement(g,{color:n?t:null},a)},y=c.b.label`
     display: flex;
     white-space: nowrap;
     margin-top: 8px;

@@ -29,23 +29,29 @@ const StyledInput = styled.input`
 const ColorSwatch = styled.div`
     position: relative;
     width: 100%;
-    text-transform: ${props => (props.color ? 'uppercase' : 'none')};
 
-    &:before {
-        content: '';
-        position: absolute;
-        left: 6px;
-        top: 5px;
-        width: 18px;
-        height: 18px;
-        background-color: ${props => props.color};
-        border: 1px solid ${COLOR_HOVER_BG};
-    }
+    ${props =>
+        props.color
+            ? `
+        text-transform: uppercase;
+        
+        &:before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 5px;
+            width: 18px;
+            height: 18px;
+            background-color: ${props => props.color};
+            border: 1px solid ${COLOR_HOVER_BG};
+        }
+    `
+            : ''}
 `;
 
 export const Input = props => {
     const { value } = props;
-    const isColor = `${value}`.trim().match(/^#[0-9a-f]{6}?$/i);
+    const isColor = `${value}`.trim().match(/^\\#[0-9a-f]{6}?$/i);
     const InputEl = <StyledInput {...props} />;
 
     return <ColorSwatch color={isColor ? value : null}>{InputEl}</ColorSwatch>;
