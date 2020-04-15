@@ -53,6 +53,14 @@ const About = () => (
                     iconName="instagram"
                     href="https://www.instagram.com/aaronmw/"
                 />
+                <IconLink
+                    iconName="github"
+                    href="https://github.com/aaronmw/random"
+                />
+                <IconLink
+                    iconName="coffee-togo"
+                    href="https://ko-fi.com/aaronwright"
+                />
             </Columns>
         </Row>
         <Row style={{ padding: '0 15px', marginTop: '30px' }}>
