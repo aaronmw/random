@@ -71,7 +71,7 @@ export const COLOR = {
 };
 
 export const DEFAULT_CONFIG = {
-    text: STRING,
+    text: { ...STRING, sortOrder: 'random' },
     width: {
         ...INTEGER,
         preserveAspectRatio: false,

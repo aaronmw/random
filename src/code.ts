@@ -1,9 +1,11 @@
+import naturalSort from 'javascript-natural-sort';
 import clamp from 'lodash/clamp';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
 import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
+import range from 'lodash/range';
 import sample from 'lodash/sample';
 
 const WINDOW_WIDTH = 290;
@@ -148,9 +150,7 @@ const toPercentage = val => clamp(toFloat(val) / 100, 0, 1);
 const toThousandsGroupedNumber = val =>
     val.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ',');
 
-const fontNameLoadHistory = {};
-
-const transformProp = async ({ node, propConfig, propName }) => {
+const generateRandomValue = ({ node, propConfig, propName }) => {
     const { method } = propConfig;
 
     let randomValue;
@@ -198,6 +198,12 @@ const transformProp = async ({ node, propConfig, propName }) => {
             break;
     }
 
+    return newPropValue;
+};
+
+const fontNameLoadHistory = {};
+
+const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
     switch (propName) {
         case 'text':
             const chars = node.characters;
@@ -357,11 +363,28 @@ figma.ui.onmessage = async msg => {
         Object.keys(config).map(propName => {
             const propConfig = config[propName];
             if (propConfig.isActive) {
-                selectedNodes.map(async node => {
+                const randomValues = selectedNodes.map(node => {
+                    return generateRandomValue({
+                        node,
+                        propConfig,
+                        propName,
+                    });
+                });
+
+                if (propConfig.sortOrder !== 'random') {
+                    randomValues.sort(naturalSort);
+
+                    if (propConfig.sortOrder === 'desc') {
+                        randomValues.reverse();
+                    }
+                }
+
+                selectedNodes.map(async (node, index) => {
                     await transformProp({
                         node,
                         propConfig,
                         propName,
+                        newPropValue: randomValues[index],
                     });
                 });
             }

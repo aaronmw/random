@@ -8,6 +8,7 @@ import ListBuilder from './ListBuilder';
 import PrefixSuffixBuilder from './PrefixSuffixBuilder';
 import RangeBuilder from './RangeBuilder';
 import ResizeOptions from './ResizeOptions';
+import SortingOptions from './SortingOptions';
 import {
     COLOR_BLUE,
     COLOR_BORDER,
@@ -83,24 +84,22 @@ const PropMethodTab = styled.button`
 
 export const PropConfigurator = ({ name, config, onUpdateState }) => {
     const propConfig = config[name];
-    const listFieldType = get(propConfig, 'listFieldType');
-    const isActive = get(propConfig, 'isActive');
-    const groupThousands = get(propConfig, 'groupThousands');
-    const preserveAspectRatio = get(
-        propConfig,
-        'preserveAspectRatio',
-        undefined,
-    );
-    const list = get(propConfig, 'list');
-    const method = get(propConfig, 'method');
     const operator = get(propConfig, ['calc', 'operator']);
-    const calcMin = get(propConfig, ['calc', operator, 'min']);
+
     const calcMax = get(propConfig, ['calc', operator, 'max']);
+    const calcMin = get(propConfig, ['calc', operator, 'min']);
+    const groupThousands = get(propConfig, 'groupThousands');
+    const isActive = get(propConfig, 'isActive');
+    const list = get(propConfig, 'list');
+    const listFieldType = get(propConfig, 'listFieldType');
+    const method = get(propConfig, 'method');
     const prefix = get(propConfig, 'prefix');
-    const rangeMin = get(propConfig, ['range', 'min']);
+    const preserveAspectRatio = get( propConfig, 'preserveAspectRatio', undefined,);
     const rangeMax = get(propConfig, ['range', 'max']);
-    const suffix = get(propConfig, 'suffix');
+    const rangeMin = get(propConfig, ['range', 'min']);
     const selectedOrigin = get(propConfig, 'selectedOrigin');
+    const sortOrder = get(propConfig, 'sortOrder');
+    const suffix = get(propConfig, 'suffix');
 
     const handlePropHeaderClick = () => {
         const newIsActive = !isActive;
@@ -225,13 +224,22 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
                         </Row>
                     )}
                     {name === 'text' && (
-                        <Row>
-                            <PrefixSuffixBuilder
-                                prefix={prefix}
-                                suffix={suffix}
-                                onUpdateState={onUpdateState}
-                            />
-                        </Row>
+                        <>
+                            <Row>
+                                <PrefixSuffixBuilder
+                                    prefix={prefix}
+                                    suffix={suffix}
+                                    onUpdateState={onUpdateState}
+                                />
+                            </Row>
+                            <Row>
+                                <SortingOptions
+                                    propName={name}
+                                    sortOrder={sortOrder}
+                                    onUpdateState={onUpdateState}
+                                />
+                            </Row>
+                        </>
                     )}
                 </PropBody>
             )}
