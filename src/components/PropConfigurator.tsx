@@ -28,6 +28,9 @@ const PropContainer = styled.div`
     &.is-active {
         border-color: ${COLOR_BORDER};
 
+        &:first-child {
+            border-top-color: transparent;
+        }
         & + .is-active {
             border-top: 0;
         }
@@ -94,7 +97,11 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
     const listFieldType = get(propConfig, 'listFieldType');
     const method = get(propConfig, 'method');
     const prefix = get(propConfig, 'prefix');
-    const preserveAspectRatio = get( propConfig, 'preserveAspectRatio', undefined,);
+    const preserveAspectRatio = get(
+        propConfig,
+        'preserveAspectRatio',
+        undefined,
+    );
     const rangeMax = get(propConfig, ['range', 'max']);
     const rangeMin = get(propConfig, ['range', 'min']);
     const selectedOrigin = get(propConfig, 'selectedOrigin');
