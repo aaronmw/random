@@ -71,7 +71,7 @@ export const COLOR = {
 };
 
 export const DEFAULT_CONFIG = {
-    text: { ...STRING },
+    text: STRING,
     width: {
         ...INTEGER,
         preserveAspectRatio: false,
@@ -82,16 +82,16 @@ export const DEFAULT_CONFIG = {
         preserveAspectRatio: false,
         selectedOrigin: 'middle-center',
     },
-    x: { ...INTEGER },
-    y: { ...INTEGER },
-    opacity: { ...PERCENTAGE },
-    rotation: { ...DEGREES },
-    fillColor: { ...COLOR },
-    fillOpacity: { ...PERCENTAGE },
-    strokeColor: { ...COLOR },
-    strokeOpacity: { ...PERCENTAGE },
-    strokeWeight: { ...INTEGER },
+    x: INTEGER,
+    y: INTEGER,
+    opacity: PERCENTAGE,
+    rotation: DEGREES,
+    fillColor: COLOR,
+    fillOpacity: PERCENTAGE,
+    strokeColor: COLOR,
+    strokeOpacity: PERCENTAGE,
+    strokeWeight: INTEGER,
     layerBlur: { ...INTEGER, range: { min: 0, max: 10 } },
-    arcStartingAngle: { ...DEGREES },
-    arcEndingAngle: { ...DEGREES },
+    arcStartingAngle: DEGREES,
+    arcEndingAngle: DEGREES,
 };

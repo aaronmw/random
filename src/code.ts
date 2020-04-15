@@ -2,7 +2,6 @@ import clamp from 'lodash/clamp';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
-import merge from 'lodash/merge';
 import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
 import sample from 'lodash/sample';
@@ -149,24 +148,24 @@ const toPercentage = val => clamp(toFloat(val) / 100, 0, 1);
 const toThousandsGroupedNumber = val =>
     val.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ',');
 
-const transformProp = async ({ node, propDefinition, propName }) => {
-    const { method } = propDefinition;
+const fontNameLoadHistory = {};
+
+const transformProp = async ({ node, propConfig, propName }) => {
+    const { method } = propConfig;
 
     let randomValue;
     let newPropValue;
 
     switch (method) {
         case 'range':
-            const { min: rangeMin, max: rangeMax } = propDefinition['range'];
+            const { min: rangeMin, max: rangeMax } = propConfig['range'];
             randomValue = random(rangeMin, rangeMax);
             newPropValue = randomValue;
             break;
 
         case 'calc':
-            const operator = propDefinition['calc'].operator;
-            const { min: calcMin, max: calcMax } = propDefinition['calc'][
-                operator
-            ];
+            const operator = propConfig['calc'].operator;
+            const { min: calcMin, max: calcMax } = propConfig['calc'][operator];
             const currentPropValue =
                 propName === 'text'
                     ? toInteger(
@@ -188,13 +187,13 @@ const transformProp = async ({ node, propDefinition, propName }) => {
 
             if (propName === 'text') {
                 newPropValue = newPropValue.toFixed(
-                    propDefinition['calc'].decimalPlaces,
+                    propConfig['calc'].decimalPlaces,
                 );
             }
             break;
 
         case 'list':
-            randomValue = sample(propDefinition['list']);
+            randomValue = sample(propConfig['list']);
             newPropValue = randomValue;
             break;
     }
@@ -203,13 +202,20 @@ const transformProp = async ({ node, propDefinition, propName }) => {
         case 'text':
             const chars = node.characters;
             const numChars = chars.length;
-            const { prefix, suffix } = propDefinition;
-            const valueToPrint = propDefinition.groupThousands
+            const { prefix, suffix } = propConfig;
+            const valueToPrint = propConfig.groupThousands
                 ? toThousandsGroupedNumber(newPropValue)
                 : newPropValue;
 
             for (let i = 0; i < numChars; i++) {
-                await figma.loadFontAsync(node.getRangeFontName(i, i + 1));
+                const fontName = await node.getRangeFontName(i, i + 1);
+                const cacheKey = `${fontName.family}-${fontName.style}`;
+                const isLoaded = fontNameLoadHistory[cacheKey];
+
+                if (!isLoaded) {
+                    await figma.loadFontAsync(fontName);
+                    fontNameLoadHistory[cacheKey] = true;
+                }
             }
 
             node.characters = `${prefix}${valueToPrint}${suffix}`;
@@ -223,13 +229,13 @@ const transformProp = async ({ node, propDefinition, propName }) => {
             const newValue = toInteger(newPropValue);
             const scaleFactor = newValue / currentValue;
             const newOppositeValue =
-                propDefinition.preserveAspectRatio === true
+                propConfig.preserveAspectRatio === true
                     ? currentOppositeValue * scaleFactor
                     : currentOppositeValue;
             const [
                 verticalOriginName,
                 horizontalOriginName,
-            ] = propDefinition.selectedOrigin.split('-');
+            ] = propConfig.selectedOrigin.split('-');
             const currentWidth = node.width;
             const currentHeight = node.height;
             const newWidth = propName === 'width' ? newValue : newOppositeValue;
@@ -349,12 +355,12 @@ figma.ui.onmessage = async msg => {
         const { config } = msg.params;
 
         Object.keys(config).map(propName => {
-            const propDefinition = config[propName];
-            if (propDefinition.isActive) {
+            const propConfig = config[propName];
+            if (propConfig.isActive) {
                 selectedNodes.map(async node => {
                     await transformProp({
                         node,
-                        propDefinition,
+                        propConfig,
                         propName,
                     });
                 });

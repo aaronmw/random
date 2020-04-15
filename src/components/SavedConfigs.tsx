@@ -208,16 +208,14 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                 pluginState.savedConfigs.map(savedConfig => {
                     const { id, label } = savedConfig;
 
-                    console.log(lastSavedConfigId === id, id);
-
-                    const applyPropDefinition = () =>
+                    const restoreSavedConfig = () =>
                         isEditingConfigId === null &&
                         handleClickRandomize(savedConfig);
 
                     return (
                         <StyledSavedConfig
                             key={id}
-                            onClick={applyPropDefinition}
+                            onClick={restoreSavedConfig}
                         >
                             <Columns align="flex-start">
                                 <SaveStatusIcon

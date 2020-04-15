@@ -75,37 +75,43 @@ const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
         }
     };
 
-    return sortedList.map((item, index) => (
-        <Row key={index}>
-            <Columns>
-                <Input
-                    className={item === '' ? 'is-new-label-input' : null}
-                    type={listFieldType}
-                    value={item}
-                    onBlur={handleBlur.bind(this, index)}
-                    onChange={handleChange.bind(this, index)}
-                    onFocus={handleFocus.bind(this, index)}
-                    onKeyDown={handleKeyDown.bind(this, index)}
-                />
-                <IconButton
-                    iconName="times"
-                    onClick={handleClickDelete.bind(this, index)}
-                />
-                <IconButton
-                    iconName="plus"
-                    style={
-                        index !== sortedList.length - 1
-                            ? {
-                                  visibility: 'hidden',
-                                  pointerEvents: 'none',
-                              }
-                            : null
-                    }
-                    onClick={handleClickPlus}
-                />
-            </Columns>
-        </Row>
-    ));
+    const listToRender = sortedList.length ? sortedList : [''];
+    const isOnlyItem = sortedList.length <= 1;
+    const show = {};
+    const hide = {
+        visibility: 'hidden',
+        pointerEvents: 'none',
+    };
+
+    return listToRender.map((item, index) => {
+        const isLastItem = index === listToRender.length - 1;
+
+        return (
+            <Row key={index}>
+                <Columns>
+                    <Input
+                        className={item === '' ? 'is-new-label-input' : null}
+                        type={listFieldType}
+                        value={item}
+                        onBlur={handleBlur.bind(this, index)}
+                        onChange={handleChange.bind(this, index)}
+                        onFocus={handleFocus.bind(this, index)}
+                        onKeyDown={handleKeyDown.bind(this, index)}
+                    />
+                    <IconButton
+                        iconName="times"
+                        style={isOnlyItem ? hide : show}
+                        onClick={handleClickDelete.bind(this, index)}
+                    />
+                    <IconButton
+                        iconName="plus"
+                        style={isLastItem ? show : hide}
+                        onClick={handleClickPlus}
+                    />
+                </Columns>
+            </Row>
+        );
+    });
 };
 
 export default ListBuilder;
