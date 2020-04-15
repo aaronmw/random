@@ -98,13 +98,6 @@ export const Button = styled.button`
     }
 `;
 
-export const RunButton = styled(Button)`
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-`;
-
 const TOGGLE_WIDTH = 25;
 const TOGGLE_HEIGHT = 11;
 const TOGGLE_BORDER_WIDTH = 1;
@@ -194,7 +187,7 @@ const ICON_MAP = {
     },
 };
 
-export const Icon = ({ name, className = '' }) => (
+export const Icon = ({ color = ICON_COLOR, className = '', name }) => (
     <svg
         className={className}
         width={ICON_SIZE}
@@ -203,9 +196,23 @@ export const Icon = ({ name, className = '' }) => (
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
     >
-        <path fill={ICON_COLOR} d={ICON_MAP[name].data} />
+        <path fill={color} d={ICON_MAP[name].data} />
     </svg>
 );
+
+export const RunButton = styled(Button)`
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    & > :first-child {
+        margin-right: 8px;
+    }
+`;
 
 const iconButtonStyles = `
     width: 30px;

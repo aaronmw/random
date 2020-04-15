@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import setWith from 'lodash/setWith';
 import clone from 'lodash/clone';
 import About from './components/About';
-import { RunButton } from './components/controls';
+import { Icon, RunButton } from './components/controls';
 import { GlobalStyles, StyledAppContainer } from './components/layout';
 import { NavBar } from './components/Navigation';
 import { PropConfigurator } from './components/PropConfigurator';
@@ -105,7 +105,10 @@ const App = () => {
                             onUpdateState={onUpdateState}
                         />
                     ))}
-                    <RunButton type="submit">Randomize</RunButton>
+                    <RunButton type="submit">
+                        <Icon color="white" name="randomize" />
+                        Randomize
+                    </RunButton>
                 </form>
             )}
             {activeRoute === 'saved-configs' && (
