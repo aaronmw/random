@@ -7,6 +7,7 @@ import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
 import range from 'lodash/range';
 import sample from 'lodash/sample';
+import rotateOriginXY from './helpers';
 
 const WINDOW_WIDTH = 290;
 const WINDOW_HEIGHT = 600;
@@ -311,9 +312,12 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
             node.arcData = arcDataForEndingAngle;
             break;
 
+        case 'rotation':
+            rotateOriginXY([node], newPropValue, 0.5, 0.5, '%', '%');
+            break;
+
         case 'x':
         case 'y':
-        case 'rotation':
         case 'strokeWeight':
             node[propName] = toInteger(newPropValue);
             break;
@@ -347,8 +351,6 @@ figma.ui.onmessage = async msg => {
 
     if (msg.type === 'run') {
         const selectedNodes = figma.currentPage.selection;
-
-        console.log(selectedNodes);
 
         if (selectedNodes.length === 0) {
             // STILL no idea why I need to cast this...
