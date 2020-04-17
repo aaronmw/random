@@ -348,6 +348,8 @@ figma.ui.onmessage = async msg => {
     if (msg.type === 'run') {
         const selectedNodes = figma.currentPage.selection;
 
+        console.log(selectedNodes);
+
         if (selectedNodes.length === 0) {
             // STILL no idea why I need to cast this...
             (figma as any).notify(
@@ -371,7 +373,7 @@ figma.ui.onmessage = async msg => {
                     });
                 });
 
-                if (propConfig.sortOrder !== 'random') {
+                if (propConfig.sortOrder && propConfig.sortOrder !== 'random') {
                     randomValues.sort(naturalSort);
 
                     if (propConfig.sortOrder === 'desc') {
