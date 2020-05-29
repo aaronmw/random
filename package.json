@@ -1,5 +1,5 @@
 {
-    "name": "random",
+    "name": "bulk-property-randomizer",
     "version": "1.0.1",
     "description": "A Figma plugin to randomize one or more properties of your selected elements",
     "main": "dist/code.js",

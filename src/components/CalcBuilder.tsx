@@ -23,14 +23,14 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
         <>
             <Row>
                 <Columns>
-                    <InputLabel>min:</InputLabel>
+                    <InputLabel>Min:</InputLabel>
                     <Input
                         data-name="min"
                         type="number"
                         value={min}
                         onChange={updateMinOrMax}
                     />
-                    <InputLabel>max:</InputLabel>
+                    <InputLabel>Max:</InputLabel>
                     <Input
                         data-name="max"
                         type="number"

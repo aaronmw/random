@@ -18,7 +18,7 @@ const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
     };
 
     return (
-        <Columns>
+        <Columns align="flex-start">
             <Label>
                 <span>Decimal Places:</span>{' '}
                 <Input value={decimalPlaces} onChange={updateDecimalPlaces} />

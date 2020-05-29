@@ -1,6 +1,7 @@
 export const STRING = {
     listFieldType: 'text',
     method: 'list',
+    sortOrder: 'random',
     groupThousands: true,
     prefix: '',
     suffix: '',
@@ -19,6 +20,7 @@ export const STRING = {
     range: {
         min: 50,
         max: 200,
+        sortOrder: 'random',
     },
     list: ['John Doe', 'Jane Smith', 'Randy Randomson'],
 };
@@ -26,6 +28,7 @@ export const STRING = {
 export const INTEGER = {
     listFieldType: 'number',
     method: 'range',
+    sortOrder: 'random',
     calc: {
         operator: 'add',
         add: {
@@ -47,6 +50,7 @@ export const INTEGER = {
 export const DEGREES = {
     listFieldType: 'number',
     method: 'range',
+    sortOrder: 'random',
     range: {
         min: 0,
         max: 360,
@@ -57,6 +61,7 @@ export const DEGREES = {
 export const PERCENTAGE = {
     listFieldType: 'number',
     method: 'range',
+    sortOrder: 'random',
     range: {
         min: 0,
         max: 100,
@@ -67,6 +72,7 @@ export const PERCENTAGE = {
 export const COLOR = {
     listFieldType: 'text',
     method: 'list',
+    sortOrder: 'random',
     list: ['#f23b27', '#fd605b', '#9851f9', '#1ab7fa', '#1bca7c'],
 };
 

@@ -231,23 +231,21 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
                         </Row>
                     )}
                     {name === 'text' && (
-                        <>
-                            <Row>
-                                <PrefixSuffixBuilder
-                                    prefix={prefix}
-                                    suffix={suffix}
-                                    onUpdateState={onUpdateState}
-                                />
-                            </Row>
-                            <Row>
-                                <SortingOptions
-                                    propName={name}
-                                    sortOrder={sortOrder}
-                                    onUpdateState={onUpdateState}
-                                />
-                            </Row>
-                        </>
+                        <Row>
+                            <PrefixSuffixBuilder
+                                prefix={prefix}
+                                suffix={suffix}
+                                onUpdateState={onUpdateState}
+                            />
+                        </Row>
                     )}
+                    <Row>
+                        <SortingOptions
+                            propName={name}
+                            sortOrder={sortOrder}
+                            onUpdateState={onUpdateState}
+                        />
+                    </Row>
                 </PropBody>
             )}
         </PropContainer>

@@ -1,5 +1,5 @@
 {
-  "name": "Random",
+  "name": "Bulk Property Randomizer",
   "id": "829089184334973766",
   "api": "1.0.0",
   "main": "dist/code.js",

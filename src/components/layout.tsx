@@ -54,6 +54,6 @@ export const Columns = styled.div`
 
 export const Row = styled.div`
     & + & {
-        margin-top: 8px;
+        margin-top: 12px;
     }
 `;

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Label } from './controls';
 import { Columns } from './layout';
+import startCase from 'lodash/startCase';
 
 const SortingOptions = ({ propName, sortOrder, onUpdateState }) => {
     const updateSortOrder = newValue => {
@@ -11,7 +12,8 @@ const SortingOptions = ({ propName, sortOrder, onUpdateState }) => {
     };
 
     return (
-        <Columns>
+        <Columns align="flex-start">
+            <span>Sort Order:</span>
             {['asc', 'desc', 'random'].map(option => {
                 return (
                     <Label key={option}>
@@ -22,7 +24,7 @@ const SortingOptions = ({ propName, sortOrder, onUpdateState }) => {
                             checked={sortOrder === option}
                             onChange={updateSortOrder.bind(this, option)}
                         />{' '}
-                        <span>{option}</span>
+                        <span>{startCase(option)}</span>
                     </Label>
                 );
             })}
