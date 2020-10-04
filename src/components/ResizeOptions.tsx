@@ -155,7 +155,7 @@ const ResizeOptions = ({
 
     return (
         <Columns align="space-between">
-            <Label>
+            <Label title="Preserve the width-to-height ratio of resized elements">
                 <input
                     type="checkbox"
                     checked={preserveAspectRatio}
@@ -163,7 +163,7 @@ const ResizeOptions = ({
                 />{' '}
                 <span>Preserve Aspect Ratio</span>
             </Label>
-            <Label>
+            <Label title="The origin point of the resize transformation">
                 <span
                     style={{
                         marginRight: '15px',

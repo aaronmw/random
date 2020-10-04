@@ -13,6 +13,10 @@ const commonStyles = `
     width: 100%;
     text-align: center;
     background-color: white;
+    
+    &:disabled {
+        opacity: 0.3;
+    }
 `;
 
 const StyledInput = styled.input`
@@ -33,19 +37,19 @@ const ColorSwatch = styled.div`
     ${props =>
         props.color !== null &&
         `
-        text-transform: uppercase;
-        
-        &:before {
-            content: '';
-            position: absolute;
-            left: 6px;
-            top: 5px;
-            width: 18px;
-            height: 18px;
-            background-color: ${props.color};
-            border: 1px solid ${COLOR_HOVER_BG};
-        }
-    `}
+            text-transform: uppercase;
+            
+            &:before {
+                content: '';
+                position: absolute;
+                left: 6px;
+                top: 5px;
+                width: 18px;
+                height: 18px;
+                background-color: ${props.color};
+                border: 1px solid ${COLOR_HOVER_BG};
+            }
+        `}
 `;
 
 export const Input = props => {
@@ -143,6 +147,18 @@ const ICON_MAP = {
             'M464 64H48C21.5 64 0 85.5 0 112v288c0 26.5 21.5 48 48 48h416c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48zM48 96h416c8.8 0 16 7.2 16 16v41.4c-21.9 18.5-53.2 44-150.6 121.3-16.9 13.4-50.2 45.7-73.4 45.3-23.2.4-56.6-31.9-73.4-45.3C85.2 197.4 53.9 171.9 32 153.4V112c0-8.8 7.2-16 16-16zm416 320H48c-8.8 0-16-7.2-16-16V195c22.8 18.7 58.8 47.6 130.7 104.7 20.5 16.4 56.7 52.5 93.3 52.3 36.4.3 72.3-35.5 93.3-52.3 71.9-57.1 107.9-86 130.7-104.7v205c0 8.8-7.2 16-16 16z',
         label: 'Email Me',
     },
+    'eye-open': {
+        data:
+            'M288 288a64 64 0 0 0 0-128c-1 0-1.88.24-2.85.29a47.5 47.5 0 0 1-60.86 60.86c0 1-.29 1.88-.29 2.85a64 64 0 0 0 64 64zm284.52-46.6C518.29 135.59 410.93 64 288 64S57.68 135.64 3.48 241.41a32.35 32.35 0 0 0 0 29.19C57.71 376.41 165.07 448 288 448s230.32-71.64 284.52-177.41a32.35 32.35 0 0 0 0-29.19zM288 96a128 128 0 1 1-128 128A128.14 128.14 0 0 1 288 96zm0 320c-107.36 0-205.46-61.31-256-160a294.78 294.78 0 0 1 129.78-129.33C140.91 153.69 128 187.17 128 224a160 160 0 0 0 320 0c0-36.83-12.91-70.31-33.78-97.33A294.78 294.78 0 0 1 544 256c-50.53 98.69-148.64 160-256 160z',
+        label: 'Disable',
+        viewBoxWidth: 576,
+    },
+    'eye-closed': {
+        data:
+            'M637 485.25L23 1.75A8 8 0 0 0 11.76 3l-10 12.51A8 8 0 0 0 3 26.75l614 483.5a8 8 0 0 0 11.25-1.25l10-12.51a8 8 0 0 0-1.25-11.24zM320 96a128.14 128.14 0 0 1 128 128c0 21.62-5.9 41.69-15.4 59.57l25.45 20C471.65 280.09 480 253.14 480 224c0-36.83-12.91-70.31-33.78-97.33A294.88 294.88 0 0 1 576.05 256a299.73 299.73 0 0 1-67.77 87.16l25.32 19.94c28.47-26.28 52.87-57.26 70.93-92.51a32.35 32.35 0 0 0 0-29.19C550.3 135.59 442.94 64 320 64a311.23 311.23 0 0 0-130.12 28.43l45.77 36C258.24 108.52 287.56 96 320 96zm60.86 146.83A63.15 63.15 0 0 0 320 160c-1 0-1.89.24-2.85.29a45.11 45.11 0 0 1-.24 32.19zm-217.62-49.16A154.29 154.29 0 0 0 160 224a159.39 159.39 0 0 0 226.27 145.29L356.69 346c-11.7 3.53-23.85 6-36.68 6A128.15 128.15 0 0 1 192 224c0-2.44.59-4.72.72-7.12zM320 416c-107.36 0-205.47-61.31-256-160 17.43-34 41.09-62.72 68.31-86.72l-25.86-20.37c-28.48 26.28-52.87 57.25-70.93 92.5a32.35 32.35 0 0 0 0 29.19C89.71 376.41 197.07 448 320 448a311.25 311.25 0 0 0 130.12-28.43l-29.25-23C389.06 408.84 355.15 416 320 416z',
+        label: 'Enable',
+        viewBoxWidth: 640,
+    },
     'floppy-disc': {
         data:
             'M433.941 129.941l-83.882-83.882A48 48 0 0 0 316.118 32H48C21.49 32 0 53.49 0 80v352c0 26.51 21.49 48 48 48h352c26.51 0 48-21.49 48-48V163.882a48 48 0 0 0-14.059-33.941zM288 64v96H96V64h192zm128 368c0 8.822-7.178 16-16 16H48c-8.822 0-16-7.178-16-16V80c0-8.822 7.178-16 16-16h16v104c0 13.255 10.745 24 24 24h208c13.255 0 24-10.745 24-24V64.491a15.888 15.888 0 0 1 7.432 4.195l83.882 83.882A15.895 15.895 0 0 1 416 163.882V432zM224 232c-48.523 0-88 39.477-88 88s39.477 88 88 88 88-39.477 88-88-39.477-88-88-88zm0 144c-30.879 0-56-25.121-56-56s25.121-56 56-56 56 25.121 56 56-25.121 56-56 56z',
@@ -178,6 +194,12 @@ const ICON_MAP = {
         data:
             'M0 128v-8c0-6.6 5.4-12 12-12h105.8c3.3 0 6.5 1.4 8.8 3.9l89.7 97-21.8 23.6L109 140H12c-6.6 0-12-5.4-12-12zm502.6 278.6l-64 64c-20.1 20.1-54.6 5.8-54.6-22.6v-44h-25.7c-3.3 0-6.5-1.4-8.8-3.9l-89.7-97 21.8-23.6L367 372h17v-52c0-28.5 34.5-42.7 54.6-22.6l64 64c12.5 12.5 12.5 32.7 0 45.2zm-19.8-25.4l-64-64c-2.5-2.5-6.8-.7-6.8 2.8v128c0 3.6 4.3 5.4 6.8 2.8l64-64c1.6-1.5 1.6-4.1 0-5.6zm19.8-230.6l-64 64c-20.1 20.1-54.6 5.8-54.6-22.6v-52h-17L126.6 400.1c-2.3 2.5-5.5 3.9-8.8 3.9H12c-6.6 0-12-5.4-12-12v-8c0-6.6 5.4-12 12-12h97l240.4-260.1c2.3-2.5 5.5-3.9 8.8-3.9H384V64c0-28.5 34.5-42.7 54.6-22.6l64 64c12.5 12.5 12.5 32.7 0 45.2zm-19.8-25.4l-64-64c-2.5-2.5-6.8-.7-6.8 2.8v128c0 3.6 4.3 5.4 6.8 2.8l64-64c1.6-1.5 1.6-4.1 0-5.6z',
         label: 'Go',
+    },
+    reply: {
+        data:
+            'M11.093 251.65l175.998 184C211.81 461.494 256 444.239 256 408v-87.84c154.425 1.812 219.063 16.728 181.19 151.091-8.341 29.518 25.447 52.232 49.68 34.51C520.16 481.421 576 426.17 576 331.19c0-171.087-154.548-201.035-320-203.02V40.016c0-36.27-44.216-53.466-68.91-27.65L11.093 196.35c-14.791 15.47-14.791 39.83 0 55.3zm23.127-33.18l176-184C215.149 29.31 224 32.738 224 40v120c157.114 0 320 11.18 320 171.19 0 74.4-40 122.17-76.02 148.51C519.313 297.707 395.396 288 224 288v120c0 7.26-8.847 10.69-13.78 5.53l-176-184a7.978 7.978 0 0 1 0-11.06z',
+        label: 'Load Config',
+        viewBoxWidth: 576,
     },
     sync: {
         data:
@@ -224,55 +246,39 @@ export const RunButton = styled(Button)`
     }
 `;
 
-const iconButtonStyles = `
-    width: 30px;
-    height: 30px;
-    display: flex;
-    flex-shrink: 0;
-    flex-grow: 0;
-    align-items: center;
-    justify-content: center;
-
-    &:hover {
-        cursor: pointer;
-        background-color: ${COLOR_HOVER_BG};
-    }
-    &:focus {
-        border: 2px solid ${COLOR_BLUE};
-    }
-`;
-
-const StyledIconButton = styled.button`
-    ${iconButtonStyles}
-`;
+const StyledIconButton = styled.button(
+    props => `
+        width: 30px;
+        height: 30px;
+        display: flex;
+        flex-shrink: 0;
+        flex-grow: 0;
+        align-items: center;
+        justify-content: center;
+        opacity: ${props.isFaded === true ? 0.3 : 1};
+    
+        &:hover {
+            cursor: pointer;
+            background-color: ${COLOR_HOVER_BG};
+            opacity: 1;
+        }
+        &:focus {
+            border: 2px solid ${COLOR_BLUE};
+        }
+    `,
+);
 
 export const IconButton = styled(
-    ({ iconName, title = null, onClick = e => null, ...otherProps }) => {
-        return (
-            <StyledIconButton
-                title={ICON_MAP[iconName].label}
-                onClick={evt => {
-                    evt.preventDefault();
-                    onClick(evt);
-                }}
-                {...otherProps}
-            >
-                <Icon name={iconName} />
-            </StyledIconButton>
-        );
-    },
+    ({ iconName, onClick = e => null, ...otherProps }) => (
+        <StyledIconButton
+            title={(ICON_MAP[iconName] || {}).label}
+            onClick={evt => {
+                evt.preventDefault();
+                onClick(evt);
+            }}
+            {...otherProps}
+        >
+            <Icon name={iconName} />
+        </StyledIconButton>
+    ),
 )``;
-
-const StyledIconLink = styled.a`
-    ${iconButtonStyles}
-`;
-
-export const IconLink = ({ iconName, ...otherProps }) => (
-    <StyledIconLink
-        target="_blank"
-        title={ICON_MAP[iconName].label}
-        {...otherProps}
-    >
-        <Icon name={iconName} />
-    </StyledIconLink>
-);

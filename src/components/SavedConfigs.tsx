@@ -51,7 +51,6 @@ const ButtonBar = styled(Columns)`
     &:hover {
         width: auto;
         background-color: white;
-        padding-left: 15px;
 
         ${IconButton} {
             &:not(.neverHide) {
@@ -201,7 +200,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
         <Route>
             {!hasSavedConfigs && (
                 <EmptyMessage>
-                    Save your configs for easy re-use later 🤓
+                    Save your configs for easy re-use in any document 🤓
                 </EmptyMessage>
             )}
             {hasSavedConfigs &&
@@ -209,13 +208,16 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                     const { id, label } = savedConfig;
 
                     const restoreSavedConfig = () =>
-                        isEditingConfigId === null &&
                         handleClickRandomize(savedConfig);
 
                     return (
                         <StyledSavedConfig
                             key={id}
-                            onClick={restoreSavedConfig}
+                            onClick={
+                                isEditingConfigId === null
+                                    ? restoreSavedConfig
+                                    : null
+                            }
                         >
                             <Columns align="flex-start">
                                 <SaveStatusIcon
@@ -237,7 +239,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                                     <span>{label}</span>
                                 )}
                             </Columns>
-                            <ButtonBar>
+                            <ButtonBar noSpacing>
                                 {isEditingConfigId === id ? (
                                     <IconButton
                                         className="neverHide"
@@ -272,7 +274,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                                         />
                                         <IconButton
                                             className="neverHide"
-                                            iconName="randomize"
+                                            iconName="reply"
                                         />
                                     </>
                                 )}

@@ -3,6 +3,7 @@ import clamp from 'lodash/clamp';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
+import mapValues from 'lodash/mapValues';
 import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
 import range from 'lodash/range';
@@ -14,13 +15,13 @@ const WINDOW_HEIGHT = 600;
 
 const RANDOM_THINGS = [
     'a camera 📸',
-    'a checkbook',
+    'a chequebook 🤑',
     'a blanket 🥶',
     'some deodorant 💩🧼',
     'some teddies 🧸🧸',
     'a radio 📻',
     'some video games 🎮',
-    'some sand paper',
+    'some sand paper 🌵',
     'a book 📙',
     'a tree 🌲',
     'a ring 💍',
@@ -30,38 +31,38 @@ const RANDOM_THINGS = [
     'some perfume 💩🧼',
     'some beef 🐄',
     'a bottle 🍾',
-    'a window',
+    'some yarn 🧶',
     'a car 🚗',
     'a sailboat ⛵️',
-    'a spring',
-    'a pool stick',
+    'a spring 🤖',
+    'a pool stick 🎱',
     'some tooth picks 🦷',
-    'the floor',
+    'a new sponge 🧽',
     'some tweezers 👃😳',
     'some money 💰',
-    'a sharpie ',
+    'a sharpie ✍️',
     'a charger 🔌',
-    'a USB drive',
+    'a USB drive 💾',
     'a purse 👛',
     'a thermostat 🥶',
-    'some coasters',
+    'some coasters 🥃',
     'a sponge 🧽',
     'an outlet 🔌',
-    'a bottle cap',
+    'a bottle cap 🍺',
     'a balloon 🎈',
     'a bed 🛏',
     'some pants 👖',
     'some fake flowers 💐',
-    'a puddle',
+    'a puddle ☔️',
     'a pencil ✏️',
     'some shoes 👟👟',
-    'a hair tie',
+    'a hair tie 🎀',
     'some face wash 🧼',
     'a plastic fork 🍔🍟',
     'some food 🌽',
     'some leg warmers 🔥🦵🦵',
     'a thread 🧵',
-    'a bookmark',
+    'a bookmark 📖',
     'a doll 🎎',
     'an air freshener 🕯',
     'a monitor 🖥',
@@ -73,14 +74,14 @@ const RANDOM_THINGS = [
     'some lip gloss ✨👄✨',
     'some speakers 🔈🔈',
     'some headphones 🎧',
-    'a cork',
-    'a desk',
+    'a cork 🍾',
+    'a desk 🖥',
     'a keyboard ⌨️',
     'some glasses 🤓',
-    'a rusty nail',
+    'a rusty nail 🔨',
     'a cup 🍵',
     'a door 🚪',
-    'some white out',
+    'some white out 🙅',
     'some paper 🧻',
     'some broccoli 🥦',
     'a box 📦',
@@ -90,15 +91,15 @@ const RANDOM_THINGS = [
     'a wagon 🎠',
     'some clothes 🧢👕👖🧦',
     'a cell phone ☎️',
-    'a rug',
-    'a nail file',
+    'a rug 📜',
+    'a nail file 💅',
     'a slipper 🥿',
     'a clay pot 🚽',
-    'a rubber band',
-    'an MP3 player',
-    'a mirror',
+    'a pretzel 🥨',
+    'an MP3 player 📱',
+    'a dumpling 🥟',
     'a sketch pad 📓',
-    'some conditioner',
+    'some conditioner 🧼',
     'a zipper 🤐',
     'a CD 💿',
     'some stockings 🦵🦵',
@@ -108,7 +109,7 @@ const RANDOM_THINGS = [
     'a couch 🛋',
     'an iPod 📱',
     'a boom box 🔊',
-    'a blouse',
+    'a blouse 👚',
     'a key chain 🔑',
     'a playing card 🃏',
     'some grid paper 📈',
@@ -125,7 +126,32 @@ const storeClientData = async (key, val) => {
 };
 
 const retrieveClientData = async key => {
-    return await figma.clientStorage.getAsync(key);
+    const clientData = await figma.clientStorage.getAsync(key);
+
+    // List items were once strings; now they're objects
+    // so we migrate strings to objects on retrieval
+    return mapValues(clientData, (dataProperty, dataPropertyName) => {
+        if (dataPropertyName === 'config') {
+            return mapValues(dataProperty, configObject => {
+                if (configObject.list) {
+                    return {
+                        ...configObject,
+                        list: configObject.list.map(listItem => {
+                            if (typeof listItem === 'string') {
+                                return {
+                                    value: listItem,
+                                    isDisabled: false,
+                                };
+                            }
+                            return listItem;
+                        }),
+                    };
+                }
+                return configObject;
+            });
+        }
+        return dataProperty;
+    });
 };
 
 const resetState = async () => {
@@ -154,8 +180,7 @@ const toThousandsGroupedNumber = val =>
 const generateRandomValue = ({ node, propConfig, propName }) => {
     const { method } = propConfig;
 
-    let randomValue;
-    let newPropValue;
+    let randomValue, newPropValue;
 
     switch (method) {
         case 'range':
@@ -194,7 +219,12 @@ const generateRandomValue = ({ node, propConfig, propName }) => {
             break;
 
         case 'list':
-            randomValue = sample(propConfig['list']);
+            const enabledItems = propConfig['list']
+                .filter(listItem => {
+                    return !listItem.isDisabled;
+                })
+                .map(listItem => listItem.value);
+            randomValue = sample(enabledItems);
             newPropValue = randomValue;
             break;
     }
@@ -367,6 +397,7 @@ figma.ui.onmessage = async msg => {
         Object.keys(config).map(propName => {
             const propConfig = config[propName];
             if (propConfig.isActive) {
+                console.log(propConfig);
                 const randomValues = selectedNodes.map(node => {
                     return generateRandomValue({
                         node,

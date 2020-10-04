@@ -36,21 +36,29 @@ export const GlobalStyles = createGlobalStyle`
 
 export const StyledAppContainer = styled.div``;
 
-export const Columns = styled.div`
-    flex-shrink: 1;
-    flex-grow: 1;
-    display: flex;
-    align-items: center;
-    justify-content: ${props => (props.align ? props.align : 'flex-end')};
-
-    & > * {
-        margin-left: 8px;
-
-        &:first-child {
-            margin-left: 0;
+export const Columns = styled.div(
+    props => `
+        flex-shrink: 1;
+        flex-grow: 1;
+        display: flex;
+        align-items: center;
+        justify-content: ${props.align ? props.align : 'flex-end'};
+    
+        ${
+            !props.noSpacing
+                ? `
+                    & > * {
+                        margin-left: 8px;
+                
+                        &:first-child {
+                            margin-left: 0;
+                        }
+                    }
+                `
+                : ``
         }
-    }
-`;
+    `,
+);
 
 export const Row = styled.div`
     & + & {

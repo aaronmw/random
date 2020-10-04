@@ -30,7 +30,6 @@ const INITIAL_STATE = {
 const App = () => {
     const [isLoaded, setIsLoaded] = React.useState(false);
     const [pluginState, setPluginState] = React.useState(INITIAL_STATE);
-    const initialFocusRef = { current: null };
 
     onmessage = message => {
         const savedState = message.data.pluginMessage;
@@ -58,12 +57,6 @@ const App = () => {
             params: pluginState,
         });
     }, [pluginState]);
-
-    React.useEffect(() => {
-        if (isLoaded) {
-            // initialFocusRef.current.focus();
-        }
-    }, [isLoaded]);
 
     const handleSubmit = evt => {
         evt.preventDefault();

@@ -12,7 +12,7 @@ const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
     };
 
     return (
-        <Columns>
+        <Columns title="Character(s) to insert before and / or after the random value">
             <InputLabel>prefix:</InputLabel>
             <Input
                 type="text"

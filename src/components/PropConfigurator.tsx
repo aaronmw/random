@@ -12,20 +12,28 @@ import SortingOptions from './SortingOptions';
 import {
     COLOR_BLUE,
     COLOR_BORDER,
-    COLOR_HOVER_BG,
     COLOR_TEXT,
     COLOR_TEXT_LIGHT,
+    Columns,
     FONT_WEIGHT_BOLD,
     Row,
 } from './layout';
 
+const METHOD_DESCRIPTIONS = {
+    calc: 'Changes the current value by a random amount',
+    list: 'Picks a random value from a list',
+    range: 'Picks a random value between two numbers',
+};
+
 const PropContainer = styled.div`
     background-color: white;
-    padding: 15px;
+    padding: 6px 15px;
     border-top: 1px solid transparent;
     border-bottom: 1px solid transparent;
+    transition: padding 0.125s linear;
 
     &.is-active {
+        padding: 15px;
         border-color: ${COLOR_BORDER};
 
         &:first-child {
@@ -55,33 +63,18 @@ const PropBody = styled.div`
     margin-top: 8px;
 `;
 
-const PropMethodTabs = styled.div`
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-`;
-
 const PropMethodTab = styled.button`
     display: flex;
+    padding: 2px 6px;
     justify-content: center;
     align-items: center;
-    padding: 0 8px;
-    padding-bottom: 2px;
-    border-radius: 100px;
     cursor: pointer;
-    font-weight: 400;
-    background-color: white;
-    color: ${COLOR_BLUE};
-    border: 2px solid transparent;
+    font-weight: ${FONT_WEIGHT_BOLD};
+    color: ${COLOR_TEXT_LIGHT};
 
+    &:focus,
     &.is-active {
-        font-weight: ${FONT_WEIGHT_BOLD};
-        background-color: ${COLOR_HOVER_BG};
         color: ${COLOR_TEXT};
-    }
-
-    &:focus {
-        border: 2px solid ${COLOR_BLUE};
     }
 `;
 
@@ -93,7 +86,7 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
     const calcMin = get(propConfig, ['calc', operator, 'min']);
     const groupThousands = get(propConfig, 'groupThousands');
     const isActive = get(propConfig, 'isActive');
-    const list = get(propConfig, 'list');
+    const list = get(propConfig, 'list', []);
     const listFieldType = get(propConfig, 'listFieldType');
     const method = get(propConfig, 'method');
     const prefix = get(propConfig, 'prefix');
@@ -150,7 +143,7 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
         <PropContainer {...commonProps}>
             <PropHeader onClick={handlePropHeaderClick} {...commonProps}>
                 {name}
-                <PropMethodTabs>
+                <Columns noSpacing>
                     {isActive &&
                         ['calc', 'list', 'range'].map(methodName => {
                             if (propConfig[methodName]) {
@@ -163,6 +156,7 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
                                             isTabActive ? 'is-active' : ''
                                         }
                                         isActive={isTabActive}
+                                        title={METHOD_DESCRIPTIONS[methodName]}
                                         onClick={evt => {
                                             evt.stopPropagation();
                                             evt.preventDefault();
@@ -176,8 +170,15 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
                                 );
                             }
                         })}
-                    <ToggleSwitch isActive={isActive} />
-                </PropMethodTabs>
+                    <ToggleSwitch
+                        isActive={isActive}
+                        title={
+                            isActive
+                                ? `Disable randomization of ${name}`
+                                : `Enable randomization of ${name}`
+                        }
+                    />
+                </Columns>
             </PropHeader>
 
             {isActive && (

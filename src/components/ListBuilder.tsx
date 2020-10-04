@@ -2,16 +2,13 @@ import * as React from 'react';
 import { IconButton, Input } from './controls';
 import { Columns, Row } from './layout';
 
-const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
-    const [sortedList, setSortedList] = React.useState(list);
+const EMPTY_ITEM = {
+    value: '',
+    isDisabled: false,
+};
 
-    React.useEffect(() => {
-        setSortedList(
-            list.sort((a, b) =>
-                `${a}`.localeCompare(b, undefined, { numeric: true }),
-            ),
-        );
-    }, [list]);
+const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
+    const [listBeingRendered, setListBeingRendered] = React.useState(list);
 
     React.useEffect(() => {
         const newLabelInput = document.getElementsByClassName(
@@ -21,35 +18,72 @@ const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
         if (newLabelInput.length) {
             (newLabelInput[0] as any).focus();
         }
-    }, [sortedList]);
+    }, [listBeingRendered]);
 
-    const updateList = newValue => {
+    const updateListInState = newList => {
         onUpdateState({
             path: ['config', propName, 'list'],
-            newValue,
+            newValue: newList.sort((a, b) =>
+                `${a}`.localeCompare(b, undefined, { numeric: true }),
+            ),
+        });
+        setListBeingRendered(newList);
+    };
+
+    const getListWithUpdatedItem = (targetList, targetIndex, key, value) => {
+        return targetList.map((listItem, index) => {
+            if (index === targetIndex) {
+                return {
+                    ...listItem,
+                    [key]: value,
+                };
+            }
+            return listItem;
         });
     };
 
     const handleBlur = () => {
-        updateList(sortedList.filter(item => item !== ''));
+        updateListInState(
+            listBeingRendered.filter(listItem => listItem.value.trim() !== ''),
+        );
     };
 
     const handleChange = (targetIndex, evt) => {
         const target = evt.currentTarget;
+        const newValue =
+            listFieldType === 'number' ? parseInt(target.value) : target.value;
 
-        setSortedList(
-            sortedList.map((item, index) =>
-                index === targetIndex ? target.value : item,
+        setListBeingRendered(
+            getListWithUpdatedItem(
+                listBeingRendered,
+                targetIndex,
+                'value',
+                newValue,
+            ),
+        );
+    };
+
+    const handleToggleIsDisabled = targetIndex => {
+        updateListInState(
+            getListWithUpdatedItem(
+                listBeingRendered,
+                targetIndex,
+                'isDisabled',
+                !listBeingRendered[targetIndex].isDisabled,
             ),
         );
     };
 
     const handleClickDelete = targetIndex => {
-        updateList(list.filter((item, itemIndex) => itemIndex !== targetIndex));
+        updateListInState(
+            listBeingRendered.filter(
+                (item, itemIndex) => itemIndex !== targetIndex,
+            ),
+        );
     };
 
     const handleClickPlus = () => {
-        setSortedList(sortedList.concat(''));
+        setListBeingRendered(listBeingRendered.concat(EMPTY_ITEM));
     };
 
     const handleFocus = (targetIndex, evt) => {
@@ -75,39 +109,49 @@ const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
         }
     };
 
-    const listToRender = sortedList.length ? sortedList : [''];
-    const isOnlyItem = sortedList.length <= 1;
+    const defaultValue = listFieldType === 'number' ? 0 : '';
+    const isOnlyItem = listBeingRendered.length <= 1;
     const show = {};
     const hide = {
         visibility: 'hidden',
         pointerEvents: 'none',
     };
 
-    return listToRender.map((item, index) => {
-        const isLastItem = index === listToRender.length - 1;
+    return listBeingRendered.map((item, index) => {
+        const isLastItem = index === listBeingRendered.length - 1;
+        const { value, isDisabled } = item;
 
         return (
             <Row key={index}>
                 <Columns>
                     <Input
-                        className={item === '' ? 'is-new-label-input' : null}
+                        className={value === '' ? 'is-new-label-input' : null}
+                        disabled={isDisabled}
                         type={listFieldType}
-                        value={item}
+                        value={value || defaultValue}
                         onBlur={handleBlur.bind(this, index)}
                         onChange={handleChange.bind(this, index)}
                         onFocus={handleFocus.bind(this, index)}
                         onKeyDown={handleKeyDown.bind(this, index)}
                     />
-                    <IconButton
-                        iconName="times"
-                        style={isOnlyItem ? hide : show}
-                        onClick={handleClickDelete.bind(this, index)}
-                    />
-                    <IconButton
-                        iconName="plus"
-                        style={isLastItem ? show : hide}
-                        onClick={handleClickPlus}
-                    />
+                    <Columns noSpacing>
+                        <IconButton
+                            iconName={isDisabled ? 'eye-closed' : 'eye-open'}
+                            isFaded={isDisabled}
+                            style={isOnlyItem ? hide : show}
+                            onClick={handleToggleIsDisabled.bind(this, index)}
+                        />
+                        <IconButton
+                            iconName="times"
+                            style={isOnlyItem ? hide : show}
+                            onClick={handleClickDelete.bind(this, index)}
+                        />
+                        <IconButton
+                            iconName="plus"
+                            style={isLastItem ? show : hide}
+                            onClick={handleClickPlus}
+                        />
+                    </Columns>
                 </Columns>
             </Row>
         );
