@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import setWith from 'lodash/setWith';
 import clone from 'lodash/clone';
+import setWith from 'lodash/setWith';
 import About from './components/About';
 import { Icon, RunButton } from './components/controls';
 import { GlobalStyles, StyledAppContainer } from './components/layout';
@@ -84,13 +84,26 @@ const App = () => {
     const config = pluginState.config;
     const activeRoute = pluginState.activeRoute;
 
+    const propNames = Object.keys(config);
+    const namesOfActivePropConfigs = propNames.filter(
+        propName => config[propName].isActive,
+    );
+    const namesOfInactivePropConfigs = propNames.filter(
+        propName => !config[propName].isActive,
+    );
+    const sortedPropNames = namesOfActivePropConfigs.concat(
+        namesOfInactivePropConfigs,
+    );
+
     return (
         <StyledAppContainer onKeyDown={handleKeyDown}>
-            <GlobalStyles />
+            <GlobalStyles
+                hasActivePropConfigs={namesOfActivePropConfigs.length >= 1}
+            />
             <NavBar activeRoute={activeRoute} onUpdateState={onUpdateState} />
             {activeRoute === 'randomizer' && isLoaded && (
                 <form onSubmit={handleSubmit}>
-                    {Object.keys(config).map(propName => (
+                    {sortedPropNames.map(propName => (
                         <PropConfigurator
                             key={propName}
                             config={config}

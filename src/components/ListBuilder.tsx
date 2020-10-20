@@ -1,159 +1,187 @@
 import * as React from 'react';
-import { IconButton, Input } from './controls';
-import { Columns, Row } from './layout';
+import styled from 'styled-components';
+import compact from 'lodash/compact';
+import { IconButton, Textarea } from './controls';
+import { Columns, FlexBox } from './layout';
+import { LIST_DELIMETER, MAX_LIST_TEXTAREA_ROWS } from '../config';
 
-const EMPTY_ITEM = {
-    value: '',
-    isDisabled: false,
+const isColor = strColor => {
+    const s = new Option().style;
+    s.color = strColor;
+    return s.color !== '';
 };
 
-const ListBuilder = ({ propName, list, listFieldType, onUpdateState }) => {
-    const [listBeingRendered, setListBeingRendered] = React.useState(list);
+const Swatch = ({ color }) => (
+    <FlexBox justify="flex-start">
+        <div
+            style={{
+                width: '24px',
+                height: '24px',
+                backgroundColor: color,
+                marginRight: '6px',
+                boxShadow: '0 0 3px rgba(0, 0, 0, 0.2) inset',
+                borderRadius: '2px',
+            }}
+        />
+        {color}
+    </FlexBox>
+);
 
-    React.useEffect(() => {
-        const newLabelInput = document.getElementsByClassName(
-            'is-new-label-input',
-        );
+const StyledListItem = styled.div`
+    & + & {
+        margin-top: 0;
+    }
+`;
 
-        if (newLabelInput.length) {
-            (newLabelInput[0] as any).focus();
-        }
-    }, [listBeingRendered]);
+const ListBuilder = ({ propName, list, onUpdateState }) => {
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [uncommittedList, setUncomittedList] = React.useState('');
+    const renderableList = list.split(LIST_DELIMETER);
 
     const updateListInState = newList => {
         onUpdateState({
             path: ['config', propName, 'list'],
-            newValue: newList.sort((a, b) =>
-                `${a}`.localeCompare(b, undefined, { numeric: true }),
-            ),
-        });
-        setListBeingRendered(newList);
-    };
-
-    const getListWithUpdatedItem = (targetList, targetIndex, key, value) => {
-        return targetList.map((listItem, index) => {
-            if (index === targetIndex) {
-                return {
-                    ...listItem,
-                    [key]: value,
-                };
-            }
-            return listItem;
+            newValue: newList,
         });
     };
 
-    const handleBlur = () => {
-        updateListInState(
-            listBeingRendered.filter(listItem => listItem.value.trim() !== ''),
-        );
+    const handleClickSave = () => {
+        const cleanedOfEmpties = compact(
+            uncommittedList.split(LIST_DELIMETER),
+        ).join(LIST_DELIMETER);
+        updateListInState(cleanedOfEmpties);
+        setUncomittedList('');
+        setIsEditing(false);
     };
 
-    const handleChange = (targetIndex, evt) => {
-        const target = evt.currentTarget;
-        const newValue =
-            listFieldType === 'number' ? parseInt(target.value) : target.value;
-
-        setListBeingRendered(
-            getListWithUpdatedItem(
-                listBeingRendered,
-                targetIndex,
-                'value',
-                newValue,
-            ),
-        );
+    const handleChange = evt => {
+        setUncomittedList(evt.currentTarget.value);
     };
 
     const handleToggleIsDisabled = targetIndex => {
         updateListInState(
-            getListWithUpdatedItem(
-                listBeingRendered,
-                targetIndex,
-                'isDisabled',
-                !listBeingRendered[targetIndex].isDisabled,
-            ),
+            renderableList
+                .map((listItem, index) =>
+                    index !== targetIndex
+                        ? listItem
+                        : listItem.includes('[disabled]')
+                        ? listItem.replace(/\s*\[disabled]\s*/, '')
+                        : `${listItem} [disabled]`,
+                )
+                .join(LIST_DELIMETER),
         );
     };
 
     const handleClickDelete = targetIndex => {
         updateListInState(
-            listBeingRendered.filter(
-                (item, itemIndex) => itemIndex !== targetIndex,
-            ),
+            renderableList
+                .filter((listItem, index) => index !== targetIndex)
+                .join(LIST_DELIMETER),
         );
     };
 
-    const handleClickPlus = () => {
-        setListBeingRendered(listBeingRendered.concat(EMPTY_ITEM));
+    const handleClickEdit = () => {
+        setUncomittedList(list);
+        setIsEditing(true);
     };
 
-    const handleFocus = (targetIndex, evt) => {
-        const target = evt.target;
-        target.dataset.valueUponFocus = target.value;
+    const handleClickCancel = () => {
+        setUncomittedList('');
+        setIsEditing(false);
     };
 
-    const handleKeyDown = (targetIndex, evt) => {
-        const targetElement = evt.target;
+    const handleKeyDown = evt => {
+        evt.stopPropagation();
 
         switch (evt.key) {
             case 'Enter':
-                targetElement.blur();
+                if (evt.metaKey) {
+                    handleClickSave();
+                }
                 break;
             case 'Escape':
-                const { valueUponFocus } = targetElement.dataset;
-                if (valueUponFocus === '') {
-                    handleClickDelete(targetIndex);
-                } else {
-                    targetElement.value = valueUponFocus;
-                }
+                handleClickCancel();
                 break;
         }
     };
 
-    const defaultValue = listFieldType === 'number' ? 0 : '';
-    const isOnlyItem = listBeingRendered.length <= 1;
-    const show = {};
-    const hide = {
-        visibility: 'hidden',
-        pointerEvents: 'none',
-    };
-
-    return listBeingRendered.map((item, index) => {
-        const isLastItem = index === listBeingRendered.length - 1;
-        const { value, isDisabled } = item;
-
+    if (isEditing) {
         return (
-            <Row key={index}>
-                <Columns>
-                    <Input
-                        className={value === '' ? 'is-new-label-input' : null}
-                        disabled={isDisabled}
-                        type={listFieldType}
-                        value={value || defaultValue}
-                        onBlur={handleBlur.bind(this, index)}
-                        onChange={handleChange.bind(this, index)}
-                        onFocus={handleFocus.bind(this, index)}
-                        onKeyDown={handleKeyDown.bind(this, index)}
+            <StyledListItem>
+                <Columns style={{ alignItems: 'flex-end' }}>
+                    <Textarea
+                        rows={Math.min(
+                            MAX_LIST_TEXTAREA_ROWS,
+                            uncommittedList.split(LIST_DELIMETER).length,
+                        )}
+                        value={uncommittedList}
+                        onChange={handleChange}
+                        onKeyDown={handleKeyDown}
                     />
-                    <Columns noSpacing>
-                        <IconButton
-                            iconName={isDisabled ? 'eye-closed' : 'eye-open'}
-                            isFaded={isDisabled}
-                            style={isOnlyItem ? hide : show}
-                            onClick={handleToggleIsDisabled.bind(this, index)}
-                        />
+                    <FlexBox>
                         <IconButton
                             iconName="times"
-                            style={isOnlyItem ? hide : show}
+                            onClick={handleClickCancel}
+                        />
+                        <IconButton
+                            iconName="check"
+                            onClick={handleClickSave}
+                        />
+                    </FlexBox>
+                </Columns>
+            </StyledListItem>
+        );
+    }
+
+    return renderableList.map((item, index) => {
+        const isFirstItem = index === 0;
+        const isDisabled = item.includes('[disabled]');
+        const printableItem = isDisabled
+            ? item.replace(/\s*\[disabled]\s*/, '')
+            : item;
+        const isItemAColor = isColor(printableItem);
+
+        return (
+            <StyledListItem key={index}>
+                <Columns>
+                    <div
+                        style={{
+                            opacity: isDisabled ? 0.5 : 1,
+                        }}
+                    >
+                        {isItemAColor ? (
+                            <Swatch color={printableItem} />
+                        ) : (
+                            printableItem
+                        )}
+                    </div>
+                    <FlexBox>
+                        <IconButton
+                            iconName="trash"
+                            isFaded={isDisabled}
                             onClick={handleClickDelete.bind(this, index)}
                         />
                         <IconButton
-                            iconName="plus"
-                            style={isLastItem ? show : hide}
-                            onClick={handleClickPlus}
+                            iconName={isDisabled ? 'eye-closed' : 'eye-open'}
+                            isFaded={isDisabled}
+                            onClick={handleToggleIsDisabled.bind(this, index)}
                         />
-                    </Columns>
+                        <IconButton
+                            iconName="pencil"
+                            label="Edit List"
+                            style={
+                                isFirstItem
+                                    ? null
+                                    : {
+                                          visibility: 'hidden',
+                                          pointerEvents: 'none',
+                                      }
+                            }
+                            onClick={handleClickEdit}
+                        />
+                    </FlexBox>
                 </Columns>
-            </Row>
+            </StyledListItem>
         );
     });
 };

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { Label } from './controls';
+import { Checkbox, Field } from './controls';
 import { COLOR_TEXT, COLOR_TEXT_LIGHT, Columns } from './layout';
 
 const StyledResizeOriginContainer = styled.div`
@@ -154,30 +154,27 @@ const ResizeOptions = ({
     };
 
     return (
-        <Columns align="space-between">
-            <Label title="Preserve the width-to-height ratio of resized elements">
-                <input
-                    type="checkbox"
-                    checked={preserveAspectRatio}
-                    onChange={updatePreserveAspectRatio}
-                />{' '}
-                <span>Preserve Aspect Ratio</span>
-            </Label>
-            <Label title="The origin point of the resize transformation">
-                <span
-                    style={{
-                        marginRight: '15px',
-                    }}
-                >
-                    Anchor:
-                </span>
+        <Columns>
+            <Field
+                label="Preserve Aspect Ratio"
+                labelOnRight
+                title="Preserve the width-to-height ratio of resized elements"
+                onClick={updatePreserveAspectRatio}
+            >
+                <Checkbox checked={preserveAspectRatio} />
+            </Field>
+            <Field
+                label="Anchor"
+                title="The origin point of the resize transformation"
+                justify="flex-end"
+            >
                 <ResizeOriginSelector
                     preserveAspectRatio={preserveAspectRatio}
                     propName={propName}
                     selectedOrigin={selectedOrigin}
                     onUpdateState={onUpdateState}
                 />
-            </Label>
+            </Field>
         </Columns>
     );
 };

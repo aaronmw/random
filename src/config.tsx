@@ -1,5 +1,7 @@
+export const LIST_DELIMETER = '\n';
+export const MAX_LIST_TEXTAREA_ROWS = 20;
+
 export const STRING = {
-    listFieldType: 'text',
     method: 'list',
     sortOrder: 'random',
     groupThousands: true,
@@ -22,15 +24,10 @@ export const STRING = {
         max: 200,
         sortOrder: 'random',
     },
-    list: [
-        { value: 'John Doe', isDisabled: false },
-        { value: 'Jane Smith', isDisabled: false },
-        { value: 'Randy Randomson', isDisabled: false },
-    ],
+    list: ['John Doe', 'Jane Smith', 'Randy Randomson'].join(LIST_DELIMETER),
 };
 
 export const INTEGER = {
-    listFieldType: 'number',
     method: 'range',
     sortOrder: 'random',
     calc: {
@@ -48,62 +45,35 @@ export const INTEGER = {
         min: 50,
         max: 200,
     },
-    list: [
-        { value: 50, isDisabled: false },
-        { value: 100, isDisabled: false },
-        { value: 200, isDisabled: false },
-    ],
+    list: [50, 100, 200].join(LIST_DELIMETER),
 };
 
 export const DEGREES = {
-    listFieldType: 'number',
     method: 'range',
     sortOrder: 'random',
     range: {
         min: 0,
         max: 360,
     },
-    list: [
-        { value: 0, isDisabled: false },
-        { value: 45, isDisabled: false },
-        { value: 90, isDisabled: false },
-        { value: 135, isDisabled: false },
-        { value: 180, isDisabled: false },
-        { value: 225, isDisabled: false },
-        { value: 270, isDisabled: false },
-        { value: 315, isDisabled: false },
-        { value: 360, isDisabled: false },
-    ],
+    list: [0, 45, 90, 135, 180, 225, 270, 315, 360].join(LIST_DELIMETER),
 };
 
 export const PERCENTAGE = {
-    listFieldType: 'number',
     method: 'range',
     sortOrder: 'random',
     range: {
         min: 0,
         max: 100,
     },
-    list: [
-        { value: 0, isDisabled: false },
-        { value: 25, isDisabled: false },
-        { value: 50, isDisabled: false },
-        { value: 75, isDisabled: false },
-        { value: 100, isDisabled: false },
-    ],
+    list: [0, 25, 50, 75, 100].join(LIST_DELIMETER),
 };
 
 export const COLOR = {
-    listFieldType: 'text',
     method: 'list',
     sortOrder: 'random',
-    list: [
-        { value: '#f23b27', isDisabled: false },
-        { value: '#fd605b', isDisabled: false },
-        { value: '#9851f9', isDisabled: false },
-        { value: '#1ab7fa', isDisabled: false },
-        { value: '#1bca7c', isDisabled: false },
-    ],
+    list: ['#f23b27', '#fd605b', '#9851f9', '#1ab7fa', '#1bca7c'].join(
+        LIST_DELIMETER,
+    ),
 };
 
 export const DEFAULT_CONFIG = {

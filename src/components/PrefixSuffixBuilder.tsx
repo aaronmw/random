@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Input, InputLabel } from './controls';
+import { Field, TextInput } from './controls';
 import { Columns } from './layout';
 
 const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
@@ -13,18 +13,22 @@ const PrefixSuffixBuilder = ({ prefix, suffix, onUpdateState }) => {
 
     return (
         <Columns title="Character(s) to insert before and / or after the random value">
-            <InputLabel>prefix:</InputLabel>
-            <Input
-                type="text"
-                value={prefix}
-                onChange={evt => handleChange(evt, 'prefix')}
-            />
-            <InputLabel>suffix:</InputLabel>
-            <Input
-                type="text"
-                value={suffix}
-                onChange={evt => handleChange(evt, 'suffix')}
-            />
+            <Field label="Prefix">
+                <TextInput
+                    type="text"
+                    value={prefix}
+                    placeholder="none"
+                    onChange={evt => handleChange(evt, 'prefix')}
+                />
+            </Field>
+            <Field label="Suffix">
+                <TextInput
+                    type="text"
+                    value={suffix}
+                    placeholder="none"
+                    onChange={evt => handleChange(evt, 'suffix')}
+                />
+            </Field>
         </Columns>
     );
 };

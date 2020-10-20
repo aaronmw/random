@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Input, InputLabel, Label } from './controls';
+import { Field, Radio, TextInput } from './controls';
 import { Columns, Row } from './layout';
 
 const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
@@ -12,10 +12,10 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
         });
     };
 
-    const updateOperator = evt => {
+    const updateOperator = newValue => {
         onUpdateState({
             path: ['config', propName, 'calc', 'operator'],
-            newValue: evt.currentTarget.value,
+            newValue,
         });
     };
 
@@ -23,44 +23,40 @@ const CalcBuilder = ({ propName, operator, min, max, onUpdateState }) => {
         <>
             <Row>
                 <Columns>
-                    <InputLabel>Min:</InputLabel>
-                    <Input
-                        data-name="min"
-                        type="number"
-                        value={min}
-                        onChange={updateMinOrMax}
-                    />
-                    <InputLabel>Max:</InputLabel>
-                    <Input
-                        data-name="max"
-                        type="number"
-                        value={max}
-                        onChange={updateMinOrMax}
-                    />
+                    <Field label="Min">
+                        <TextInput
+                            data-name="min"
+                            type="number"
+                            value={min}
+                            onChange={updateMinOrMax}
+                        />
+                    </Field>
+                    <Field label="Max">
+                        <TextInput
+                            data-name="max"
+                            type="number"
+                            value={max}
+                            onChange={updateMinOrMax}
+                        />
+                    </Field>
                 </Columns>
             </Row>
             <Row>
-                <Columns align="flex-start">
-                    <Label>
-                        <input
-                            name={`${propName}-operator`}
-                            type="radio"
-                            checked={operator === 'add'}
-                            value="add"
-                            onChange={updateOperator}
-                        />{' '}
-                        <span>Add</span>
-                    </Label>
-                    <Label>
-                        <input
-                            name={`${propName}-operator`}
-                            type="radio"
-                            checked={operator === 'multiply'}
-                            value="multiply"
-                            onChange={updateOperator}
-                        />{' '}
-                        <span>Multiply</span>
-                    </Label>
+                <Columns justify="flex-start">
+                    <Field
+                        label="Add"
+                        labelOnRight
+                        onClick={updateOperator.bind(this, 'add')}
+                    >
+                        <Radio checked={operator === 'add'} />
+                    </Field>
+                    <Field
+                        label="Multiply"
+                        labelOnRight
+                        onClick={updateOperator.bind(this, 'multiply')}
+                    >
+                        <Radio checked={operator === 'multiply'} />
+                    </Field>
                 </Columns>
             </Row>
         </>

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Input, InputLabel } from './controls';
+import { Field, TextInput } from './controls';
 import { Columns } from './layout';
 
 const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
@@ -14,20 +14,22 @@ const RangeBuilder = ({ propName, min, max, onUpdateState }) => {
 
     return (
         <Columns>
-            <InputLabel>min:</InputLabel>
-            <Input
-                data-name="min"
-                type="number"
-                value={min}
-                onChange={handleChange}
-            />
-            <InputLabel>max:</InputLabel>
-            <Input
-                data-name="max"
-                type="number"
-                value={max}
-                onChange={handleChange}
-            />
+            <Field label="Min">
+                <TextInput
+                    data-name="min"
+                    type="number"
+                    value={min}
+                    onChange={handleChange}
+                />
+            </Field>
+            <Field label="Max">
+                <TextInput
+                    data-name="max"
+                    type="number"
+                    value={max}
+                    onChange={handleChange}
+                />
+            </Field>
         </Columns>
     );
 };

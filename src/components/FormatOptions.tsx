@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Input, Label } from './controls';
+import { Checkbox, Field, TextInput } from './controls';
 import { Columns } from './layout';
 
 const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
@@ -18,20 +18,24 @@ const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
     };
 
     return (
-        <Columns align="flex-start">
-            <Label>
-                <span>Decimal Places:</span>{' '}
-                <Input value={decimalPlaces} onChange={updateDecimalPlaces} />
-            </Label>
-            <Label>
-                <input
-                    type="checkbox"
-                    value="true"
-                    checked={groupThousands}
-                    onChange={updateGroupThousands}
-                />{' '}
-                <span>Format with Commas</span>
-            </Label>
+        <Columns>
+            <Field label="Decimal Places">
+                <TextInput
+                    type="number"
+                    min={0}
+                    value={decimalPlaces}
+                    style={{ width: '35px' }}
+                    onClick={updateDecimalPlaces}
+                />
+            </Field>
+            <Field
+                label="Group Thousands"
+                labelOnRight
+                title="Add commas to larger numbers: 1000 -> 1,000"
+                onClick={updateGroupThousands}
+            >
+                <Checkbox checked={groupThousands} />
+            </Field>
         </Columns>
     );
 };

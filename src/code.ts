@@ -3,12 +3,14 @@ import clamp from 'lodash/clamp';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import isArray from 'lodash/isArray';
-import mapValues from 'lodash/mapValues';
 import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
 import range from 'lodash/range';
 import sample from 'lodash/sample';
 import rotateOriginXY from './helpers';
+import { LIST_DELIMETER } from './config';
+import migrateData from './migrateData';
+import parseCSSColor from './css-color-parser';
 
 const WINDOW_WIDTH = 290;
 const WINDOW_HEIGHT = 600;
@@ -127,50 +129,31 @@ const storeClientData = async (key, val) => {
 
 const retrieveClientData = async key => {
     const clientData = await figma.clientStorage.getAsync(key);
-
-    // List items were once strings; now they're objects
-    // so we migrate strings to objects on retrieval
-    return mapValues(clientData, (dataProperty, dataPropertyName) => {
-        if (dataPropertyName === 'config') {
-            return mapValues(dataProperty, configObject => {
-                if (configObject.list) {
-                    return {
-                        ...configObject,
-                        list: configObject.list.map(listItem => {
-                            if (typeof listItem === 'string') {
-                                return {
-                                    value: listItem,
-                                    isDisabled: false,
-                                };
-                            }
-                            return listItem;
-                        }),
-                    };
-                }
-                return configObject;
-            });
-        }
-        return dataProperty;
-    });
+    clientData.config = migrateData(clientData.config);
+    return clientData;
 };
 
 const resetState = async () => {
     await storeClientData('pluginState', {});
 };
 
-const toColor = hex => {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-        ? {
-              r: parseInt(result[1], 16) / 255,
-              g: parseInt(result[2], 16) / 255,
-              b: parseInt(result[3], 16) / 255,
-          }
-        : null;
+const anyColorStringToRGB = color => {
+    const colorAsRGBAArray = parseCSSColor(color);
+    if (isArray(colorAsRGBAArray)) {
+        const [r, g, b] = colorAsRGBAArray;
+        return {
+            r: r / 255,
+            g: g / 255,
+            b: b / 255,
+        };
+    }
+    return false;
 };
+
 const toDegrees = degrees => {
     return (Math.PI / 180) * degrees;
 };
+
 const toFloat = val => parseFloat(val);
 const toInteger = val => parseInt(val);
 const toPercentage = val => clamp(toFloat(val) / 100, 0, 1);
@@ -220,10 +203,8 @@ const generateRandomValue = ({ node, propConfig, propName }) => {
 
         case 'list':
             const enabledItems = propConfig['list']
-                .filter(listItem => {
-                    return !listItem.isDisabled;
-                })
-                .map(listItem => listItem.value);
+                .split(LIST_DELIMETER)
+                .filter(listItem => !listItem.includes('[disabled]'));
             randomValue = sample(enabledItems);
             newPropValue = randomValue;
             break;
@@ -308,13 +289,21 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
 
         case 'fillColor':
             const fillsForColor = cloneDeep(node.fills);
-            fillsForColor[0].color = toColor(newPropValue);
-            node.fills = fillsForColor;
+            const colorAsRGB = anyColorStringToRGB(newPropValue);
+
+            if (colorAsRGB) {
+                fillsForColor[0].color = colorAsRGB;
+                node.fills = fillsForColor;
+            } else {
+                (figma as any).notify(
+                    `🤔️ "${newPropValue}" doesn't look a color, so we'll just ignore that one...`,
+                );
+            }
             break;
 
         case 'strokeColor':
             const strokesForColor = cloneDeep(node.strokes);
-            strokesForColor[0].color = toColor(newPropValue);
+            strokesForColor[0].color = anyColorStringToRGB(newPropValue);
             node.strokes = strokesForColor;
             break;
 
@@ -397,7 +386,6 @@ figma.ui.onmessage = async msg => {
         Object.keys(config).map(propName => {
             const propConfig = config[propName];
             if (propConfig.isActive) {
-                console.log(propConfig);
                 const randomValues = selectedNodes.map(node => {
                     return generateRandomValue({
                         node,

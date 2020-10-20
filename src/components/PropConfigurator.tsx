@@ -1,6 +1,7 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import get from 'lodash/get';
+import startCase from 'lodash/startCase';
 import { ToggleSwitch } from './controls';
 import CalcBuilder from './CalcBuilder';
 import FormatOptions from './FormatOptions';
@@ -10,11 +11,9 @@ import RangeBuilder from './RangeBuilder';
 import ResizeOptions from './ResizeOptions';
 import SortingOptions from './SortingOptions';
 import {
-    COLOR_BLUE,
-    COLOR_BORDER,
     COLOR_TEXT,
     COLOR_TEXT_LIGHT,
-    Columns,
+    FlexBox,
     FONT_WEIGHT_BOLD,
     Row,
 } from './layout';
@@ -26,19 +25,15 @@ const METHOD_DESCRIPTIONS = {
 };
 
 const PropContainer = styled.div`
-    background-color: white;
     padding: 6px 15px;
-    border-top: 1px solid transparent;
-    border-bottom: 1px solid transparent;
-    transition: padding 0.125s linear;
+    transition: all 0.125s linear;
 
     &.is-active {
+        margin: 6px;
         padding: 15px;
-        border-color: ${COLOR_BORDER};
+        background-color: white;
+        border-radius: 3px;
 
-        &:first-child {
-            border-top-color: transparent;
-        }
         & + .is-active {
             border-top: 0;
         }
@@ -53,6 +48,7 @@ const PropHeader = styled.div`
     cursor: pointer;
     color: ${COLOR_TEXT_LIGHT};
 
+    &:hover,
     &.is-active {
         color: ${COLOR_TEXT};
         font-weight: ${FONT_WEIGHT_BOLD};
@@ -80,8 +76,8 @@ const PropMethodTab = styled.button`
 
 export const PropConfigurator = ({ name, config, onUpdateState }) => {
     const propConfig = config[name];
+    const humanReadableName = startCase(name);
     const operator = get(propConfig, ['calc', 'operator']);
-
     const calcMax = get(propConfig, ['calc', operator, 'max']);
     const calcMin = get(propConfig, ['calc', operator, 'min']);
     const groupThousands = get(propConfig, 'groupThousands');
@@ -142,8 +138,8 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
     return (
         <PropContainer {...commonProps}>
             <PropHeader onClick={handlePropHeaderClick} {...commonProps}>
-                {name}
-                <Columns noSpacing>
+                <div>{humanReadableName}</div>
+                <FlexBox justify="flex-end">
                     {isActive &&
                         ['calc', 'list', 'range'].map(methodName => {
                             if (propConfig[methodName]) {
@@ -174,11 +170,11 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
                         isActive={isActive}
                         title={
                             isActive
-                                ? `Disable randomization of ${name}`
-                                : `Enable randomization of ${name}`
+                                ? `Disable randomization of ${humanReadableName}`
+                                : `Enable randomization of ${humanReadableName}`
                         }
                     />
-                </Columns>
+                </FlexBox>
             </PropHeader>
 
             {isActive && (
@@ -188,7 +184,6 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
                             <ListBuilder
                                 propName={name}
                                 list={list}
-                                listFieldType={listFieldType}
                                 onUpdateState={onUpdateState}
                             />
                         ) : method === 'range' ? (

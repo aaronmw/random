@@ -5,6 +5,7 @@ import {
     COLOR_HOVER_BG,
     COLOR_TEXT,
     COLOR_TEXT_LIGHT,
+    Columns,
 } from './layout';
 
 const commonStyles = `
@@ -13,6 +14,7 @@ const commonStyles = `
     width: 100%;
     text-align: center;
     background-color: white;
+    border: 1px solid transparent;
     
     &:disabled {
         opacity: 0.3;
@@ -26,64 +28,83 @@ const StyledInput = styled.input`
     width: 100%;
 
     &:focus {
-        border: 2px solid ${COLOR_BLUE};
+        border: 1px solid ${COLOR_BLUE};
+        box-shadow: 0 0 0 1px ${COLOR_BLUE} inset;
     }
 `;
 
-const ColorSwatch = styled.div`
-    position: relative;
-    width: 100%;
-
-    ${props =>
-        props.color !== null &&
-        `
-            text-transform: uppercase;
-            
-            &:before {
-                content: '';
-                position: absolute;
-                left: 6px;
-                top: 5px;
-                width: 18px;
-                height: 18px;
-                background-color: ${props.color};
-                border: 1px solid ${COLOR_HOVER_BG};
-            }
-        `}
-`;
-
-export const Input = props => {
-    const { value } = props;
-    const isColor = `${value}`.trim().match(/^#[0-9a-f]{6}?$/i);
-    const InputEl = <StyledInput {...props} />;
-
-    return <ColorSwatch color={isColor ? value : null}>{InputEl}</ColorSwatch>;
+export const Field = ({
+    disabled = false,
+    label,
+    labelOnRight = false,
+    children,
+    onClick = null,
+    ...otherProps
+}) => {
+    return (
+        <Columns
+            direction={labelOnRight ? 'row-reverse' : 'row'}
+            justify={labelOnRight ? 'flex-end' : 'flex-start'}
+            spacing="tight"
+            style={{ cursor: onClick ? 'pointer' : 'default', flexGrow: 0 }}
+            onClick={disabled ? null : onClick}
+            {...otherProps}
+        >
+            <div
+                style={{
+                    textTransform: 'lowercase',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {label}
+            </div>
+            <div>{children}</div>
+        </Columns>
+    );
 };
 
-export const Label = styled.label`
-    display: flex;
-    white-space: nowrap;
-    align-items: center;
+export const TextInput = props => <StyledInput {...props} />;
 
-    & > :first-child {
-        margin-right: 4px;
-    }
-    & > [type='radio'] {
-        position: relative;
-        top: -1px;
-    }
-    & + & {
-        margin-left: 15px !important;
-    }
-`;
+export const Textarea = props => (
+    <StyledInput
+        as="textarea"
+        style={{
+            height: 'auto',
+            lineHeight: '18px',
+            padding: '6px 12px',
+            textAlign: 'left',
+        }}
+        {...props}
+    />
+);
 
-export const InputLabel = styled.span`
-    display: inline-block;
-    flex-shrink: 0;
-    flex-grow: 1;
-    width: 35px;
-    text-align: right;
-`;
+export const Checkbox = ({
+    checked = false,
+    iconChecked = 'check-square',
+    iconUnchecked = 'square',
+    disabled = false,
+    onClick = null,
+    ...otherProps
+}) => {
+    return (
+        <Icon
+            name={checked ? iconChecked : iconUnchecked}
+            color={
+                disabled
+                    ? COLOR_TEXT_LIGHT
+                    : checked
+                    ? COLOR_TEXT
+                    : COLOR_TEXT_LIGHT
+            }
+            onClick={disabled ? null : onClick}
+            {...otherProps}
+        />
+    );
+};
+
+export const Radio = props => (
+    <Checkbox iconChecked="dot-circle" iconUnchecked="circle" {...props} />
+);
 
 export const Button = styled.button`
     ${commonStyles}
@@ -136,11 +157,29 @@ const ICON_MAP = {
             'M413.505 91.951L133.49 371.966l-98.995-98.995c-4.686-4.686-12.284-4.686-16.971 0L6.211 284.284c-4.686 4.686-4.686 12.284 0 16.971l118.794 118.794c4.686 4.686 12.284 4.686 16.971 0l299.813-299.813c4.686-4.686 4.686-12.284 0-16.971l-11.314-11.314c-4.686-4.686-12.284-4.686-16.97 0z',
         label: 'Save (Esc to Cancel)',
     },
+    'check-square': {
+        data:
+            'M400 480H48c-26.51 0-48-21.49-48-48V80c0-26.51 21.49-48 48-48h352c26.51 0 48 21.49 48 48v352c0 26.51-21.49 48-48 48zm-204.686-98.059l184-184c6.248-6.248 6.248-16.379 0-22.627l-22.627-22.627c-6.248-6.248-16.379-6.249-22.628 0L184 302.745l-70.059-70.059c-6.248-6.248-16.379-6.248-22.628 0l-22.627 22.627c-6.248 6.248-6.248 16.379 0 22.627l104 104c6.249 6.25 16.379 6.25 22.628.001z',
+        label: '',
+        viewBoxWidth: 448,
+    },
+    circle: {
+        data:
+            'M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm216 248c0 118.7-96.1 216-216 216-118.7 0-216-96.1-216-216 0-118.7 96.1-216 216-216 118.7 0 216 96.1 216 216z',
+        label: '',
+        viewBoxWidth: 512,
+    },
     'coffee-togo': {
         data:
             'M432 96h-16l-24.71-74.12C386.94 8.81 374.71 0 360.94 0h-274C73.16 0 61.07 8.81 56.71 21.88L32 96H16c-8.84 0-16 7.16-16 16v32c0 8.84 7.16 16 16 16h19.84l25.8 322.55C62.97 499.18 76.86 512 93.54 512h260.92c16.68 0 30.57-12.82 31.9-29.45L412.16 160H432c8.84 0 16-7.16 16-16v-32c0-8.84-7.16-16-16-16zM98.6 48h250.8l21.33 64H77.26L98.6 48zm9.71 416l-7.68-96h246.73l-7.68 96H108.31zm250.58-240H89.11l-5.12-64H364l-5.11 64z',
         label: 'Grateful? Buy me a coffee!',
         viewBoxWidth: 448,
+    },
+    'dot-circle': {
+        data:
+            'M256 8C119.033 8 8 119.033 8 256s111.033 248 248 248 248-111.033 248-248S392.967 8 256 8zm80 248c0 44.112-35.888 80-80 80s-80-35.888-80-80 35.888-80 80-80 80 35.888 80 80z',
+        label: '',
+        viewBoxWidth: 512,
     },
     envelope: {
         data:
@@ -201,6 +240,12 @@ const ICON_MAP = {
         label: 'Load Config',
         viewBoxWidth: 576,
     },
+    square: {
+        data:
+            'M400 32H48C21.5 32 0 53.5 0 80v352c0 26.5 21.5 48 48 48h352c26.5 0 48-21.5 48-48V80c0-26.5-21.5-48-48-48zm16 400c0 8.8-7.2 16-16 16H48c-8.8 0-16-7.2-16-16V80c0-8.8 7.2-16 16-16h352c8.8 0 16 7.2 16 16v352z',
+        label: '',
+        viewBoxWidth: 448,
+    },
     sync: {
         data:
             'M492 8h-10c-6.627 0-12 5.373-12 12v110.627C426.929 57.261 347.224 8 256 8 123.228 8 14.824 112.338 8.31 243.493 7.971 250.311 13.475 256 20.301 256h10.016c6.353 0 11.646-4.949 11.977-11.293C48.157 132.216 141.097 42 256 42c82.862 0 154.737 47.077 190.289 116H332c-6.627 0-12 5.373-12 12v10c0 6.627 5.373 12 12 12h160c6.627 0 12-5.373 12-12V20c0-6.627-5.373-12-12-12zm-.301 248h-10.015c-6.352 0-11.647 4.949-11.977 11.293C463.841 380.158 370.546 470 256 470c-82.608 0-154.672-46.952-190.299-116H180c6.627 0 12-5.373 12-12v-10c0-6.627-5.373-12-12-12H20c-6.627 0-12 5.373-12 12v160c0 6.627 5.373 12 12 12h10c6.627 0 12-5.373 12-12V381.373C85.071 454.739 164.777 504 256 504c132.773 0 241.176-104.338 247.69-235.493.339-6.818-5.165-12.507-11.991-12.507z',
@@ -209,8 +254,14 @@ const ICON_MAP = {
     times: {
         data:
             'M193.94 256L296.5 153.44l21.15-21.15c3.12-3.12 3.12-8.19 0-11.31l-22.63-22.63c-3.12-3.12-8.19-3.12-11.31 0L160 222.06 36.29 98.34c-3.12-3.12-8.19-3.12-11.31 0L2.34 120.97c-3.12 3.12-3.12 8.19 0 11.31L126.06 256 2.34 379.71c-3.12 3.12-3.12 8.19 0 11.31l22.63 22.63c3.12 3.12 8.19 3.12 11.31 0L160 289.94 262.56 392.5l21.15 21.15c3.12 3.12 8.19 3.12 11.31 0l22.63-22.63c3.12-3.12 3.12-8.19 0-11.31L193.94 256z',
-        label: 'Delete',
+        label: 'Cancel',
         viewBoxWidth: 320,
+    },
+    trash: {
+        data:
+            'M440 64H336l-33.6-44.8A48 48 0 0 0 264 0h-80a48 48 0 0 0-38.4 19.2L112 64H8a8 8 0 0 0-8 8v16a8 8 0 0 0 8 8h18.9l33.2 372.3a48 48 0 0 0 47.8 43.7h232.2a48 48 0 0 0 47.8-43.7L421.1 96H440a8 8 0 0 0 8-8V72a8 8 0 0 0-8-8zM171.2 38.4A16.1 16.1 0 0 1 184 32h80a16.1 16.1 0 0 1 12.8 6.4L296 64H152zm184.8 427a15.91 15.91 0 0 1-15.9 14.6H107.9A15.91 15.91 0 0 1 92 465.4L59 96h330z',
+        label: 'Delete',
+        viewBoxWidth: 448,
     },
     twitter: {
         data:
@@ -219,7 +270,13 @@ const ICON_MAP = {
     },
 };
 
-export const Icon = ({ color = ICON_COLOR, className = '', name }) => (
+export const Icon = ({
+    color = ICON_COLOR,
+    className = '',
+    isFlashing = false,
+    name,
+    ...otherProps
+}) => (
     <svg
         className={className}
         width={ICON_SIZE}
@@ -227,6 +284,7 @@ export const Icon = ({ color = ICON_COLOR, className = '', name }) => (
         viewBox={`0 0 ${ICON_MAP[name].viewBoxWidth || 512} 512`}
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        {...otherProps}
     >
         <path fill={color} d={ICON_MAP[name].data} />
     </svg>
@@ -269,9 +327,16 @@ const StyledIconButton = styled.button(
 );
 
 export const IconButton = styled(
-    ({ iconName, onClick = e => null, ...otherProps }) => (
+    ({
+        className,
+        iconName,
+        label = null,
+        onClick = () => null,
+        ...otherProps
+    }) => (
         <StyledIconButton
-            title={(ICON_MAP[iconName] || {}).label}
+            className={className}
+            title={label || ICON_MAP[iconName].label}
             onClick={evt => {
                 evt.preventDefault();
                 onClick(evt);

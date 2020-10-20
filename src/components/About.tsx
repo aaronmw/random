@@ -30,17 +30,17 @@ const About = () => (
         }}
     >
         <Row>
-            <Columns align="center">
+            <Columns justify="center">
                 <Avatar />
             </Columns>
         </Row>
         <Row>
-            <Columns align="center">
+            <Columns justify="center">
                 <strong>Aaron M. Wright</strong>
             </Columns>
         </Row>
         <Row>
-            <Columns align="center">
+            <Columns justify="center">
                 <IconButton
                     iconName="envelope"
                     onClick={openWindow.bind(

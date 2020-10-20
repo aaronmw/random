@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Label } from './controls';
+import { Field, Radio } from './controls';
 import { Columns } from './layout';
 import startCase from 'lodash/startCase';
 
@@ -12,23 +12,22 @@ const SortingOptions = ({ propName, sortOrder, onUpdateState }) => {
     };
 
     return (
-        <Columns align="flex-start">
-            <span>Sort Order:</span>
-            {['asc', 'desc', 'random'].map(option => {
-                return (
-                    <Label key={option}>
-                        <input
-                            type="radio"
-                            name={`${propName}-sort-order`}
-                            value={option}
-                            checked={sortOrder === option}
-                            onChange={updateSortOrder.bind(this, option)}
-                        />{' '}
-                        <span>{startCase(option)}</span>
-                    </Label>
-                );
-            })}
-        </Columns>
+        <Field label="Sort Order" justify="space-between">
+            <Columns>
+                {['asc', 'desc', 'random'].map(option => {
+                    return (
+                        <Field
+                            key={option}
+                            label={startCase(option)}
+                            labelOnRight
+                            onClick={updateSortOrder.bind(this, option)}
+                        >
+                            <Radio checked={sortOrder === option} />
+                        </Field>
+                    );
+                })}
+            </Columns>
+        </Field>
     );
 };
 

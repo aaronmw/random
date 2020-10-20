@@ -37,7 +37,7 @@ const NavButton = styled.button`
 `;
 
 const PRIMARY_ROUTES = [
-    { name: 'randomizer', label: 'Randomizer' },
+    { name: 'randomizer', label: 'Properties' },
     { name: 'saved-configs', label: 'Saved Configs' },
 ];
 
@@ -65,8 +65,8 @@ export const NavBar = ({ activeRoute, onUpdateState }) => {
     return (
         <StyledNavBar>
             <StyledNavBarContents>
-                <Columns align="space-between">
-                    <Columns align="flex-start">
+                <Columns justify="space-between">
+                    <Columns justify="flex-start">
                         {printRoutes(PRIMARY_ROUTES)}
                     </Columns>
                     {printRoutes(SECONDARY_ROUTES)}

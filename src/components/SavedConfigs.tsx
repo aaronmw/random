@@ -1,8 +1,16 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { Button, Icon, IconButton, Input } from './controls';
-import { COLOR_BLUE, COLOR_TEXT, COLOR_TEXT_LIGHT, Columns } from './layout';
+import { Button, Icon, IconButton, TextInput } from './controls';
+import {
+    COLOR_BLUE,
+    COLOR_TEXT,
+    COLOR_TEXT_LIGHT,
+    Columns,
+    FlexBox,
+    SPACING,
+} from './layout';
 import { Route } from './Navigation';
+import migrateData from '../migrateData';
 
 const EmptyMessage = styled(Columns).attrs({
     align: 'center',
@@ -15,30 +23,7 @@ const SaveCurrentConfigButton = styled(Button)`
     margin-top: 15px;
 `;
 
-const StyledSavedConfig = styled(Columns).attrs({
-    align: 'space-between',
-})`
-    position: relative;
-    height: 30px;
-    padding-right: 45px;
-    cursor: pointer;
-`;
-
-const SAVE_CONFIRMATION_DURATION = 750;
-
-const SaveStatusIcon = styled(Icon).attrs({
-    name: 'floppy-disc',
-})`
-    transition: all 0.2s ease-in-out;
-    transform: ${props =>
-        props.isFlashing ? 'scale(2) rotate(-25deg)' : 'none'};
-
-    & > path {
-        fill: ${props => (props.isFlashing ? COLOR_BLUE : COLOR_TEXT)};
-    }
-`;
-
-const ButtonBar = styled(Columns)`
+const ButtonBar = styled(FlexBox)`
     position: absolute;
     right: 0;
     width: 30px;
@@ -47,6 +32,7 @@ const ButtonBar = styled(Columns)`
     transition-delay: 0.5s;
     transition-property: background padding;
     background-color: transparent;
+    justify-content: flex-end;
 
     &:hover {
         width: auto;
@@ -65,6 +51,33 @@ const ButtonBar = styled(Columns)`
             opacity: 0;
             transition: opacity 0.2s ease-in-out;
         }
+    }
+`;
+
+const StyledSavedConfig = styled(Columns).attrs({
+    align: 'space-between',
+})`
+    position: relative;
+    height: 30px;
+    padding-right: 45px;
+    cursor: pointer;
+
+    &:hover ${ButtonBar} {
+        opacity: 1;
+    }
+`;
+
+const SAVE_CONFIRMATION_DURATION = 750;
+
+const SaveStatusIcon = styled(Icon).attrs({
+    name: 'floppy-disc',
+})`
+    transition: all 0.2s ease-in-out;
+    transform: ${props =>
+        props.isFlashing ? 'scale(2) rotate(-25deg)' : 'none'};
+
+    & > path {
+        fill: ${props => (props.isFlashing ? COLOR_BLUE : COLOR_TEXT)};
     }
 `;
 
@@ -173,7 +186,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
     const handleClickRandomize = savedConfig => {
         onUpdateState({
             path: ['config'],
-            newValue: savedConfig.data,
+            newValue: migrateData(savedConfig.data),
         });
         goToRandomizer();
     };
@@ -213,18 +226,20 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                     return (
                         <StyledSavedConfig
                             key={id}
+                            title="Click to load this config"
                             onClick={
                                 isEditingConfigId === null
                                     ? restoreSavedConfig
                                     : null
                             }
                         >
-                            <Columns align="flex-start">
+                            <FlexBox justify="flex-start">
                                 <SaveStatusIcon
                                     isFlashing={lastSavedConfigId === id}
-                                />{' '}
+                                    style={{ marginRight: SPACING.tight }}
+                                />
                                 {isEditingConfigId === id ? (
-                                    <Input
+                                    <TextInput
                                         id="js-new-label-input"
                                         value={tempNewLabel}
                                         onChange={evt =>
@@ -238,8 +253,8 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                                 ) : (
                                     <span>{label}</span>
                                 )}
-                            </Columns>
-                            <ButtonBar noSpacing>
+                            </FlexBox>
+                            <ButtonBar>
                                 {isEditingConfigId === id ? (
                                     <IconButton
                                         className="neverHide"
@@ -252,7 +267,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
                                 ) : (
                                     <>
                                         <IconButton
-                                            iconName="times"
+                                            iconName="trash"
                                             onMouseDown={handleClickDelete.bind(
                                                 this,
                                                 savedConfig,
