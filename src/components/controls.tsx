@@ -305,7 +305,7 @@ export const RunButton = styled(Button)`
 `;
 
 const StyledIconButton = styled.button(
-    props => `
+    ({ isFaded, showOnHover = null }) => `
         width: 30px;
         height: 30px;
         display: flex;
@@ -313,7 +313,8 @@ const StyledIconButton = styled.button(
         flex-grow: 0;
         align-items: center;
         justify-content: center;
-        opacity: ${props.isFaded === true ? 0.3 : 1};
+        transition: opacity 0.2s ease-in-out;
+        opacity: ${isFaded === true ? 0.3 : 1};
     
         &:hover {
             cursor: pointer;
@@ -322,6 +323,15 @@ const StyledIconButton = styled.button(
         }
         &:focus {
             border: 2px solid ${COLOR_BLUE};
+        }
+        ${
+            showOnHover !== null &&
+            `
+            opacity: 0;
+            ${showOnHover}:hover & {
+                opacity: 1;
+            }
+        `
         }
     `,
 );

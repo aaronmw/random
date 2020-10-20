@@ -24,8 +24,8 @@ const FormatOptions = ({ groupThousands, decimalPlaces, onUpdateState }) => {
                     type="number"
                     min={0}
                     value={decimalPlaces}
-                    style={{ width: '35px' }}
-                    onClick={updateDecimalPlaces}
+                    style={{ width: '33px' }}
+                    onChange={updateDecimalPlaces}
                 />
             </Field>
             <Field

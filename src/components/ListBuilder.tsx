@@ -143,7 +143,7 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
 
         return (
             <StyledListItem key={index}>
-                <Columns>
+                <Columns onDoubleClick={handleClickEdit}>
                     <div
                         style={{
                             opacity: isDisabled ? 0.5 : 1,
@@ -159,11 +159,13 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
                         <IconButton
                             iconName="trash"
                             isFaded={isDisabled}
+                            showOnHover={StyledListItem}
                             onClick={handleClickDelete.bind(this, index)}
                         />
                         <IconButton
                             iconName={isDisabled ? 'eye-closed' : 'eye-open'}
                             isFaded={isDisabled}
+                            showOnHover={isDisabled ? null : StyledListItem}
                             onClick={handleToggleIsDisabled.bind(this, index)}
                         />
                         <IconButton

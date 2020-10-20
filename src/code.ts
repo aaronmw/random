@@ -215,10 +215,31 @@ const generateRandomValue = ({ node, propConfig, propName }) => {
 
 const fontNameLoadHistory = {};
 
+const notificationHandler = {
+    current: null,
+};
+
+const showMessage = message => {
+    if (notificationHandler.current !== null) {
+        notificationHandler.current.cancel();
+        notificationHandler.current = null;
+    }
+
+    notificationHandler.current = (figma as any).notify(message);
+};
+
 const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
     switch (propName) {
         case 'text':
             const chars = node.characters;
+
+            if (!chars) {
+                showMessage(
+                    `Heads-up: At least one of the elements you've selected is NOT text 🤦`,
+                );
+                break;
+            }
+
             const numChars = chars.length;
             const { prefix, suffix } = propConfig;
             const valueToPrint = propConfig.groupThousands
@@ -295,7 +316,7 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
                 fillsForColor[0].color = colorAsRGB;
                 node.fills = fillsForColor;
             } else {
-                (figma as any).notify(
+                showMessage(
                     `🤔️ "${newPropValue}" doesn't look a color, so we'll just ignore that one...`,
                 );
             }
@@ -373,7 +394,7 @@ figma.ui.onmessage = async msg => {
 
         if (selectedNodes.length === 0) {
             // STILL no idea why I need to cast this...
-            (figma as any).notify(
+            showMessage(
                 `You have nothing selected, but here's a random thing anyway: ${sample(
                     RANDOM_THINGS,
                 )}`,
