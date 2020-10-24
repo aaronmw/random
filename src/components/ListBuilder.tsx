@@ -1,6 +1,7 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import compact from 'lodash/compact';
+import FadedOverflow from './FadedOverflow';
 import { IconButton, Textarea } from './controls';
 import { Columns, FlexBox } from './layout';
 import { LIST_DELIMETER, MAX_LIST_TEXTAREA_ROWS } from '../config';
@@ -33,6 +34,16 @@ const StyledListItem = styled.div`
     }
 `;
 
+const EditButton = styled(IconButton).attrs({
+    iconName: 'pencil',
+    label: 'Edit List',
+})`
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1000;
+`;
+
 const ListBuilder = ({ propName, list, onUpdateState }) => {
     const [isEditing, setIsEditing] = React.useState(false);
     const [uncommittedList, setUncomittedList] = React.useState('');
@@ -58,7 +69,8 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
         setUncomittedList(evt.currentTarget.value);
     };
 
-    const handleToggleIsDisabled = targetIndex => {
+    const handleToggleIsDisabled = (targetIndex, evt) => {
+        evt.stopPropagation();
         updateListInState(
             renderableList
                 .map((listItem, index) =>
@@ -72,7 +84,8 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
         );
     };
 
-    const handleClickDelete = targetIndex => {
+    const handleClickDelete = (targetIndex, evt) => {
+        evt.stopPropagation();
         updateListInState(
             renderableList
                 .filter((listItem, index) => index !== targetIndex)
@@ -133,59 +146,77 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
         );
     }
 
-    return renderableList.map((item, index) => {
-        const isFirstItem = index === 0;
-        const isDisabled = item.includes('[disabled]');
-        const printableItem = isDisabled
-            ? item.replace(/\s*\[disabled]\s*/, '')
-            : item;
-        const isItemAColor = isColor(printableItem);
+    return (
+        <div style={{ position: 'relative' }}>
+            <EditButton onClick={handleClickEdit} />
+            <FadedOverflow maxHeight={300}>
+                {renderableList.map((item, index) => {
+                    const isFirstItem = index === 0;
+                    const isDisabled = item.includes('[disabled]');
+                    const printableItem = isDisabled
+                        ? item.replace(/\s*\[disabled]\s*/, '')
+                        : item;
+                    const isItemAColor = isColor(printableItem);
 
-        return (
-            <StyledListItem key={index}>
-                <Columns onDoubleClick={handleClickEdit}>
-                    <div
-                        style={{
-                            opacity: isDisabled ? 0.5 : 1,
-                        }}
-                    >
-                        {isItemAColor ? (
-                            <Swatch color={printableItem} />
-                        ) : (
-                            printableItem
-                        )}
-                    </div>
-                    <FlexBox>
-                        <IconButton
-                            iconName="trash"
-                            isFaded={isDisabled}
-                            showOnHover={StyledListItem}
-                            onClick={handleClickDelete.bind(this, index)}
-                        />
-                        <IconButton
-                            iconName={isDisabled ? 'eye-closed' : 'eye-open'}
-                            isFaded={isDisabled}
-                            showOnHover={isDisabled ? null : StyledListItem}
-                            onClick={handleToggleIsDisabled.bind(this, index)}
-                        />
-                        <IconButton
-                            iconName="pencil"
-                            label="Edit List"
-                            style={
-                                isFirstItem
-                                    ? null
-                                    : {
-                                          visibility: 'hidden',
-                                          pointerEvents: 'none',
-                                      }
-                            }
-                            onClick={handleClickEdit}
-                        />
-                    </FlexBox>
-                </Columns>
-            </StyledListItem>
-        );
-    });
+                    return (
+                        <StyledListItem key={index}>
+                            <Columns
+                                title="Click to Edit"
+                                onClick={handleClickEdit}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <div
+                                    style={{
+                                        opacity: isDisabled ? 0.5 : 1,
+                                    }}
+                                >
+                                    {isItemAColor ? (
+                                        <Swatch color={printableItem} />
+                                    ) : (
+                                        printableItem
+                                    )}
+                                </div>
+                                <FlexBox>
+                                    <IconButton
+                                        iconName="trash"
+                                        isFaded={isDisabled}
+                                        showOnHover={StyledListItem}
+                                        onClick={handleClickDelete.bind(
+                                            this,
+                                            index,
+                                        )}
+                                    />
+                                    <IconButton
+                                        iconName={
+                                            isDisabled
+                                                ? 'eye-closed'
+                                                : 'eye-open'
+                                        }
+                                        isFaded={isDisabled}
+                                        showOnHover={
+                                            isDisabled ? null : StyledListItem
+                                        }
+                                        onClick={handleToggleIsDisabled.bind(
+                                            this,
+                                            index,
+                                        )}
+                                    />
+                                    <IconButton
+                                        iconName="pencil"
+                                        label="Edit List"
+                                        style={{
+                                            visibility: 'hidden',
+                                            pointerEvents: 'none',
+                                        }}
+                                    />
+                                </FlexBox>
+                            </Columns>
+                        </StyledListItem>
+                    );
+                })}
+            </FadedOverflow>
+        </div>
+    );
 };
 
 export default ListBuilder;
