@@ -24,14 +24,14 @@ export const GlobalStyles = createGlobalStyle`
         font-size: 1rem;
         font-family: Inter, sans-serif;
         font-feature-settings: 'liga' on,'calt' on;
+        letter-spacing: inherit;
         text-transform: inherit;
     }
     :root {
         line-height: 1.1rem;
         font-size: 11px;
         letter-spacing: 0.5;
-        background: ${props =>
-            props.hasActivePropConfigs ? COLOR_BG : 'white'};
+        background: ${COLOR_BG};
         user-select: none;
         color: ${COLOR_TEXT};
         -webkit-font-smoothing: subpixel-antialiased;
@@ -47,9 +47,9 @@ export const StyledAppContainer = styled.div``;
 export const FlexBox = styled.div(
     props => `
         display: flex;
-        flex-direction: ${props.direction ? props.direction : 'row'};
+        flex-direction: ${props.direction || 'row'};
         align-items: center;
-        justify-content: ${props.justify ? props.justify : 'space-between'};
+        justify-content: ${props.justify || 'space-between'};
     `,
 );
 

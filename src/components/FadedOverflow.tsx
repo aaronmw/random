@@ -8,6 +8,7 @@ const sharedIndicatorStyles = {
     height: '50px',
     pointerEvents: 'none',
     transition: 'opacity 0.2s ease-in-out',
+    zIndex: 12,
 };
 
 const FadedOverflow = ({ children, height = null, maxHeight = null }) => {
@@ -18,6 +19,7 @@ const FadedOverflow = ({ children, height = null, maxHeight = null }) => {
 
     React.useEffect(() => {
         const currentEl = scrollingElementRef.current;
+
         const throttledSetScrollTop = throttle(evt => {
             setScrollTop(evt.target.scrollTop);
         }, 50);
@@ -37,7 +39,7 @@ const FadedOverflow = ({ children, height = null, maxHeight = null }) => {
                 throttledSetScrollTop,
             );
         };
-    }, [scrollingElementRef.current]);
+    }, [children, scrollingElementRef.current]);
 
     const isScrolledToTop = scrollTop === 0;
     const isScrolledToBottom =

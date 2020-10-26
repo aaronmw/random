@@ -26,7 +26,7 @@ const METHOD_DESCRIPTIONS = {
 
 const PropContainer = styled.div`
     padding: 6px 15px;
-    transition: all 0.125s linear;
+    transition: all 0.125s ease-in-out;
 
     &.is-active {
         margin: 6px;
@@ -74,7 +74,7 @@ const PropMethodTab = styled.button`
     }
 `;
 
-export const PropConfigurator = ({ name, config, onUpdateState }) => {
+const PropConfigBuilder = ({ name, config, onUpdateState }) => {
     const propConfig = config[name];
     const humanReadableName = startCase(name);
     const operator = get(propConfig, ['calc', 'operator']);
@@ -247,3 +247,5 @@ export const PropConfigurator = ({ name, config, onUpdateState }) => {
         </PropContainer>
     );
 };
+
+export default React.memo(PropConfigBuilder);

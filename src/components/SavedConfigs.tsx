@@ -9,7 +9,7 @@ import {
     FlexBox,
     SPACING,
 } from './layout';
-import { Route } from './Navigation';
+import { PageContainer } from './Navigation';
 import migrateData from '../migrateData';
 
 const EmptyMessage = styled(Columns).attrs({
@@ -210,7 +210,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
     };
 
     return (
-        <Route>
+        <PageContainer>
             {!hasSavedConfigs && (
                 <EmptyMessage>
                     Save your configs for easy re-use in any document 🤓
@@ -300,7 +300,7 @@ const SavedConfigs = ({ pluginState, onUpdateState }) => {
             <SaveCurrentConfigButton onClick={handleClickSaveCurrentConfig}>
                 Save Current Config
             </SaveCurrentConfigButton>
-        </Route>
+        </PageContainer>
     );
 };
 

@@ -10,6 +10,17 @@ import {
 
 const NAVBAR_HEIGHT = '30px';
 
+export const PageContainer = styled.div`
+    background-color: white;
+    padding: 15px;
+    position: fixed;
+    top: ${NAVBAR_HEIGHT};
+    right: 0;
+    bottom: 0;
+    left: 0;
+    overflow: auto;
+`;
+
 const StyledNavBar = styled.div`
     background-color: white;
     height: ${NAVBAR_HEIGHT};
@@ -36,16 +47,12 @@ const NavButton = styled.button`
     `}
 `;
 
-const PRIMARY_ROUTES = [
-    { name: 'randomizer', label: 'Properties' },
-    { name: 'saved-configs', label: 'Saved Configs' },
-];
-
-const SECONDARY_ROUTES = [{ name: 'about', label: 'About' }];
+const leftSideButtons = [{ name: 'randomizer', label: 'Properties' }];
+const rightSideButtons = [{ name: 'about', label: 'About' }];
 
 export const NavBar = ({ activeRoute, onUpdateState }) => {
-    const printRoutes = routes =>
-        routes.map(({ name, label }) => (
+    const printButtons = buttons =>
+        buttons.map(({ name, label }) => (
             <NavButton
                 key={name}
                 isActive={activeRoute === name}
@@ -67,22 +74,11 @@ export const NavBar = ({ activeRoute, onUpdateState }) => {
             <StyledNavBarContents>
                 <Columns justify="space-between">
                     <Columns justify="flex-start">
-                        {printRoutes(PRIMARY_ROUTES)}
+                        {printButtons(leftSideButtons)}
                     </Columns>
-                    {printRoutes(SECONDARY_ROUTES)}
+                    {printButtons(rightSideButtons)}
                 </Columns>
             </StyledNavBarContents>
         </StyledNavBar>
     );
 };
-
-export const Route = styled.div`
-    background-color: white;
-    padding: 15px;
-    position: fixed;
-    top: ${NAVBAR_HEIGHT};
-    right: 0;
-    bottom: 0;
-    left: 0;
-    overflow: auto;
-`;

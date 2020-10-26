@@ -228,6 +228,26 @@ const showMessage = message => {
     notificationHandler.current = (figma as any).notify(message);
 };
 
+const hasStrokeOrFill = (arr, type) => {
+    if (arr.length === 0) {
+        showMessage(
+            `🤔️ At least one of your selected elements doesn't have a ${type} to change...`,
+        );
+        return false;
+    }
+    return true;
+};
+
+const isSupportedColor = color => {
+    if (!color) {
+        showMessage(
+            `🤔️ "${color}" doesn't look a color, so we'll just ignore that one...`,
+        );
+        return false;
+    }
+    return true;
+};
+
 const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
     switch (propName) {
         case 'text':
@@ -311,31 +331,29 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
         case 'fillColor':
             const fillsForColor = cloneDeep(node.fills);
             const colorAsRGB = anyColorStringToRGB(newPropValue);
-
-            if (colorAsRGB) {
-                fillsForColor[0].color = colorAsRGB;
-                node.fills = fillsForColor;
-            } else {
-                showMessage(
-                    `🤔️ "${newPropValue}" doesn't look a color, so we'll just ignore that one...`,
-                );
-            }
+            if (!hasStrokeOrFill(fillsForColor, 'fill')) break;
+            if (!isSupportedColor(colorAsRGB)) break;
+            fillsForColor[0].color = colorAsRGB;
+            node.fills = fillsForColor;
             break;
 
         case 'strokeColor':
             const strokesForColor = cloneDeep(node.strokes);
+            if (!hasStrokeOrFill(strokesForColor, 'stroke')) break;
             strokesForColor[0].color = anyColorStringToRGB(newPropValue);
             node.strokes = strokesForColor;
             break;
 
         case 'fillOpacity':
             const fillsForOpacity = cloneDeep(node.fills);
+            if (!hasStrokeOrFill(fillsForOpacity, 'fill')) break;
             fillsForOpacity[0].opacity = toPercentage(newPropValue);
             node.fills = fillsForOpacity;
             break;
 
         case 'strokeOpacity':
             const strokesForOpacity = cloneDeep(node.strokes);
+            if (!hasStrokeOrFill(strokesForOpacity, 'stroke')) break;
             strokesForOpacity[0].opacity = toPercentage(newPropValue);
             node.strokes = strokesForOpacity;
             break;
