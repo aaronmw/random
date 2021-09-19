@@ -7,9 +7,7 @@ import { COLOR_TEXT_LIGHT, Columns, FlexBox } from './layout';
 import { LIST_DELIMETER, MAX_LIST_TEXTAREA_ROWS } from '../config';
 
 const isColor = strColor => {
-    const s = new Option().style;
-    s.color = strColor;
-    return s.color !== '';
+    return strColor.match(/^#([a-f0-9]{3}|[a-f0-9]{6})$/);
 };
 
 const Swatch = ({ color }) => (
@@ -99,9 +97,10 @@ const EditButton = styled(IconButton).attrs({
 const ListBuilder = ({ propName, list, onUpdateState }) => {
     const [isEditing, setIsEditing] = React.useState(false);
     const [uncommittedList, setUncomittedList] = React.useState('');
-    const renderableList = React.useMemo(() => list.split(LIST_DELIMETER), [
-        list,
-    ]);
+    const renderableList = React.useMemo(
+        () => list.split(LIST_DELIMETER),
+        [list],
+    );
 
     const updateListInState = React.useCallback(newList => {
         onUpdateState({

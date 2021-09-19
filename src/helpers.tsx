@@ -72,8 +72,8 @@ function rotateOriginXY(
 
     // shake out the nodes in a new not rotated group. Node rotation is maintained
     group = figma.group(group.children, figma.currentPage);
-    const totalX = group.x,
-        totalY = group.y;
+    const totalX = group.x;
+    const totalY = group.y;
     const totalWidth = group.width;
     const totalHeight = group.height;
 

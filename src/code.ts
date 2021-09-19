@@ -291,10 +291,8 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
                 propConfig.preserveAspectRatio === true
                     ? currentOppositeValue * scaleFactor
                     : currentOppositeValue;
-            const [
-                verticalOriginName,
-                horizontalOriginName,
-            ] = propConfig.selectedOrigin.split('-');
+            const [verticalOriginName, horizontalOriginName] =
+                propConfig.selectedOrigin.split('-');
             const currentWidth = node.width;
             const currentHeight = node.height;
             const newWidth = propName === 'width' ? newValue : newOppositeValue;
@@ -371,7 +369,7 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
             break;
 
         case 'rotation':
-            rotateOriginXY([node], newPropValue, 0.5, 0.5, '%', '%');
+            rotateOriginXY([node], Number(newPropValue), 0.5, 0.5, '%', '%');
             break;
 
         case 'x':
