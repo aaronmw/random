@@ -7,10 +7,10 @@ import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
 import range from 'lodash/range';
 import sample from 'lodash/sample';
-import rotateOriginXY from './helpers';
 import { LIST_DELIMETER } from './config';
-import migrateData from './migrateData';
 import parseCSSColor from './css-color-parser';
+import rotateOriginXY from './helpers';
+import migrateData from './migrateData';
 
 const WINDOW_WIDTH = 290;
 const WINDOW_HEIGHT = 600;
@@ -314,6 +314,14 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
                     : verticalOriginName === 'bottom'
                     ? node.y + (newHeight - currentHeight) / -1
                     : node.y;
+            break;
+
+        case 'cornerRadius':
+        case 'topLeftRadius':
+        case 'topRightRadius':
+        case 'bottomRightRadius':
+        case 'bottomLeftRadius':
+            node[propName] = toInteger(newPropValue);
             break;
 
         case 'layerBlur':

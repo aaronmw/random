@@ -1,15 +1,10 @@
-import * as React from 'react';
-import styled from 'styled-components';
 import get from 'lodash/get';
 import startCase from 'lodash/startCase';
-import { ToggleSwitch } from './controls';
+import * as React from 'react';
+import styled from 'styled-components';
 import CalcBuilder from './CalcBuilder';
+import { ToggleSwitch } from './controls';
 import FormatOptions from './FormatOptions';
-import ListBuilder from './ListBuilder';
-import PrefixSuffixBuilder from './PrefixSuffixBuilder';
-import RangeBuilder from './RangeBuilder';
-import ResizeOptions from './ResizeOptions';
-import SortingOptions from './SortingOptions';
 import {
     COLOR_TEXT,
     COLOR_TEXT_LIGHT,
@@ -17,6 +12,11 @@ import {
     FONT_WEIGHT_BOLD,
     Row,
 } from './layout';
+import ListBuilder from './ListBuilder';
+import PrefixSuffixBuilder from './PrefixSuffixBuilder';
+import RangeBuilder from './RangeBuilder';
+import ResizeOptions from './ResizeOptions';
+import SortingOptions from './SortingOptions';
 
 const METHOD_DESCRIPTIONS = {
     calc: 'Changes the current value by a random amount',
@@ -41,12 +41,14 @@ const PropContainer = styled.div`
 `;
 
 const PropHeader = styled.div`
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    font-weight: 400;
-    cursor: pointer;
     color: ${COLOR_TEXT_LIGHT};
+    cursor: pointer;
+    display: flex;
+    flex-wrap: wrap;
+    font-weight: 400;
+    justify-content: space-between;
+    row-gap: 4px;
 
     &:hover,
     &.is-active {
@@ -139,7 +141,7 @@ const PropConfigBuilder = ({ name, config, onUpdateState }) => {
         <PropContainer {...commonProps}>
             <PropHeader onClick={handlePropHeaderClick} {...commonProps}>
                 <div>{humanReadableName}</div>
-                <FlexBox justify="flex-end">
+                <FlexBox justify="flex-end" style={{ flexGrow: 1 }}>
                     {isActive &&
                         ['calc', 'list', 'range'].map(methodName => {
                             if (propConfig[methodName]) {

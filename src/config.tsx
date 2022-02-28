@@ -76,6 +76,18 @@ export const COLOR = {
     ),
 };
 
+export const BORDER_RADIUS = {
+    ...INTEGER,
+    calc: {
+        ...INTEGER.calc,
+        add: {
+            min: -1,
+            max: 1,
+        },
+    },
+    range: { min: 0, max: 50 },
+};
+
 export const DEFAULT_CONFIG = {
     text: { ...STRING, sortOrder: 'random' },
     width: {
@@ -92,6 +104,11 @@ export const DEFAULT_CONFIG = {
     y: INTEGER,
     opacity: PERCENTAGE,
     rotation: DEGREES,
+    cornerRadius: BORDER_RADIUS,
+    topLeftRadius: BORDER_RADIUS,
+    topRightRadius: BORDER_RADIUS,
+    bottomRightRadius: BORDER_RADIUS,
+    bottomLeftRadius: BORDER_RADIUS,
     fillColor: COLOR,
     fillOpacity: PERCENTAGE,
     strokeColor: COLOR,
