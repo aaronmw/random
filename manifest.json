@@ -7,7 +7,7 @@
   "ui": "dist/index.html",
   "permissions": [],
   "networkAccess": {
-    "allowedDomains": ["none"]
+    "allowedDomains": ["https://*.fontawesome.com", "https://fonts.googleapis.com", "https://fonts.gstatic.com"]
   },
   "documentAccess": "dynamic-page"
 }

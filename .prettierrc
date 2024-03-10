@@ -1,0 +1,7 @@
+{
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "quoteProps": "consistent",
+  "semi": false,
+  "singleAttributePerLine": true,
+  "tailwindFunctions": ["twJoin","twMerge"]
+}
