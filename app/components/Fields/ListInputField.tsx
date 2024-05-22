@@ -59,11 +59,13 @@ const classNames = {
       group/list
       relative
       grid
+      max-h-[300px]
       w-full
       grid-flow-col
       grid-cols-[min-content,1fr,min-content]
       grid-rows-[max-content]
-      overflow-hidden
+      overflow-y-auto
+      overflow-x-hidden
       leading-none
     `,
   ),

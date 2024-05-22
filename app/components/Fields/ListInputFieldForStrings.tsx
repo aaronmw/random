@@ -29,21 +29,25 @@ function ListInputFieldForStrings({
         label={label}
         propertyName={propertyName}
         renderBottomSlot={
-          <Button
-            className="
-              flex
-              items-center
-              gap-1
-            "
-            variant="link"
-            onClick={() => setIsShowingRandy(true)}
-          >
-            <Icon
-              name="robot"
-              variant="solid"
-            />
-            Randy
-          </Button>
+          process.env.NODE_ENV === "development" && (
+            <div className="mt-1 flex justify-end">
+              <Button
+                className="
+                  flex
+                  items-center
+                  gap-1
+                "
+                variant="link"
+                onClick={() => setIsShowingRandy(true)}
+              >
+                <Icon
+                  name="robot"
+                  variant="solid"
+                />
+                Randy
+              </Button>
+            </div>
+          )
         }
         validatorFunction={() => true}
       />
