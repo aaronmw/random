@@ -17,7 +17,7 @@ const getRandomPropertyValue = ({
   propertyName,
 }: {
   node: SceneNode
-  propertySettings
+  propertySettings: PropertySettings
   propertyName: PropertyName
 }) => {
   const { mode, modeOptions } = propertySettings
