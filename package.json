@@ -44,6 +44,6 @@
     "prettier-plugin-tailwindcss": "^0.5.14"
   },
   "config": {
-    "siteURL": "https://test-ai-plugin-template.vercel.app/"
+    "siteURL": "https://rewrite--figma-property-randomizer.netlify.app/"
   }
 }
