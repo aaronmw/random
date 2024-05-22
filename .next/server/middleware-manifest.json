@@ -1,6 +1,33 @@
 {
   "version": 3,
   "middleware": {},
-  "functions": {},
+  "functions": {
+    "/api/completion/route": {
+      "files": [
+        "server/middleware-build-manifest.js",
+        "server/middleware-react-loadable-manifest.js",
+        "server/next-font-manifest.js",
+        "server/interception-route-rewrite-manifest.js",
+        "prerender-manifest.js",
+        "server/edge-runtime-webpack.js",
+        "server/app/api/completion/route.js"
+      ],
+      "name": "app/api/completion/route",
+      "page": "/api/completion/route",
+      "matchers": [
+        {
+          "regexp": "^/api/completion$",
+          "originalSource": "/api/completion"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "environments": {
+        "previewModeId": "c7dc8b18e63e7b6e0e47bea0c074a876",
+        "previewModeSigningKey": "99e8c18ec1b56ffcebcb0d017204242f36b111a3a551d0d9b220a0c78b5a1ad0",
+        "previewModeEncryptionKey": "91d7396c9e804a3f7826cf91051679cbada3a8d34e6597840e4fa2dca5e2689d"
+      }
+    }
+  },
   "sortedMiddleware": []
 }

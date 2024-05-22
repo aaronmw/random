@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import Link from "next/link"
 import Script from "next/script"
+import { Suspense } from "react"
 import { twJoin, twMerge } from "tailwind-merge"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -92,7 +93,7 @@ export default function RootLayout({
             </nav>
           </header>
 
-          {children}
+          <Suspense fallback={null}>{children}</Suspense>
         </main>
       </body>
     </html>

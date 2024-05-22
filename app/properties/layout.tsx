@@ -12,12 +12,20 @@ import {
   PropertySettings,
 } from "@/lib/pluginTypes"
 import { useReducerWithPersistedStateKeys } from "@/lib/useReducerWithPersistedStateKeys"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ReactNode, useCallback, useEffect, useState } from "react"
 import { twMerge } from "tailwind-merge"
 
 export default function Layout({ children }: { children: ReactNode }) {
   const router = useRouter()
+
+  const params = useSearchParams()
+
+  const isLightMode = params.get("isLightMode") === "true"
+
+  useEffect(() => {
+    document.body.classList.toggle("dark", !isLightMode)
+  }, [isLightMode])
 
   const [state, dispatch] = useReducerWithPersistedStateKeys({
     initializer: ({ finalState }) => {
