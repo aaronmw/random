@@ -1,0 +1,21 @@
+{
+  "name": "Property Randomizer",
+  "id": "829089184334973766",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "enableProposedApi": false,
+  "editorType": ["figma", "figjam"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://*.fontawesome.com",
+      "https://fonts.googleapis.com",
+      "https://fonts.gstatic.com",
+      "https://api.openai.com",
+      "https://*.netlify.app"
+    ],
+    "devAllowedDomains": [
+      "http://localhost:3000"
+    ]
+  },
+  "documentAccess": "dynamic-page"
+}
