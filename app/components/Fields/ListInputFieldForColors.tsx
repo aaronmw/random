@@ -1,5 +1,5 @@
 import { Icon } from "@/app/components/Icon"
-import { PropertyName } from "@/lib/pluginTypes"
+import { PropertyName } from "@/lib/types"
 import { ComponentProps, MouseEvent, useRef, useState } from "react"
 import { twMerge } from "tailwind-merge"
 import { FieldContainerProps } from "./FieldContainer"

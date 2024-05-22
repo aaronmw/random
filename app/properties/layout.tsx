@@ -10,7 +10,7 @@ import {
   PluginAction,
   PropertyName,
   PropertySettings,
-} from "@/lib/pluginTypes"
+} from "@/lib/types"
 import { useReducerWithPersistedStateKeys } from "@/lib/useReducerWithPersistedStateKeys"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ReactNode, useCallback, useEffect, useState } from "react"

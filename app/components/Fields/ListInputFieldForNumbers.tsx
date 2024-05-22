@@ -1,5 +1,5 @@
 import { hasProperty } from "@/lib/hasProperty"
-import { DATA_TYPES, DataType, PropertyName } from "@/lib/pluginTypes"
+import { DATA_TYPES, DataType, PropertyName } from "@/lib/types"
 import { inRange } from "lodash"
 import { ComponentProps } from "react"
 import invariant from "tiny-invariant"

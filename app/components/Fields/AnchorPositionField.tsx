@@ -1,5 +1,5 @@
 import { AppContext } from "@/app/reducer"
-import { PropertyName } from "@/lib/pluginTypes"
+import { PropertyName } from "@/lib/types"
 import { MouseEvent, useContext } from "react"
 import { twMerge } from "tailwind-merge"
 import { FieldContainer, FieldContainerProps } from "./FieldContainer"

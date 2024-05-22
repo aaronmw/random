@@ -10,11 +10,7 @@ import { GridContainer } from "@/app/components/GridContainer"
 import { IconName } from "@/app/components/Icon"
 import { AppContext } from "@/app/reducer"
 import { hasProperty } from "@/lib/hasProperty"
-import {
-  DATA_TYPES,
-  PropertyName,
-  dataTypesByPropertyName,
-} from "@/lib/pluginTypes"
+import { DATA_TYPES, PropertyName, dataTypesByPropertyName } from "@/lib/types"
 import { useContext, useEffect } from "react"
 import { twMerge } from "tailwind-merge"
 import invariant from "tiny-invariant"

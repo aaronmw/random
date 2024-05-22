@@ -1,4 +1,4 @@
-import { AppAction, AppState } from "@/lib/pluginTypes"
+import { AppAction, AppState } from "@/lib/types"
 import update from "immutability-helper"
 import { mapValues, set } from "lodash"
 import invariant from "tiny-invariant"

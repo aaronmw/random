@@ -6,7 +6,7 @@ import {
   percentageBasedPropertyOptions,
   textBasedPropertyOptions,
 } from "@/app/reducer/propertyModels"
-import { AppState } from "@/lib/pluginTypes"
+import { AppState } from "@/lib/types"
 
 export const initialState: AppState = {
   activePropertyName: "text",

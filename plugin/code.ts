@@ -1,11 +1,11 @@
 import { getRandomPropertyValue } from "@/lib/getRandomPropertyValue"
+import { setNodeProperty } from "@/lib/setNodeProperty"
 import type {
   AppAction,
   PluginAction,
   PropertyName,
   PropertySettings,
-} from "@/lib/pluginTypes"
-import { setNodeProperty } from "@/lib/setNodeProperty"
+} from "@/lib/types"
 import { merge } from "lodash"
 import naturalSort from "natural-compare-lite"
 

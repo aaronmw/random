@@ -1,14 +1,14 @@
 import { hasProperty } from "@/lib/hasProperty"
+import { rotateOriginXY } from "@/lib/rotateOriginXY"
+import { setCharacters } from "@/lib/setCharacters"
+import { toDegrees } from "@/lib/toDegrees"
+import { toPercentage } from "@/lib/toPercentage"
 import type {
   AnchorPosition,
   DataType,
   PropertyName,
   PropertySettings,
-} from "@/lib/pluginTypes"
-import { rotateOriginXY } from "@/lib/rotateOriginXY"
-import { setCharacters } from "@/lib/setCharacters"
-import { toDegrees } from "@/lib/toDegrees"
-import { toPercentage } from "@/lib/toPercentage"
+} from "@/lib/types"
 import { cloneDeep } from "lodash"
 
 export async function setNodeProperty({

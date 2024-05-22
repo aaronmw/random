@@ -1,4 +1,4 @@
-import { AnchorPosition } from "@/lib/pluginTypes"
+import { AnchorPosition } from "@/lib/types"
 import { xor } from "lodash"
 
 export const anchorPositions = [

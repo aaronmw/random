@@ -2,7 +2,7 @@ import { Badge } from "@/app/components/Badge"
 import { Box } from "@/app/components/Box"
 import { Icon } from "@/app/components/Icon"
 import { AppContext } from "@/app/reducer"
-import { PropertyName } from "@/lib/pluginTypes"
+import { PropertyName } from "@/lib/types"
 import { get } from "lodash"
 import {
   FocusEvent,

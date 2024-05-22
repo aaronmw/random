@@ -1,4 +1,4 @@
-import { PropertyName, PropertySettings } from "@/lib/pluginTypes"
+import { PropertyName, PropertySettings } from "@/lib/types"
 import { get, random, sample, toInteger } from "lodash"
 import invariant from "tiny-invariant"
 

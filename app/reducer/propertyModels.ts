@@ -1,4 +1,4 @@
-import { PropertySettings } from "@/lib/pluginTypes"
+import { PropertySettings } from "@/lib/types"
 
 export const colorBasedPropertyOptions: PropertySettings = {
   mode: "list",

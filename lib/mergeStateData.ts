@@ -1,5 +1,5 @@
-import { AppState } from "@/lib/pluginTypes"
 import { removeNullProperties } from "@/lib/removeNullProperties"
+import { AppState } from "@/lib/types"
 import { cloneDeep, mergeWith } from "lodash"
 
 export function mergeStateData({

@@ -1,4 +1,4 @@
-import { PropertyName } from "@/lib/pluginTypes"
+import { PropertyName } from "@/lib/types"
 
 export const groupedPropertyNames: [
   groupName: string,

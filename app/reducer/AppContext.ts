@@ -1,4 +1,4 @@
-import { AppAction, AppState } from "@/lib/pluginTypes"
+import { AppAction, AppState } from "@/lib/types"
 import { Dispatch, createContext } from "react"
 import { initialState } from "./initialState"
 

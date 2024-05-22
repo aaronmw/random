@@ -1,7 +1,7 @@
 import { Icon } from "@/app/components/Icon"
 import { IconButton } from "@/app/components/IconButton"
 import { AppContext } from "@/app/reducer"
-import { PropertyName } from "@/lib/pluginTypes"
+import { PropertyName } from "@/lib/types"
 import { sortBy } from "lodash"
 import Link from "next/link"
 import { useParams } from "next/navigation"
