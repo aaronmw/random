@@ -12,7 +12,7 @@ import {
   PropertySettings,
 } from "@/lib/types"
 import { useReducerWithPersistedStateKeys } from "@/lib/useReducerWithPersistedStateKeys"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { ReactNode, useCallback, useEffect } from "react"
 import { twJoin } from "tailwind-merge"
 
@@ -65,8 +65,6 @@ export default function Layout({ children }: { children: ReactNode }) {
     reducer: AppReducer,
   })
 
-  const params = useSearchParams()
-
   const { propertySettings } = state
 
   const hasRandomizedProperties = Object.entries(propertySettings).some(
@@ -82,12 +80,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       "*",
     )
   }, [])
-
-  const isLightMode = params.get("isLightMode") === "true"
-
-  useEffect(() => {
-    document.body.classList.toggle("dark", !isLightMode)
-  }, [isLightMode])
 
   useEffect(() => {
     window.onmessage = (event: {

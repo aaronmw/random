@@ -1,12 +1,15 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect } from "react"
 
 export default function PropertiesIndexPage() {
   const router = useRouter()
+  const params = useSearchParams()
+  const isLightMode = params.get("isLightMode") === "true"
 
   useEffect(() => {
+    document.body.classList.toggle("dark", !isLightMode)
     router.push(`properties/text`)
-  }, [router])
+  }, [isLightMode, router])
 }
