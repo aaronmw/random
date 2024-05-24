@@ -1,6 +1,14 @@
+import { Box } from "@/app/components/Box"
 import { AppContext } from "@/app/reducer"
 import { get } from "lodash"
-import { ChangeEvent, ComponentProps, useContext } from "react"
+import {
+  ChangeEvent,
+  ComponentProps,
+  FocusEvent,
+  Ref,
+  forwardRef,
+  useContext,
+} from "react"
 import { FieldContainer, FieldContainerProps } from "./FieldContainer"
 
 export { LabeledInputField }
@@ -21,16 +29,19 @@ type LabeledInputFieldProps<P extends string, V extends string | number> = Omit<
       }
   )
 
-const LabeledInputField = <P extends string, V extends string | number>({
-  defaultValue,
-  label,
-  path,
-  type,
-  value,
-  variant,
-  onChange,
-  ...otherProps
-}: LabeledInputFieldProps<P, V>) => {
+const InnerLabeledInputField = <P extends string, V extends string | number>(
+  {
+    defaultValue,
+    label,
+    path,
+    type,
+    value,
+    variant,
+    onChange,
+    ...otherProps
+  }: LabeledInputFieldProps<P, V>,
+  ref: Ref<HTMLInputElement>,
+) => {
   const { dispatch, state } = useContext(AppContext)
 
   const currentValue = value ?? (path ? String(get(state, path)) : undefined)
@@ -57,23 +68,19 @@ const LabeledInputField = <P extends string, V extends string | number>({
       label={label}
       variant={variant}
     >
-      <input
-        className="
-          w-full
-          border-0
-          bg-bgColor
-          text-textColor
-          outline-0
-          [font-size:inherit]
-          placeholder:text-fadedTextColor
-        "
+      <Box
+        as="input"
         placeholder={type === "number" ? "0" : "text" ? "-" : ""}
+        ref={ref}
         type={type}
         value={String(currentValue ?? defaultValue)}
+        variant={variant === "labelOnTop" ? "input" : "inputWithoutBorder"}
         onChange={handleChange}
-        onFocus={(e) => e.target.select()}
+        onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
         {...otherProps}
       />
     </FieldContainer>
   )
 }
+
+const LabeledInputField = forwardRef(InnerLabeledInputField)

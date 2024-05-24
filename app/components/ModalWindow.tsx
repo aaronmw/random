@@ -1,7 +1,10 @@
+"use client"
+
+import { Icon } from "@/app/components/Icon"
+import { useIsClient } from "@uidotdev/usehooks"
 import { ComponentPropsWithoutRef, MouseEvent, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { twJoin, twMerge } from "tailwind-merge"
-import { Icon } from "./Icon"
 
 export { ModalWindow }
 export type { ModalWindowProps }
@@ -86,6 +89,8 @@ const ModalWindow = ({
   onClose,
   ...otherProps
 }: ModalWindowProps) => {
+  const isClient = useIsClient()
+
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
       const activeElement = document.activeElement
@@ -122,29 +127,36 @@ const ModalWindow = ({
     onClose()
   }
 
-  return createPortal(
-    <div
-      className={twMerge(classNames.container({ isOpen }), className)}
-      {...otherProps}
-    >
-      <div
-        className={classNames.backdrop}
-        onClick={onClose}
-      />
-
-      <div className={twMerge(classNames.window, classNamesByVariant[variant])}>
-        <button
-          className={twMerge(classNames.closeButton, classNamesForCloseButton)}
+  return !isClient
+    ? null
+    : createPortal(
+        <div
+          className={twMerge(classNames.container({ isOpen }), className)}
+          {...otherProps}
         >
-          <Icon
-            name="xmark"
-            onClick={handleClickClose}
+          <div
+            className={classNames.backdrop}
+            onClick={onClose}
           />
-        </button>
 
-        {children}
-      </div>
-    </div>,
-    document.body,
-  )
+          <div
+            className={twMerge(classNames.window, classNamesByVariant[variant])}
+          >
+            <button
+              className={twMerge(
+                classNames.closeButton,
+                classNamesForCloseButton,
+              )}
+            >
+              <Icon
+                name="xmark"
+                onClick={handleClickClose}
+              />
+            </button>
+
+            {children}
+          </div>
+        </div>,
+        document.body,
+      )
 }

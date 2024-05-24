@@ -26,7 +26,8 @@ const classNamesForInteractiveSurface = `
 const classNamesByVariant = {
   unlabeled: {
     container: "",
-    interactiveSurface: "label",
+    interactiveSurfaceElement: "label",
+    interactiveSurface: ``,
     field: "",
     label: "hidden",
   },
@@ -34,12 +35,14 @@ const classNamesByVariant = {
   full: {
     container: `
       col-span-28
+      leading-none
       flex
       items-center
       justify-between
       pl-2
     `,
-    interactiveSurface: "field",
+    interactiveSurfaceElement: "field",
+    interactiveSurface: ``,
     field: `
       flex
       justify-end
@@ -52,11 +55,13 @@ const classNamesByVariant = {
   half: {
     container: `
       col-span-14
+      leading-none
       grid
       grid-cols-subgrid
       pl-2
     `,
-    interactiveSurface: "label",
+    interactiveSurfaceElement: "label",
+    interactiveSurface: ``,
     label: `
       grid
       text-fadedTextColor
@@ -73,12 +78,14 @@ const classNamesByVariant = {
   labelOnTop: {
     container: `
       col-span-28
+      leading-none
       flex
       flex-col
       pl-2
       gap-1
     `,
-    interactiveSurface: "field",
+    interactiveSurfaceElement: "field",
+    interactiveSurface: `min-h-0`,
     field: `
       block
     `,
@@ -96,28 +103,31 @@ const FieldContainer = ({
   variant = "unlabeled",
   ...otherProps
 }: FieldContainerProps) => {
-  const {
-    container: classNamesForContainer,
-    field: classNamesForField,
-    interactiveSurface,
-    label: classNamesForLabel,
-  } = classNamesByVariant[variant]
+  const classNames = classNamesByVariant[variant]
 
   return (
     <label
       className={twMerge(
-        interactiveSurface === "label" && classNamesForInteractiveSurface,
-        classNamesForContainer,
+        classNames.interactiveSurfaceElement === "label" &&
+          classNamesForInteractiveSurface,
+        classNames.container,
         className,
       )}
       {...otherProps}
     >
-      <span className={twJoin(classNamesForLabel)}>{label}</span>
-      <span className={classNamesForField}>
+      <span className={twJoin(classNames.label)}>{label}</span>
+      <span className={classNames.field}>
         <ConditionalWrapper
-          condition={interactiveSurface === "field"}
+          condition={classNames.interactiveSurfaceElement === "field"}
           wrapper={(children) => (
-            <span className={classNamesForInteractiveSurface}>{children}</span>
+            <span
+              className={twMerge(
+                classNamesForInteractiveSurface,
+                classNames.interactiveSurface,
+              )}
+            >
+              {children}
+            </span>
           )}
         >
           {children}

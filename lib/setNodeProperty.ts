@@ -1,3 +1,4 @@
+import { anyColorStringToRGB } from "@/lib/anyColorStringToRGB"
 import { hasProperty } from "@/lib/hasProperty"
 import { rotateOriginXY } from "@/lib/rotateOriginXY"
 import { setCharacters } from "@/lib/setCharacters"
@@ -5,7 +6,6 @@ import { toDegrees } from "@/lib/toDegrees"
 import { toPercentage } from "@/lib/toPercentage"
 import type {
   AnchorPosition,
-  DataType,
   PropertyName,
   PropertySettings,
 } from "@/lib/types"
@@ -22,8 +22,6 @@ export async function setNodeProperty({
   propertyName: PropertyName
   value: string | number
 }) {
-  console.log({ node, propertySettings, propertyName, value })
-
   switch (propertyName) {
     case "text": {
       if (!hasProperty(node, "characters")) {
@@ -87,8 +85,6 @@ export async function setNodeProperty({
     case "strokeColor":
     case "fillOpacity":
     case "strokeOpacity": {
-      const paintShit = (property: "fill" | "stroke", dataType: DataType) => {}
-
       const isFillProperty =
         propertyName === "fillColor" || propertyName === "fillOpacity"
       const isColorProperty =
@@ -102,7 +98,7 @@ export async function setNodeProperty({
 
       const fillsOrStrokes = cloneDeep(node[fillsOrStrokesPropertyName])
       const colorOrOpacity = isColorProperty
-        ? figma.util.solidPaint(String(value))
+        ? anyColorStringToRGB(value)
         : toPercentage(value)
 
       fillsOrStrokes[0][colorOrOpacityPropertyName] = colorOrOpacity

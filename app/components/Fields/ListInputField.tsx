@@ -5,10 +5,7 @@ import { AppContext } from "@/app/reducer"
 import { PropertyName } from "@/lib/types"
 import { get } from "lodash"
 import {
-  FocusEvent,
-  FocusEventHandler,
   KeyboardEvent,
-  MouseEvent,
   ReactNode,
   useContext,
   useEffect,
@@ -206,18 +203,14 @@ export function ListInputField({
   renderBottomSlot,
   validatorFunction,
 }: ListInputFieldProps) {
+  const scrollingElementRef = useRef<HTMLDivElement>(null)
+  const textareaElementRef = useRef<HTMLTextAreaElement>(null)
   const [isEditing, setIsEditing] = useState(false)
-
   const [scrollTop, setScrollTop] = useState<number | null>(null)
-
   const [clickedLineIndex, setClickedLineIndex] = useState<number | null>(null)
-
   const { dispatch, state } = useContext(AppContext)
-
   const path = `propertySettings.${propertyName}.modeOptions.list.options`
-
   const values = get(state, path) as string[]
-
   const [metaDataByLineIndex, setMetaDataByLineIndex] = useState<
     (string | true)[]
   >([])
@@ -257,18 +250,13 @@ export function ListInputField({
         const startingIndex = values
           .slice(0, clickedLineIndex)
           .reduce((totalOffset, value) => totalOffset + value.length + 1, 0)
-
         const endingIndex = startingIndex + values[clickedLineIndex].length
 
         textareaElement.setSelectionRange(startingIndex, endingIndex)
-
         setClickedLineIndex(null)
       }
     }
   }, [clickedLineIndex, isEditing, scrollTop, values])
-
-  const scrollingElementRef = useRef<HTMLDivElement>(null)
-  const textareaElementRef = useRef<HTMLTextAreaElement>(null)
 
   function startEditingLineIndex({ lineIndex }: { lineIndex: number }) {
     setClickedLineIndex(lineIndex)
@@ -328,7 +316,6 @@ export function ListInputField({
       label={
         <div className={classNames.labelContainer}>
           {label}
-
           <div className={classNames.badgesContainer}>
             <Badge title="Number of Valid Values">
               <Icon
@@ -339,7 +326,6 @@ export function ListInputField({
                 errorMessages.length -
                 numDisabledValues}
             </Badge>
-
             {errorMessages.length >= 1 && (
               <Badge
                 title="Number of Invalid Values"
@@ -352,7 +338,6 @@ export function ListInputField({
                 {errorMessages.length}
               </Badge>
             )}
-
             {numDisabledValues >= 1 && (
               <Badge title="Number of Disabled Values">
                 {"// "}
@@ -388,7 +373,6 @@ export function ListInputField({
                 </Box>
               )
             })}
-
           {isEditing ? (
             <textarea
               className={classNames.textArea}
@@ -403,12 +387,10 @@ export function ListInputField({
           ) : (
             values.map((value, lineIndex) => {
               const isCommentedOut = String(value).startsWith("//")
-
               const isValid =
                 !isCommentedOut &&
                 (typeof metaDataByLineIndex[lineIndex] === "undefined" ||
                   metaDataByLineIndex[lineIndex] === true)
-
               return (
                 <div
                   className={classNames.valueContainer({
@@ -425,15 +407,12 @@ export function ListInputField({
               )
             })
           )}
-
           {values.map((value, lineIndex) => {
             const isCommentedOut = String(value).startsWith("//")
-
             const isValid =
               !isCommentedOut &&
               (typeof metaDataByLineIndex[lineIndex] === "undefined" ||
                 metaDataByLineIndex[lineIndex] === true)
-
             return (
               <div
                 className={classNames.rightSlotContainer({

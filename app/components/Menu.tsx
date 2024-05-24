@@ -1,4 +1,7 @@
+"use client"
+
 import { Icon, IconName } from "@/app/components/Icon"
+import { useIsClient } from "@uidotdev/usehooks"
 import { ComponentProps, MouseEvent, createContext, useContext } from "react"
 import { createPortal } from "react-dom"
 import { twJoin, twMerge } from "tailwind-merge"
@@ -11,6 +14,7 @@ interface MenuProps extends ComponentProps<"ul"> {
 }
 
 interface MenuItemProps extends Omit<ComponentProps<"li">, "onClick"> {
+  disabled?: boolean
   icon?: IconName
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void
 }
@@ -66,15 +70,17 @@ const classNames = {
           `,
     ),
 
-  menuItem: twJoin(`
+  menuItemButton: twJoin(`
     flex
     w-full
     items-center
     gap-3
     px-4
-    py-1
-    hover:bg-accentColor
+    py-2
     hover:text-white
+    disabled:cursor-default
+    disabled:opacity-50
+    [&:not(:disabled)]:hover:bg-accentColor
   `),
 }
 
@@ -85,27 +91,32 @@ function Menu({
   onClose,
   ...otherProps
 }: MenuProps) {
-  return createPortal(
-    <MenuContext.Provider value={{ isOpen, onClose }}>
-      <div
-        className={classNames.backdrop({ isOpen })}
-        onClick={onClose}
-      />
+  const isClient = useIsClient()
 
-      <ul
-        className={twMerge(classNames.container({ isOpen }), className)}
-        {...otherProps}
-      >
-        {children}
-      </ul>
-    </MenuContext.Provider>,
-    document.body,
-  )
+  return !isClient
+    ? null
+    : createPortal(
+        <MenuContext.Provider value={{ isOpen, onClose }}>
+          <div
+            className={classNames.backdrop({ isOpen })}
+            onClick={onClose}
+          />
+
+          <ul
+            className={twMerge(classNames.container({ isOpen }), className)}
+            {...otherProps}
+          >
+            {children}
+          </ul>
+        </MenuContext.Provider>,
+        document.body,
+      )
 }
 
 function MenuItem({
   children,
   className,
+  disabled,
   icon,
   onClick,
   ...otherProps
@@ -114,11 +125,12 @@ function MenuItem({
 
   return (
     <li
-      className={twMerge(``, className)}
+      className={twMerge(className)}
       {...otherProps}
     >
       <button
-        className={classNames.menuItem}
+        className={classNames.menuItemButton}
+        disabled={disabled}
         onClick={(e) => {
           onClick?.(e)
           onClose()

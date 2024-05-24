@@ -91,6 +91,7 @@ const config: Config = {
         "*": {
           scrollbarColor: `${theme("colors.borderColor")} transparent`,
           letterSpacing: "0.05em",
+          lineHeight: "1em",
         },
         "*::-webkit-scrollbar": {
           height: theme("spacing.2"),

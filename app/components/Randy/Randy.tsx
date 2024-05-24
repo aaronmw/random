@@ -1,3 +1,5 @@
+"use client"
+
 import { Button } from "@/app/components/Button"
 import { Icon } from "@/app/components/Icon"
 import { ModalWindow, ModalWindowProps } from "@/app/components/ModalWindow"

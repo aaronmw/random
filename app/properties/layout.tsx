@@ -2,7 +2,7 @@
 
 import { Button } from "@/app/components/Button"
 import { Icon } from "@/app/components/Icon"
-import { Menu, MenuItem, MenuItemDivider } from "@/app/components/Menu"
+import { PresetsMenu } from "@/app/components/PresetsMenu"
 import { PropertyMenu } from "@/app/components/PropertyMenu"
 import { AppContext, AppReducer, initialState } from "@/app/reducer"
 import {
@@ -13,19 +13,43 @@ import {
 } from "@/lib/types"
 import { useReducerWithPersistedStateKeys } from "@/lib/useReducerWithPersistedStateKeys"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ReactNode, useCallback, useEffect, useState } from "react"
-import { twMerge } from "tailwind-merge"
+import { ReactNode, useCallback, useEffect } from "react"
+import { twJoin } from "tailwind-merge"
+
+const classNames = {
+  propertyMenu: twJoin(
+    `
+      col-start-1
+      col-end-2
+      row-start-2
+      row-end-3
+      overflow-hidden
+      border-r
+    `,
+  ),
+
+  footer: twJoin(
+    `
+      relative
+      col-start-1
+      col-end-3
+      row-start-3
+      row-end-4
+      flex
+      divide-x
+      border-t
+    `,
+  ),
+
+  executeButton: twJoin(
+    `
+      w-full
+    `,
+  ),
+}
 
 export default function Layout({ children }: { children: ReactNode }) {
   const router = useRouter()
-
-  const params = useSearchParams()
-
-  const isLightMode = params.get("isLightMode") === "true"
-
-  useEffect(() => {
-    document.body.classList.toggle("dark", !isLightMode)
-  }, [isLightMode])
 
   const [state, dispatch] = useReducerWithPersistedStateKeys({
     initializer: ({ finalState }) => {
@@ -37,11 +61,17 @@ export default function Layout({ children }: { children: ReactNode }) {
     },
     initialState,
     localStorageKeyName: "plugin-state",
-    persistedKeys: ["activePropertyName"],
+    persistedKeys: ["activePropertyName", "savedPropertySettings"],
     reducer: AppReducer,
   })
 
-  const [isPresetsMenuOpen, setIsPresetsMenuOpen] = useState(false)
+  const params = useSearchParams()
+
+  const { propertySettings } = state
+
+  const hasRandomizedProperties = Object.entries(propertySettings).some(
+    ([_, { isRandomized }]) => isRandomized === true,
+  )
 
   const dispatchPluginAction = useCallback((pluginAction: PluginAction) => {
     parent.postMessage(
@@ -52,6 +82,12 @@ export default function Layout({ children }: { children: ReactNode }) {
       "*",
     )
   }, [])
+
+  const isLightMode = params.get("isLightMode") === "true"
+
+  useEffect(() => {
+    document.body.classList.toggle("dark", !isLightMode)
+  }, [isLightMode])
 
   useEffect(() => {
     window.onmessage = (event: {
@@ -64,8 +100,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   }, [dispatch])
 
   useEffect(() => {
-    const { propertySettings } = state
-
     const randomizedPropertySettings = Object.entries(propertySettings).filter(
       ([, { isRandomized }]) => isRandomized,
     )
@@ -82,7 +116,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         ) as Record<PropertyName, PropertySettings>,
       },
     })
-  }, [dispatch, dispatchPluginAction, state])
+  }, [dispatch, dispatchPluginAction, propertySettings])
 
   useEffect(() => {
     dispatchPluginAction({
@@ -108,69 +142,16 @@ export default function Layout({ children }: { children: ReactNode }) {
         state,
       }}
     >
-      <PropertyMenu
-        className="
-          col-start-1
-          col-end-2
-          row-start-2
-          row-end-3
-          overflow-hidden
-          border-r
-        "
-      />
+      <PropertyMenu className={classNames.propertyMenu} />
 
       {children}
 
-      <footer
-        className="
-          relative
-          col-start-1
-          col-end-3
-          row-start-3
-          row-end-4
-          flex
-          divide-x
-          border-t
-        "
-      >
-        <Button
-          className={twMerge(
-            isPresetsMenuOpen &&
-              `
-                relative
-                z-50
-              `,
-          )}
-          title="Saved Presets Menu"
-          variant="primary"
-          onClick={() => setIsPresetsMenuOpen(!isPresetsMenuOpen)}
-        >
-          <Icon
-            name="floppy-disk"
-            variant="solid"
-          />
-        </Button>
-
-        <Menu
-          className="
-            absolute
-            bottom-8
-            left-0
-            z-50
-          "
-          isOpen={isPresetsMenuOpen}
-          onClose={() => setIsPresetsMenuOpen(false)}
-        >
-          <MenuItem icon="floppy-disk">Save as Preset...</MenuItem>
-          <MenuItemDivider />
-          <MenuItem>Vertical Bars</MenuItem>
-          <MenuItem>Horizontal Bars</MenuItem>
-          <MenuItem>Pie Slices</MenuItem>
-          <MenuItem>Confetti</MenuItem>
-        </Menu>
+      <footer className={classNames.footer}>
+        <PresetsMenu />
 
         <Button
-          className="w-full"
+          className={classNames.executeButton}
+          disabled={!hasRandomizedProperties}
           variant="primary"
           onClick={handleClickExecute}
         >

@@ -10,13 +10,13 @@ export { AppReducer }
 const AppReducer = (state: AppState, action: AppAction) => {
   let newState: AppState = state
 
+  if (typeof action === "undefined") {
+    return newState
+  }
+
   switch (action.type) {
     case "receiveSettingsFromSelectedNodes": {
       const { propertySettingsFromSelectedNodes } = action.payload
-
-      console.log("Received settings from selected nodes:", {
-        propertySettingsFromSelectedNodes,
-      })
 
       newState = {
         ...newState,

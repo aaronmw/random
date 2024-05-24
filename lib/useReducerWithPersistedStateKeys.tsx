@@ -1,3 +1,5 @@
+"use client"
+
 import { pick } from "lodash"
 import { Dispatch, Reducer, useEffect, useReducer } from "react"
 
@@ -19,6 +21,10 @@ export const useReducerWithPersistedStateKeys = <T, A>({
   reducer: Reducer<T, A>
 }): [state: T, dispatch: Dispatch<A>] => {
   const [state, dispatch] = useReducer(reducer, initialState, () => {
+    if (typeof window === "undefined") {
+      return initialState
+    }
+
     const rawSavedState = window.localStorage.getItem(localStorageKeyName)
 
     const savedState = rawSavedState

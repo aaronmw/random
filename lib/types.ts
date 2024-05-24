@@ -132,6 +132,7 @@ export const dataTypesByPropertyName = {
 export interface AppState {
   activePropertyName: string
   propertySettings: Record<PropertyName, PropertySettings>
+  savedPropertySettings: Record<string, Record<PropertyName, PropertySettings>>
 }
 
 export type AnchorPosition =

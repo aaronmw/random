@@ -1,12 +1,26 @@
-import { ComponentProps } from "react"
+import { ComponentPropsWithRef, Ref, forwardRef } from "react"
 import { twJoin, twMerge } from "tailwind-merge"
 
-type BoxProps<T extends keyof JSX.IntrinsicElements> = ComponentProps<T> & {
-  as?: T
-  variant?: Variant | Variant[]
-}
+type BoxProps<T extends keyof JSX.IntrinsicElements> =
+  ComponentPropsWithRef<T> & {
+    as?: T
+    variant?: Variant | Variant[]
+  }
 
 type Variant = keyof typeof classNamesByVariant
+
+const classNamesForAllInputs = twJoin(
+  `
+    w-full
+    border-0
+    bg-bgColor
+    leading-none
+    text-textColor
+    outline-0
+    [font-size:inherit]
+    placeholder:text-fadedTextColor
+  `,
+)
 
 const classNamesByVariant = {
   button: twJoin(`
@@ -47,6 +61,20 @@ const classNamesByVariant = {
     w-full
   `),
 
+  inputWithoutBorder: classNamesForAllInputs,
+
+  input: twMerge(
+    classNamesForAllInputs,
+    `
+      border
+      px-2
+      py-1
+      focus:outline
+      focus:outline-2
+      focus:outline-accentColor
+    `,
+  ),
+
   kebab: twJoin(`
     flex
     w-full
@@ -67,13 +95,10 @@ const classNamesByVariant = {
   `),
 }
 
-export function Box<T extends keyof JSX.IntrinsicElements>({
-  as,
-  children,
-  className,
-  variant,
-  ...otherProps
-}: BoxProps<T>) {
+function InnerBox<T extends keyof JSX.IntrinsicElements>(
+  { as, children, className, variant, ...otherProps }: BoxProps<T>,
+  ref: Ref<HTMLElement>,
+) {
   const Component = String(as ?? "div")
 
   const classNames = Array.isArray(variant)
@@ -85,9 +110,12 @@ export function Box<T extends keyof JSX.IntrinsicElements>({
   return (
     <Component
       className={twMerge(classNames, className)}
+      ref={ref}
       {...otherProps}
     >
       {children}
     </Component>
   )
 }
+
+export const Box = forwardRef(InnerBox)

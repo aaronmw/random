@@ -87,4 +87,5 @@ export const initialState: AppState = {
     x: { ...integerBasedPropertyOptions },
     y: { ...integerBasedPropertyOptions },
   },
+  savedPropertySettings: {},
 }

@@ -30,8 +30,15 @@ function ListInputFieldForStrings({
         propertyName={propertyName}
         renderBottomSlot={
           process.env.NODE_ENV === "development" && (
-            <div className="mt-1 flex justify-end">
+            <div
+              className="
+                mt-1
+                flex
+                justify-end
+              "
+            >
               <Button
+                as="a"
                 className="
                   flex
                   items-center
