@@ -13,7 +13,7 @@ export default function AboutPage() {
         flex-col
         items-center
         justify-center
-        gap-6
+        gap-9
         p-12
       "
     >
@@ -39,7 +39,7 @@ export default function AboutPage() {
         className="
           flex
           items-center
-          gap-3
+          gap-5
           text-lg
         "
       >
@@ -77,7 +77,7 @@ export default function AboutPage() {
         <IconButton
           className="
             flex
-            size-10
+            size-9
             items-center
             justify-center
             rounded-full

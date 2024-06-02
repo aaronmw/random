@@ -102,8 +102,8 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
             w-full
             border
             bg-bgColor
-            px-3
-            py-1
+            px-5
+            py-2
             text-center
             text-textColor
           "

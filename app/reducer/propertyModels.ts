@@ -1,7 +1,7 @@
 import { PropertySettings } from "@/lib/types"
 
 export const colorBasedPropertyOptions: PropertySettings = {
-  mode: "list",
+  mode: "disabled",
   modeOptions: {
     list: {
       options: [
@@ -14,12 +14,11 @@ export const colorBasedPropertyOptions: PropertySettings = {
       ],
     },
   },
-  isRandomized: false,
   sortOrder: "random",
 }
 
 export const degreeBasedPropertyOptions: PropertySettings = {
-  mode: "list",
+  mode: "disabled",
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -41,12 +40,11 @@ export const degreeBasedPropertyOptions: PropertySettings = {
       max: 360,
     },
   },
-  isRandomized: false,
   sortOrder: "random",
 }
 
 export const integerBasedPropertyOptions: PropertySettings = {
-  mode: "list",
+  mode: "disabled",
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -68,7 +66,6 @@ export const integerBasedPropertyOptions: PropertySettings = {
       max: 200,
     },
   },
-  isRandomized: false,
   sortOrder: "random",
 }
 
@@ -103,7 +100,7 @@ export const colorChannelBasedPropertyOptions: PropertySettings = {
 }
 
 export const percentageBasedPropertyOptions: PropertySettings = {
-  mode: "range",
+  mode: "disabled",
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -125,12 +122,11 @@ export const percentageBasedPropertyOptions: PropertySettings = {
       min: 0,
     },
   },
-  isRandomized: false,
   sortOrder: "random",
 }
 
 export const textBasedPropertyOptions: PropertySettings = {
-  mode: "list",
+  mode: "disabled",
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -173,7 +169,6 @@ export const textBasedPropertyOptions: PropertySettings = {
       min: 50,
     },
   },
-  isRandomized: false,
   sortOrder: "random",
   prefix: "",
   suffix: "",

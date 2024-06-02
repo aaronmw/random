@@ -15,31 +15,22 @@ export const anchorPositions = [
 
 const anchorConstraints = {
   height: ["top-center", "center-center", "bottom-center"],
-
   width: ["center-left", "center-center", "center-right"],
 } as const
 
 export const getConstrainedAnchorPosition = ({
-  currentAnchor,
+  anchor,
   preserveAspectRatio,
   propertyName,
 }: {
-  currentAnchor: AnchorPosition
+  anchor: AnchorPosition
   preserveAspectRatio: boolean
   propertyName: "width" | "height"
 }) => {
   const allowedAnchorPositions = anchorConstraints[propertyName]
-
   const disallowedAnchorPositions = xor(anchorPositions, allowedAnchorPositions)
 
-  let constrainedAnchor = currentAnchor
-
-  if (
-    !preserveAspectRatio &&
-    disallowedAnchorPositions.includes(currentAnchor)
-  ) {
-    constrainedAnchor = "center-center"
-  }
-
-  return constrainedAnchor
+  return !preserveAspectRatio && disallowedAnchorPositions.includes(anchor)
+    ? "center-center"
+    : anchor
 }

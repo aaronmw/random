@@ -25,9 +25,9 @@ const classNames = {
     twMerge(
       `
         relative
-        mr-1
+        mx-1
         flex
-        size-4
+        size-6
         cursor-pointer
         items-center
         justify-center
@@ -56,6 +56,7 @@ function ListInputFieldForColors({
   ) {
     event.preventDefault()
     event.stopPropagation()
+
     setLineContext(lineContext)
 
     requestAnimationFrame(() => {
@@ -86,6 +87,7 @@ function ListInputFieldForColors({
         propertyName={propertyName}
         renderLeftSlot={({ isValid, lineIndex, setValues, value, values }) => (
           <div
+            // TODO: Render the colour swatch even if it's commented out
             className={classNames.colorSwatch({ isValid })}
             key={`${lineIndex}-${value}`}
             style={{

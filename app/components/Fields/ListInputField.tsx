@@ -63,7 +63,6 @@ const classNames = {
       grid-rows-[max-content]
       overflow-y-auto
       overflow-x-hidden
-      leading-none
     `,
   ),
 
@@ -85,7 +84,7 @@ const classNames = {
       bg-transparent
       pl-2
       font-mono
-      leading-6
+      leading-9
       text-textColor
       outline-none
     `,
@@ -97,14 +96,13 @@ const classNames = {
         col-start-2
         col-end-3
         flex
-        h-6
+        h-9
         w-full
         flex-shrink-0
         cursor-pointer
         items-center
         pl-2
         font-mono
-        leading-none
         transition-opacity
         hover:!text-textColor
         group-hover/list:text-fadedTextColor
@@ -137,11 +135,10 @@ const classNames = {
         col-start-3
         col-end-4
         flex
-        h-6
+        h-9
         items-center
         justify-end
         px-2
-        leading-none
       `,
       // Can't use `odd:` because the number of children
       // changes when editing
@@ -158,6 +155,7 @@ const classNames = {
         `,
       isValid
         ? `
+            cursor-pointer
             [&.is-odd]:bg-shadedBgColor
             [&.is-odd]:before:bg-shadedBgColor
           `
@@ -167,6 +165,7 @@ const classNames = {
               before:bg-shadedBgColor/20
               [&.is-odd]:bg-shadedBgColor/40
               [&.is-odd]:before:bg-shadedBgColor/40
+              cursor-pointer
               text-fadedTextColor
             `
           : `
@@ -317,17 +316,9 @@ export function ListInputField({
         <div className={classNames.labelContainer}>
           {label}
           <div className={classNames.badgesContainer}>
-            <Badge title="Number of Valid Values">
-              <Icon
-                name="check"
-                variant="solid"
-              />{" "}
-              {metaDataByLineIndex.length -
-                errorMessages.length -
-                numDisabledValues}
-            </Badge>
             {errorMessages.length >= 1 && (
               <Badge
+                className="cursor-help"
                 title="Number of Invalid Values"
                 variant="danger"
               >
@@ -397,6 +388,7 @@ export function ListInputField({
                     isValid,
                     isCommentedOut,
                   })}
+                  role="button"
                   key={lineIndex}
                   onClick={startEditingLineIndex.bind(null, {
                     lineIndex,
@@ -413,22 +405,44 @@ export function ListInputField({
               !isCommentedOut &&
               (typeof metaDataByLineIndex[lineIndex] === "undefined" ||
                 metaDataByLineIndex[lineIndex] === true)
+
+            const iconInfo = (
+              {
+                isCommentedOut: {
+                  icon: "eye",
+                  label: "Enable",
+                },
+                isValid: {
+                  icon: "eye-slash",
+                  label: "Disable",
+                },
+                isInvalid: {
+                  className: "cursor-help",
+                  icon: "triangle-exclamation",
+                  label: `Invalid: ${metaDataByLineIndex[lineIndex]}`,
+                },
+              } as const
+            )[
+              isCommentedOut
+                ? "isCommentedOut"
+                : isValid
+                  ? "isValid"
+                  : "isInvalid"
+            ]
+
             return (
               <div
-                className={classNames.rightSlotContainer({
-                  isCommentedOut,
-                  isEditing,
-                  isValid,
-                  lineIndex,
-                })}
+                className={twMerge(
+                  classNames.rightSlotContainer({
+                    isCommentedOut,
+                    isEditing,
+                    isValid,
+                    lineIndex,
+                  }),
+                  iconInfo.className,
+                )}
                 key={lineIndex}
-                title={
-                  isCommentedOut
-                    ? "Enable"
-                    : isValid
-                      ? "Disable"
-                      : `Invalid: ${metaDataByLineIndex[lineIndex]}`
-                }
+                title={iconInfo.label}
                 onClick={handleClickToggleComment.bind(null, {
                   lineIndex,
                 })}
@@ -438,15 +452,10 @@ export function ListInputField({
                     isCommentedOut,
                     isValid,
                   })}
-                  name={
-                    isCommentedOut
-                      ? "eye"
-                      : isValid
-                        ? "eye-slash"
-                        : "triangle-exclamation"
-                  }
+                  name={iconInfo.icon}
                   variant="solid"
                 />
+                <div className="sr-only">{iconInfo.label}</div>
               </div>
             )
           })}

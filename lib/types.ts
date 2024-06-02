@@ -1,12 +1,5 @@
 export type AppAction =
   | {
-      type: "setIsRandomized"
-      payload: {
-        propertyName: PropertyName
-        isRandomized: boolean
-      }
-    }
-  | {
       type: "setPreserveAspectRatio"
       payload: {
         propertyName: PropertyName
@@ -14,14 +7,10 @@ export type AppAction =
       }
     }
   | {
-      type: "receiveSettingsFromSelectedNodes"
+      type: "loadPropertySettings"
       payload: {
-        propertySettingsFromSelectedNodes: Partial<AppState["propertySettings"]>
+        loadedProperties: Partial<AppState["propertySettings"]>
       }
-    }
-  | {
-      type: "setState"
-      payload: Partial<AppState>
     }
   | {
       type: "setStateByPath"
@@ -34,14 +23,24 @@ export type AppAction =
 export type PluginAction =
   | {
       type: "execute"
-      payload: Pick<AppState, "propertySettings">
+      payload: {
+        propertySettings: Record<PropertyName, PropertySettings>
+      }
     }
   | {
       type: "requestSettingsFromSelectedNodes"
     }
   | {
+      type: "setPluginHeight"
+      payload: {
+        height: number
+      }
+    }
+  | {
       type: "saveSettingsToSelectedNodes"
-      payload: Partial<Pick<AppState, "propertySettings">>
+      payload: {
+        propertySettings: Record<PropertyName, PropertySettings>
+      }
     }
 
 export const DATA_TYPES = {
@@ -132,7 +131,7 @@ export const dataTypesByPropertyName = {
 export interface AppState {
   activePropertyName: string
   propertySettings: Record<PropertyName, PropertySettings>
-  savedPropertySettings: Record<string, Record<PropertyName, PropertySettings>>
+  savedPropertySettings: [string, Record<PropertyName, PropertySettings>][]
 }
 
 export type AnchorPosition =
@@ -151,8 +150,7 @@ export type RandomizationType = "calc" | "list" | "range"
 export type PropertySettings = {
   anchor?: AnchorPosition
   corners?: ("topLeft" | "topRight" | "bottomRight" | "bottomLeft")[]
-  isRandomized: boolean
-  mode: "calc" | "list" | "range"
+  mode: "calc" | "list" | "range" | "disabled"
   modeOptions: {
     calc?: {
       add: {

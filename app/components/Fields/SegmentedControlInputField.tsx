@@ -1,8 +1,6 @@
-import { IconName, IconVariant } from "@/app/components/Icon"
-import { IconButton } from "@/app/components/IconButton"
 import { AppContext } from "@/app/reducer"
 import { get } from "lodash"
-import { ComponentProps, MouseEvent, useContext } from "react"
+import { ComponentProps, MouseEvent, createContext, useContext } from "react"
 import { twMerge } from "tailwind-merge"
 import { FieldContainer, FieldContainerProps } from "./FieldContainer"
 
@@ -10,25 +8,29 @@ export { SegmentedControlInputField }
 export type { SegmentedControlInputFieldProps }
 
 interface SegmentedControlInputFieldProps<V extends string | number | boolean>
-  extends Omit<
-      ComponentProps<"input">,
-      "defaultValue" | "name" | "value" | "onChange"
-    >,
+  extends Omit<ComponentProps<"div">, "onChange">,
     Pick<FieldContainerProps, "label" | "variant"> {
-  options: {
-    iconName?: IconName
-    iconVariant?: IconVariant
-    title?: string
-    label: string
-    value: V
-  }[]
   path: string
   onChange?: (context: { path: string; value: V }) => void
 }
 
+interface SegmentedControlInputContextObject<
+  V extends string | number | boolean,
+> {
+  currentValue?: V
+  handleClickButton: (newValue: V, event: MouseEvent<HTMLButtonElement>) => void
+}
+
+const SegmentedControlInputContext = createContext<
+  SegmentedControlInputContextObject<any>
+>({
+  currentValue: undefined,
+  handleClickButton: () => {},
+})
+
 const SegmentedControlInputField = <V extends string | number | boolean>({
+  children,
   label,
-  options,
   path,
   variant,
   onChange,
@@ -60,45 +62,64 @@ const SegmentedControlInputField = <V extends string | number | boolean>({
   }
 
   return (
-    <FieldContainer
-      label={label}
-      variant={variant}
+    <SegmentedControlInputContext.Provider
+      value={{ currentValue, handleClickButton }}
     >
-      <div
-        className="
-          flex
-          w-fit
-          flex-row-reverse
-          overflow-hidden
-          outline-0
-        "
+      <FieldContainer
+        label={label}
+        variant={variant}
       >
-        {options.map(
-          (
-            { iconName, iconVariant, label, title, value: optionValue },
-            index,
-          ) => {
-            const isSelected = optionValue === currentValue
+        <div
+          className="
+            flex
+            w-fit
+            flex-row-reverse
+            overflow-hidden
+            outline-0
+          "
+        >
+          {children}
+        </div>
+      </FieldContainer>
+    </SegmentedControlInputContext.Provider>
+  )
+}
 
-            return (
-              <IconButton
-                className={twMerge(
-                  isSelected && "is-selected",
-                  `
-                    [&.is-selected]:bg-selectedBgColor
-                  `,
-                )}
-                iconName={iconName}
-                iconVariant={iconVariant}
-                key={`${optionValue}-${index}`}
-                label={label}
-                title={title ?? label}
-                onClick={handleClickButton.bind(null, optionValue)}
-              />
-            )
-          },
-        )}
-      </div>
-    </FieldContainer>
+SegmentedControlInputField.OptionButton = function OptionButton({
+  children,
+  className,
+  value,
+  ...otherProps
+}: Omit<ComponentProps<"button">, "value"> & {
+  value: string | number | boolean
+}) {
+  const { currentValue, handleClickButton } = useContext(
+    SegmentedControlInputContext,
+  )
+
+  const isSelected = value === currentValue
+
+  return (
+    <button
+      className={twMerge(
+        `
+          flex
+          h-9
+          min-w-9
+          items-center
+          justify-center
+          px-2
+        `,
+        isSelected &&
+          `
+            bg-selectedBgColor
+          `,
+        className,
+      )}
+      onClick={handleClickButton.bind(null, value)}
+      {...otherProps}
+    >
+      {children}
+    </button>
   )
 }

@@ -1,6 +1,6 @@
 import { PropertyName } from "@/lib/types"
 
-const mutuallyExclusiveConstraints: Partial<
+export const mutualExclusivityMap: Partial<
   Record<PropertyName, PropertyName[]>
 > = {
   cornerRadius: [
@@ -97,26 +97,4 @@ const mutuallyExclusiveConstraints: Partial<
   strokeRightWeight: ["strokeWeight"],
   strokeBottomWeight: ["strokeWeight"],
   strokeTopWeight: ["strokeWeight"],
-}
-
-export function getConstrainedPropertySettings({
-  propertyName,
-}: {
-  propertyName: PropertyName
-}) {
-  return (
-    mutuallyExclusiveConstraints[propertyName]?.reduce(
-      (acc, propertyNameToStopRandomizing) => {
-        return {
-          ...acc,
-          [propertyNameToStopRandomizing]: {
-            isRandomized: {
-              $set: false,
-            },
-          },
-        }
-      },
-      {},
-    ) ?? {}
-  )
 }

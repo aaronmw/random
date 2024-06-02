@@ -1,5 +1,5 @@
-import { ComponentPropsWithRef, Ref, forwardRef } from "react"
-import { twJoin, twMerge } from "tailwind-merge"
+import { ComponentPropsWithRef, Ref, forwardRef } from 'react'
+import { twJoin, twMerge } from 'tailwind-merge'
 
 type BoxProps<T extends keyof JSX.IntrinsicElements> =
   ComponentPropsWithRef<T> & {
@@ -11,10 +11,10 @@ type Variant = keyof typeof classNamesByVariant
 
 const classNamesForAllInputs = twJoin(
   `
+
     w-full
     border-0
     bg-bgColor
-    leading-none
     text-textColor
     outline-0
     [font-size:inherit]
@@ -29,8 +29,8 @@ const classNamesByVariant = {
     w-fit
     whitespace-nowrap
     bg-textColor
-    px-6
-    py-3
+    px-9
+    py-5
     text-white
     transition-colors
   `),
@@ -61,6 +61,11 @@ const classNamesByVariant = {
     w-full
   `),
 
+  heading: twJoin(`
+    text-base
+    font-bold
+  `),
+
   inputWithoutBorder: classNamesForAllInputs,
 
   input: twMerge(
@@ -83,7 +88,9 @@ const classNamesByVariant = {
   `),
 
   link: twJoin(`
-    font-bold
+    inline-flex
+    gap-3
+    text-accentColor
     underline
   `),
 
@@ -91,7 +98,7 @@ const classNamesByVariant = {
     flex
     flex-col
     justify-center
-    gap-6
+    gap-9
   `),
 }
 
@@ -99,7 +106,7 @@ function InnerBox<T extends keyof JSX.IntrinsicElements>(
   { as, children, className, variant, ...otherProps }: BoxProps<T>,
   ref: Ref<HTMLElement>,
 ) {
-  const Component = String(as ?? "div")
+  const Component = String(as ?? 'div')
 
   const classNames = Array.isArray(variant)
     ? variant.map((v) => classNamesByVariant[v])

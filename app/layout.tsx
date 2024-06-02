@@ -1,9 +1,13 @@
+import { ClientComponent } from "@/app/components/ClientComponent"
+import { CrashScreen } from "@/app/components/CrashSreen"
+import { ResizeHandle } from "@/app/components/ResizeHandle"
 import "@/app/globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import Link from "next/link"
 import Script from "next/script"
 import { Suspense } from "react"
+import { ErrorBoundary } from "react-error-boundary"
 import { twJoin, twMerge } from "tailwind-merge"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -44,19 +48,15 @@ export default function RootLayout({
             absolute
             left-0
             top-0
-            grid
+            flex
             h-screen
             w-full
-            grid-cols-[3fr,4fr]
-            grid-rows-[min-content,1fr,min-content]
+            flex-col
+            gap-px
           "
         >
           <header
             className="
-              col-start-1
-              col-end-3
-              row-start-1
-              row-end-2
               border-b
               px-4
               py-2
@@ -68,7 +68,6 @@ export default function RootLayout({
                   `
                     py-1
                     font-bold
-                    leading-none
                     hover:text-textColor
                   `,
                 )}
@@ -82,7 +81,6 @@ export default function RootLayout({
                   `
                     py-1
                     font-bold
-                    leading-none
                     hover:text-textColor
                   `,
                 )}
@@ -93,7 +91,13 @@ export default function RootLayout({
             </nav>
           </header>
 
-          <Suspense fallback={null}>{children}</Suspense>
+          <ErrorBoundary fallback={<CrashScreen />}>
+            <Suspense fallback={null}>{children}</Suspense>
+          </ErrorBoundary>
+
+          <ClientComponent>
+            <ResizeHandle />
+          </ClientComponent>
         </main>
       </body>
     </html>

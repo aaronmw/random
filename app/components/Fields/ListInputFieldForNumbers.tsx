@@ -43,7 +43,7 @@ function ListInputFieldForNumbers({
           return "Not numeric"
         }
 
-        return inRange(Number(value), min, max) ? true : "Out of Range"
+        return inRange(Number(value), min, max + 1) ? true : "Out of Range"
       }}
     />
   )

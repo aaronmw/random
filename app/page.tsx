@@ -10,6 +10,6 @@ export default function PropertiesIndexPage() {
 
   useEffect(() => {
     document.body.classList.toggle("dark", !isLightMode)
-    router.push(`properties/text`)
+    router.push(`properties`)
   }, [isLightMode, router])
 }

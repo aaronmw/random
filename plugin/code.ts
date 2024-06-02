@@ -6,16 +6,19 @@ import type {
   PropertyName,
   PropertySettings,
 } from "@/lib/types"
-import { merge } from "lodash"
+import { pickBy } from "lodash"
 import naturalSort from "natural-compare-lite"
 
 declare const SITE_URL: string
 
+const PLUGIN_HEIGHT = 500
+const PLUGIN_WIDTH = 250
+
 /*
-  By enabling `theme-colors`, the plugin will add either the figma-light or
+  By enabling `theme-colors`, Figma will add either the figma-light or
   figma-dark class to the body element. It can take a second or two, so this
   code just waits until it sees either class and then redirects to the actual
-  plugin, with the mode as a query parameter
+  plugin, with the resulting display mode as a query parameter
 */
 figma.showUI(
   `
@@ -28,16 +31,18 @@ figma.showUI(
             const isDarkMode = classList.contains('figma-dark')
             if (isLightMode || isDarkMode) {
               window.location.href = '${SITE_URL}?isLightMode=' + isLightMode
+              return
             }
+            setTimeout(redirectWhenLightOrDarkModeDetected, 10)
           }
-          window.setInterval(redirectWhenLightOrDarkModeDetected, 10)
+          setTimeout(redirectWhenLightOrDarkModeDetected, 10)
         </script>
       </body>
     </html>
   `,
   {
-    height: 500,
-    width: 450,
+    height: PLUGIN_HEIGHT,
+    width: PLUGIN_WIDTH,
     themeColors: true,
   },
 )
@@ -51,27 +56,18 @@ const dispatchAppAction = (action: AppAction) => {
 function sendSettingsFromSelectedNodes() {
   const { selection } = figma.currentPage
 
-  let propertySettingsFromSelectedNodes: {
-    [k in PropertyName]?: PropertySettings
-  } = {}
+  const node = selection.length === 1 ? selection[0] : figma.currentPage
 
-  if (selection.length) {
-    propertySettingsFromSelectedNodes = merge(
-      {},
-      ...selection.map((node) =>
-        JSON.parse(node.getPluginData("property-settings") || "{}"),
-      ),
-    )
-  } else {
-    propertySettingsFromSelectedNodes = JSON.parse(
-      figma.currentPage.getPluginData("property-settings") || "{}",
-    )
-  }
+  const loadedProperties = JSON.parse(
+    node.getPluginData("property-settings") || "{}",
+  )
+
+  console.log("Loading settings from node:", node, loadedProperties)
 
   dispatchAppAction({
-    type: "receiveSettingsFromSelectedNodes",
+    type: "loadPropertySettings",
     payload: {
-      propertySettingsFromSelectedNodes,
+      loadedProperties,
     },
   })
 }
@@ -87,9 +83,10 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
     case "execute": {
       const { propertySettings } = action.payload
 
-      const propertiesToRandomize = Object.entries(propertySettings).filter(
-        ([, { isRandomized }]) => isRandomized,
-      ) as [PropertyName, PropertySettings][]
+      const randomizedPropertySettings = pickBy(
+        propertySettings,
+        ({ mode }) => mode !== "disabled",
+      )
 
       const { selection } = figma.currentPage
 
@@ -98,40 +95,43 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
         break
       }
 
-      propertiesToRandomize.forEach(
-        async ([propertyName, propertySettings]) => {
-          const { sortOrder } = propertySettings
+      ;(
+        Object.entries(randomizedPropertySettings) as [
+          propertyName: PropertyName,
+          PropertySettings,
+        ][]
+      ).forEach(async ([propertyName, propertySettings]) => {
+        const { sortOrder } = propertySettings
 
-          const randomValues = selection.map((node) =>
-            getRandomPropertyValue({
+        const randomValues = selection.map((node) =>
+          getRandomPropertyValue({
+            node,
+            propertySettings,
+            propertyName,
+          }),
+        )
+
+        if (sortOrder !== "random") {
+          randomValues.sort(naturalSort)
+
+          if (sortOrder === "desc") {
+            randomValues.reverse()
+          }
+        }
+
+        await Promise.all(
+          selection.map(async (node, index) => {
+            const value = randomValues[index]
+
+            await setNodeProperty({
               node,
               propertySettings,
               propertyName,
-            }),
-          )
-
-          if (sortOrder !== "random") {
-            randomValues.sort(naturalSort)
-
-            if (sortOrder === "desc") {
-              randomValues.reverse()
-            }
-          }
-
-          await Promise.all(
-            selection.map(async (node, index) => {
-              const value = randomValues[index]
-
-              await setNodeProperty({
-                node,
-                propertySettings,
-                propertyName,
-                value,
-              })
-            }),
-          )
-        },
-      )
+              value,
+            })
+          }),
+        )
+      })
       break
     }
 
@@ -145,17 +145,28 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
 
       const { selection } = figma.currentPage
 
+      const enabledPropertySettings = pickBy(
+        propertySettings,
+        ({ mode }) => mode !== "disabled",
+      )
+
       selection.forEach((node) => {
         node.setPluginData(
           "property-settings",
-          JSON.stringify(propertySettings),
+          JSON.stringify(enabledPropertySettings),
         )
       })
 
       figma.currentPage.setPluginData(
         "property-settings",
-        JSON.stringify(propertySettings),
+        JSON.stringify(enabledPropertySettings),
       )
+      break
+    }
+
+    case "setPluginHeight": {
+      const { height } = action.payload
+      figma.ui.resize(PLUGIN_WIDTH, height)
       break
     }
 

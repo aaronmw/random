@@ -29,9 +29,8 @@ const classNamesByVariant = {
   primary: twJoin(`
     whitespace-nowrap
     bg-accentColor
-    px-3
-    py-2
-    leading-none
+    px-5
+    py-3
     text-white
     hover:bg-accentColorDark
     focus:bg-accentColorDark

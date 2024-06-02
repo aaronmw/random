@@ -44,8 +44,8 @@ function IconButton<T extends TagName>({
         classNamesByVariant[variant],
         `
           flex
-          h-6
-          min-w-6
+          h-9
+          min-w-9
           items-center
           justify-center
         `,

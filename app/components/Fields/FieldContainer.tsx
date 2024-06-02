@@ -11,7 +11,7 @@ interface FieldContainerProps extends ComponentPropsWithoutRef<"label"> {
 }
 
 const classNamesForInteractiveSurface = `
-  min-h-6
+  min-h-9
   flex
   items-center
   rounded-[0.5px]
@@ -34,8 +34,7 @@ const classNamesByVariant = {
 
   full: {
     container: `
-      col-span-28
-      leading-none
+      col-span-4
       flex
       items-center
       justify-between
@@ -54,8 +53,7 @@ const classNamesByVariant = {
 
   half: {
     container: `
-      col-span-14
-      leading-none
+      col-span-2
       grid
       grid-cols-subgrid
       pl-2
@@ -66,19 +64,18 @@ const classNamesByVariant = {
       grid
       text-fadedTextColor
       col-start-1
-      col-end-7
+      col-end-2
     `,
     field: `
       grid
-      col-start-7
-      col-end-15
+      col-start-2
+      col-end-3
     `,
   },
 
   labelOnTop: {
     container: `
-      col-span-28
-      leading-none
+      col-span-4
       flex
       flex-col
       pl-2

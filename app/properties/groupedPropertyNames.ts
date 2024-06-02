@@ -10,8 +10,8 @@ export const groupedPropertyNames: [
     "fill",
     [
       "opacity",
-      "fillColor",
       "fillOpacity",
+      "fillColor",
       "fillColorRedChannel",
       "fillColorGreenChannel",
       "fillColorBlueChannel",
@@ -49,5 +49,5 @@ export const groupedPropertyNames: [
     ],
   ],
   ["arc", ["arcStartingAngle", "arcEndingAngle", "arcInnerRadius"]],
-  ["stars", ["pointCount", "cornerRadius", "innerRadius"]],
+  ["stars", ["pointCount", "innerRadius"]],
 ]

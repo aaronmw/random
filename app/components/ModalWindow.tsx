@@ -1,32 +1,36 @@
-"use client"
+'use client'
 
-import { Icon } from "@/app/components/Icon"
-import { useIsClient } from "@uidotdev/usehooks"
-import { ComponentPropsWithoutRef, MouseEvent, useEffect } from "react"
-import { createPortal } from "react-dom"
-import { twJoin, twMerge } from "tailwind-merge"
+import { Icon } from '@/app/components/Icon'
+import { useIsClient } from '@uidotdev/usehooks'
+import { ComponentPropsWithoutRef, MouseEvent, useEffect } from 'react'
+import { createPortal } from 'react-dom'
+import { twJoin, twMerge } from 'tailwind-merge'
 
 export { ModalWindow }
 export type { ModalWindowProps }
 
-interface ModalWindowProps extends ComponentPropsWithoutRef<"div"> {
+type ModalWindowVariant = keyof typeof windowClassNamesByVariant
+
+interface ModalWindowProps extends ComponentPropsWithoutRef<'div'> {
   classNamesForCloseButton?: string | string[]
   isOpen: boolean
-  variant?: keyof typeof classNamesByVariant
+  variant?: ModalWindowVariant
   onClose: () => void
 }
 
 const classNames = {
-  backdrop: twJoin(`
-    fixed
-    left-0
-    top-0
-    z-40
-    h-full
-    w-full
-    bg-black/50
-    backdrop-blur-[1px]
-  `),
+  backdrop: twJoin(
+    `
+      fixed
+      left-0
+      top-0
+      z-40
+      h-full
+      w-full
+      bg-black/50
+      backdrop-blur-[1px]
+    `,
+  ),
 
   container: ({ isOpen = false }) =>
     twMerge(
@@ -46,38 +50,44 @@ const classNames = {
           `,
     ),
 
-  window: twJoin(
+  window: ({ variant = 'default' }) =>
+    twMerge(
+      `
+        fixed
+        left-1/2
+        top-1/2
+        z-50
+        flex
+        -translate-x-1/2
+        -translate-y-1/2
+        flex-col
+        justify-stretch
+      `,
+      windowClassNamesByVariant[variant as ModalWindowVariant],
+    ),
+
+  closeButton: twJoin(
     `
-      fixed
-      left-1/2
-      top-1/2
-      z-50
-      flex
-      -translate-x-1/2
-      -translate-y-1/2
-      flex-col
-      justify-stretch
+      absolute
+      right-5
+      top-5
     `,
   ),
-
-  closeButton: twJoin(`
-    absolute
-    right-3
-    top-3
-  `),
 }
 
-const classNamesByVariant = {
-  default: twJoin(`
-    max-h-[90vh]
-    min-w-60
-    max-w-screen-sm
-    gap-6
-    overflow-auto
-    border
-    bg-bgColor
-    p-px
-  `),
+const windowClassNamesByVariant = {
+  default: twJoin(
+    `
+      max-h-[90vh]
+      min-w-60
+      max-w-screen-sm
+      gap-9
+      overflow-auto
+      border
+      bg-bgColor
+      p-px
+    `,
+  ),
 }
 
 const ModalWindow = ({
@@ -85,7 +95,7 @@ const ModalWindow = ({
   className,
   classNamesForCloseButton,
   isOpen,
-  variant = "default",
+  variant = 'default',
   onClose,
   ...otherProps
 }: ModalWindowProps) => {
@@ -95,10 +105,10 @@ const ModalWindow = ({
     const handleKeyPress = (event: KeyboardEvent) => {
       const activeElement = document.activeElement
 
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         if (
           activeElement &&
-          ["INPUT", "TEXTAREA"].includes(activeElement.tagName ?? "")
+          ['INPUT', 'TEXTAREA'].includes(activeElement.tagName ?? '')
         ) {
           const activeInputElement = activeElement as
             | HTMLTextAreaElement
@@ -113,10 +123,10 @@ const ModalWindow = ({
       }
     }
 
-    document.addEventListener("keyup", handleKeyPress)
+    document.addEventListener('keyup', handleKeyPress)
 
     return () => {
-      document.removeEventListener("keyup", handleKeyPress)
+      document.removeEventListener('keyup', handleKeyPress)
     }
   }, [onClose])
 
@@ -139,9 +149,7 @@ const ModalWindow = ({
             onClick={onClose}
           />
 
-          <div
-            className={twMerge(classNames.window, classNamesByVariant[variant])}
-          >
+          <div className={twMerge(classNames.window({ variant }))}>
             <button
               className={twMerge(
                 classNames.closeButton,
