@@ -14,14 +14,14 @@ export const classNames = {
   filterContainer: twJoin(
     `
       group
+      relative
       row-start-1
       row-end-2
       items-center
       border-b
-      bg-selectedBgColor
+      bg-shadedBgColor
       px-2
-      py-1
-      backdrop-blur-sm
+      py-[4px]
     `,
   ),
 

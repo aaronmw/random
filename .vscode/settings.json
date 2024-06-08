@@ -1,3 +1,4 @@
 {
-  "tailwindCSS.rootFontSize": 10
+  "tailwindCSS.rootFontSize": 11,
+  "tailwindCSS.experimental.configFile": null
 }

@@ -1,9 +1,9 @@
-import { Badge } from "@/app/components/Badge"
-import { Box } from "@/app/components/Box"
-import { Icon } from "@/app/components/Icon"
-import { AppContext } from "@/app/reducer"
-import { PropertyName } from "@/lib/types"
-import { get } from "lodash"
+import { Badge } from '@/app/components/Badge'
+import { Box } from '@/app/components/Box'
+import { Icon } from '@/app/components/Icon'
+import { AppContext } from '@/app/reducer'
+import { PropertyName } from '@/lib/types'
+import { get } from 'lodash'
 import {
   KeyboardEvent,
   ReactNode,
@@ -11,9 +11,9 @@ import {
   useEffect,
   useRef,
   useState,
-} from "react"
-import { twJoin, twMerge } from "tailwind-merge"
-import { FieldContainer } from "./FieldContainer"
+} from 'react'
+import { twJoin, twMerge } from 'tailwind-merge'
+import { FieldContainer } from './FieldContainer'
 
 interface ListInputFieldProps {
   label: ReactNode
@@ -56,7 +56,6 @@ const classNames = {
       group/list
       relative
       grid
-      max-h-[300px]
       w-full
       grid-flow-col
       grid-cols-[min-content,1fr,min-content]
@@ -73,18 +72,23 @@ const classNames = {
     `,
   ),
 
-  textArea: twJoin(
+  textAreaContainer: twJoin(
     `
       col-start-2
       col-end-3
       row-start-1
       row-end-[9999]
+    `,
+  ),
+
+  textArea: twJoin(
+    `
+      w-full
       resize-none
       border-0
       bg-transparent
       pl-2
       font-mono
-      leading-9
       text-textColor
       outline-none
     `,
@@ -96,7 +100,7 @@ const classNames = {
         col-start-2
         col-end-3
         flex
-        h-9
+        min-h-9
         w-full
         flex-shrink-0
         cursor-pointer
@@ -108,7 +112,7 @@ const classNames = {
         group-hover/list:text-fadedTextColor
       `,
       isValid
-        ? "odd:bg-shadedBgColor"
+        ? 'odd:bg-shadedBgColor'
         : isCommentedOut
           ? `
               bg-shadedBgColor/20
@@ -217,7 +221,7 @@ export function ListInputField({
   useEffect(() => {
     setMetaDataByLineIndex(
       values.map((value) =>
-        String(value).startsWith("//") ? true : validatorFunction(value),
+        String(value).startsWith('//') ? true : validatorFunction(value),
       ),
     )
   }, [validatorFunction, values])
@@ -229,10 +233,10 @@ export function ListInputField({
 
     const handleScroll = () => setScrollTop(scrollingElement.scrollTop)
 
-    scrollingElement.addEventListener("scroll", handleScroll)
+    scrollingElement.addEventListener('scroll', handleScroll)
 
     return () => {
-      scrollingElement.removeEventListener("scroll", handleScroll)
+      scrollingElement.removeEventListener('scroll', handleScroll)
     }
   }, [])
 
@@ -268,7 +272,7 @@ export function ListInputField({
 
   function handleChange(event: { target: { value: string } }) {
     const { value } = event.target
-    const newValues = value.split("\n")
+    const newValues = value.split('\n')
     setValues(newValues)
   }
 
@@ -277,8 +281,8 @@ export function ListInputField({
     setValues(
       values.map((value, index) =>
         index === lineIndex
-          ? value.startsWith("//")
-            ? value.replace(/^\/\/\s*/, "")
+          ? value.startsWith('//')
+            ? value.replace(/^\/\/\s*/, '')
             : `// ${value}`
           : value,
       ),
@@ -287,14 +291,14 @@ export function ListInputField({
 
   // Re-enable CMD+A to select all text in textarea
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "a" && event.metaKey) {
+    if (event.key === 'a' && event.metaKey) {
       textareaElementRef.current?.select()
     }
   }
 
   function setValues(values: string[]) {
     dispatch({
-      type: "setStateByPath",
+      type: 'setStateByPath',
       payload: {
         path,
         value: values,
@@ -303,11 +307,11 @@ export function ListInputField({
   }
 
   const numDisabledValues = values.filter((value) =>
-    String(value).startsWith("//"),
+    String(value).startsWith('//'),
   ).length
 
   const errorMessages = metaDataByLineIndex.filter(
-    (metaData) => typeof metaData === "string",
+    (metaData) => typeof metaData === 'string',
   )
 
   return (
@@ -325,13 +329,13 @@ export function ListInputField({
                 <Icon
                   name="triangle-exclamation"
                   variant="solid"
-                />{" "}
+                />{' '}
                 {errorMessages.length}
               </Badge>
             )}
             {numDisabledValues >= 1 && (
               <Badge title="Number of Disabled Values">
-                {"// "}
+                {'// '}
                 {numDisabledValues}
               </Badge>
             )}
@@ -345,7 +349,7 @@ export function ListInputField({
           className={classNames.listContainer}
           ref={scrollingElementRef}
         >
-          {typeof renderLeftSlot === "function" &&
+          {typeof renderLeftSlot === 'function' &&
             values.map((value, lineIndex) => {
               const isValid = metaDataByLineIndex[lineIndex] === true
               return (
@@ -364,24 +368,29 @@ export function ListInputField({
                 </Box>
               )
             })}
+
           {isEditing ? (
-            <textarea
-              className={classNames.textArea}
-              spellCheck={false}
-              ref={textareaElementRef}
-              rows={values.length}
-              value={values.join("\n")}
-              onKeyDown={handleKeyDown}
-              onBlur={stopEditing}
-              onChange={handleChange}
-            />
+            <div className={classNames.textAreaContainer}>
+              <textarea
+                className={classNames.textArea}
+                spellCheck={false}
+                ref={textareaElementRef}
+                rows={values.length}
+                value={values.join('\n')}
+                onKeyDown={handleKeyDown}
+                onBlur={stopEditing}
+                onChange={handleChange}
+              />
+            </div>
           ) : (
             values.map((value, lineIndex) => {
-              const isCommentedOut = String(value).startsWith("//")
+              const isCommentedOut = String(value).startsWith('//')
+
               const isValid =
                 !isCommentedOut &&
-                (typeof metaDataByLineIndex[lineIndex] === "undefined" ||
+                (typeof metaDataByLineIndex[lineIndex] === 'undefined' ||
                   metaDataByLineIndex[lineIndex] === true)
+
               return (
                 <div
                   className={classNames.valueContainer({
@@ -399,35 +408,37 @@ export function ListInputField({
               )
             })
           )}
+
           {values.map((value, lineIndex) => {
-            const isCommentedOut = String(value).startsWith("//")
+            const isCommentedOut = String(value).startsWith('//')
+
             const isValid =
               !isCommentedOut &&
-              (typeof metaDataByLineIndex[lineIndex] === "undefined" ||
+              (typeof metaDataByLineIndex[lineIndex] === 'undefined' ||
                 metaDataByLineIndex[lineIndex] === true)
 
             const iconInfo = (
               {
                 isCommentedOut: {
-                  icon: "eye",
-                  label: "Enable",
+                  icon: 'eye',
+                  label: 'Enable',
                 },
                 isValid: {
-                  icon: "eye-slash",
-                  label: "Disable",
+                  icon: 'eye-slash',
+                  label: 'Disable',
                 },
                 isInvalid: {
-                  className: "cursor-help",
-                  icon: "triangle-exclamation",
+                  className: 'cursor-help',
+                  icon: 'triangle-exclamation',
                   label: `Invalid: ${metaDataByLineIndex[lineIndex]}`,
                 },
               } as const
             )[
               isCommentedOut
-                ? "isCommentedOut"
+                ? 'isCommentedOut'
                 : isValid
-                  ? "isValid"
-                  : "isInvalid"
+                  ? 'isValid'
+                  : 'isInvalid'
             ]
 
             return (

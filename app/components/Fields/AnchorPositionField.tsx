@@ -14,10 +14,10 @@ interface AnchorPositionFieldProps
 const classNames = {
   container: twJoin(
     `
-      grid
-      w-fit
-      grid-cols-3
-      grid-rows-3
+      flex
+      size-[30px]
+      flex-wrap
+      leading-none
       outline-0
     `,
   ),
@@ -28,10 +28,7 @@ const classNames = {
       isSelected && 'is-selected',
       `
         group
-        flex
-        size-5
-        items-center
-        justify-center
+        size-[10px]
         [&.is-selectable]:pointer-events-auto
         [&.is-selectable]:cursor-pointer
         [&:not(.is-selectable)]:pointer-events-none
@@ -40,7 +37,8 @@ const classNames = {
 
   visibleAnchorButton: twJoin(
     `
-      size-3
+      m-[2px]
+      size-[6px]
       group-[&.is-selectable]:border
       group-[&.is-selectable:not(.is-selected):hover]:border-accentColor
       group-[&.is-selectable:not(.is-selected)]:border-fadedTextColor

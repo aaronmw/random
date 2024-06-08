@@ -1,13 +1,13 @@
-import { getRandomPropertyValue } from "@/lib/getRandomPropertyValue"
-import { setNodeProperty } from "@/lib/setNodeProperty"
+import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
+import { setNodeProperty } from '@/lib/setNodeProperty'
 import type {
   AppAction,
   PluginAction,
   PropertyName,
   PropertySettings,
-} from "@/lib/types"
-import { pickBy } from "lodash"
-import naturalSort from "natural-compare-lite"
+} from '@/lib/types'
+import { pickBy } from 'lodash'
+import naturalSort from 'natural-compare-lite'
 
 declare const SITE_URL: string
 
@@ -47,51 +47,24 @@ figma.showUI(
   },
 )
 
-const dispatchAppAction = (action: AppAction) => {
-  figma.ui.postMessage(action, {
-    origin: "*",
-  })
-}
-
-function sendSettingsFromSelectedNodes() {
-  const { selection } = figma.currentPage
-
-  const node = selection.length === 1 ? selection[0] : figma.currentPage
-
-  const loadedProperties = JSON.parse(
-    node.getPluginData("property-settings") || "{}",
-  )
-
-  console.log("Loading settings from node:", node, loadedProperties)
-
-  dispatchAppAction({
-    type: "loadPropertySettings",
-    payload: {
-      loadedProperties,
-    },
-  })
-}
-
-figma.on("selectionchange", sendSettingsFromSelectedNodes)
-
 figma.ui.onmessage = async (action: PluginAction, props) => {
   if (props.origin !== SITE_URL) {
     return
   }
 
   switch (action.type) {
-    case "execute": {
+    case 'execute': {
       const { propertySettings } = action.payload
 
       const randomizedPropertySettings = pickBy(
         propertySettings,
-        ({ mode }) => mode !== "disabled",
+        ({ mode }) => mode !== 'disabled',
       )
 
       const { selection } = figma.currentPage
 
       if (!selection.length) {
-        figma.notify("No layers selected")
+        figma.notify('No layers selected')
         break
       }
 
@@ -111,10 +84,10 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
           }),
         )
 
-        if (sortOrder !== "random") {
+        if (sortOrder !== 'random') {
           randomValues.sort(naturalSort)
 
-          if (sortOrder === "desc") {
+          if (sortOrder === 'desc') {
             randomValues.reverse()
           }
         }
@@ -135,36 +108,7 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
       break
     }
 
-    case "requestSettingsFromSelectedNodes": {
-      sendSettingsFromSelectedNodes()
-      break
-    }
-
-    case "saveSettingsToSelectedNodes": {
-      const { propertySettings } = action.payload
-
-      const { selection } = figma.currentPage
-
-      const enabledPropertySettings = pickBy(
-        propertySettings,
-        ({ mode }) => mode !== "disabled",
-      )
-
-      selection.forEach((node) => {
-        node.setPluginData(
-          "property-settings",
-          JSON.stringify(enabledPropertySettings),
-        )
-      })
-
-      figma.currentPage.setPluginData(
-        "property-settings",
-        JSON.stringify(enabledPropertySettings),
-      )
-      break
-    }
-
-    case "setPluginHeight": {
+    case 'setPluginHeight': {
       const { height } = action.payload
       figma.ui.resize(PLUGIN_WIDTH, height)
       break

@@ -46,19 +46,36 @@ const classNames = {
       w-full
       items-center
       justify-between
-      gap-9
+      whitespace-normal
     `,
   ),
 
-  actionButtonsContainer: twJoin(
+  hoverContainer: twJoin(
     `
-      -my-2
+      absolute
+      right-0
+      top-1/2
       flex
+      h-full
+      -translate-y-1/2
       flex-row-reverse
+      items-center
+      justify-center
       gap-1
+      bg-bgColor
+      pl-3
       opacity-0
-      transition-opacity
+      before:absolute
+      before:right-full
+      before:top-0
+      before:h-full
+      before:w-10
+      before:bg-gradient-to-l
+      before:from-bgColor
+      before:to-transparent
+      group-hover/menuItem:bg-accentColor
       group-hover/menuItem:opacity-100
+      group-hover/menuItem:before:from-accentColor
     `,
   ),
 
@@ -216,6 +233,10 @@ export function PresetButtons() {
     event.stopPropagation()
     setPresetIndexBeingEdited(presetIndex)
     setIsPresetConfigModalOpen(true)
+
+    if (!presetNameInputRef.current) return
+
+    presetNameInputRef.current.value = savedPropertySettings[presetIndex][0]
   }
 
   function handleClickDeletePreset(
@@ -304,26 +325,38 @@ export function PresetButtons() {
               }
             >
               <div className={classNames.menuItemContentsContainer}>
-                {presetName || '(Untitled)'}
+                <div>{presetName || '(Untitled)'}</div>
 
-                {presetMenuMode === 'loading' && (
-                  <div className={classNames.actionButtonsContainer}>
-                    <IconButton
-                      iconName="pencil"
-                      id={`rename-preset-button-${presetIndex}`}
-                      label="Rename"
-                      variant="primary"
-                      onClick={handleClickRenamePreset.bind(null, presetIndex)}
-                    />
-                    <IconButton
-                      iconName="trash"
-                      id={`delete-preset-button-${presetIndex}`}
-                      label="Delete"
-                      variant="primary"
-                      onClick={handleClickDeletePreset.bind(null, presetIndex)}
-                    />
-                  </div>
-                )}
+                <div className={classNames.hoverContainer}>
+                  {presetMenuMode === 'loading' && (
+                    <>
+                      <IconButton
+                        iconName="pencil"
+                        id={`rename-preset-button-${presetIndex}`}
+                        label="Rename"
+                        variant="primary"
+                        onClick={handleClickRenamePreset.bind(
+                          null,
+                          presetIndex,
+                        )}
+                      />
+                      <IconButton
+                        iconName="trash"
+                        id={`delete-preset-button-${presetIndex}`}
+                        label="Delete"
+                        variant="primary"
+                        onClick={handleClickDeletePreset.bind(
+                          null,
+                          presetIndex,
+                        )}
+                      />
+                    </>
+                  )}
+
+                  {presetMenuMode === 'saving' && (
+                    <div className="text-fadedTextColor">Re-Save</div>
+                  )}
+                </div>
               </div>
             </Menu.Item>
           ))

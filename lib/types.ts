@@ -1,19 +1,19 @@
 export type AppAction =
   | {
-      type: "setPreserveAspectRatio"
+      type: 'setPreserveAspectRatio'
       payload: {
         propertyName: PropertyName
         preserveAspectRatio: boolean
       }
     }
   | {
-      type: "loadPropertySettings"
+      type: 'loadPropertySettings'
       payload: {
-        loadedProperties: Partial<AppState["propertySettings"]>
+        loadedProperties: Partial<AppState['propertySettings']>
       }
     }
   | {
-      type: "setStateByPath"
+      type: 'setStateByPath'
       payload: {
         path: string
         value: unknown
@@ -22,22 +22,22 @@ export type AppAction =
 
 export type PluginAction =
   | {
-      type: "execute"
+      type: 'execute'
       payload: {
         propertySettings: Record<PropertyName, PropertySettings>
       }
     }
   | {
-      type: "requestSettingsFromSelectedNodes"
+      type: 'requestSettingsFromSelectedNodes'
     }
   | {
-      type: "setPluginHeight"
+      type: 'setPluginHeight'
       payload: {
         height: number
       }
     }
   | {
-      type: "saveSettingsToSelectedNodes"
+      type: 'saveSettingsToSelectedNodes'
       payload: {
         propertySettings: Record<PropertyName, PropertySettings>
       }
@@ -45,27 +45,27 @@ export type PluginAction =
 
 export const DATA_TYPES = {
   int: {
-    label: "Signed Integer",
+    label: 'Signed Integer',
     min: -9999,
     max: 9999,
   },
   uint: {
-    label: "Unsigned Integer",
+    label: 'Unsigned Integer',
     min: 0,
     max: 9999,
   },
   udegree: {
-    label: "Unsigned Degree",
+    label: 'Unsigned Degree',
     min: 0,
     max: 9999,
   },
   degree: {
-    label: "Degree",
+    label: 'Degree',
     min: -9999,
     max: 9999,
   },
   percent: {
-    label: "Percentage",
+    label: 'Percentage',
     min: 0,
     max: 100,
   },
@@ -74,10 +74,10 @@ export const DATA_TYPES = {
     max: 100,
   },
   color: {
-    label: "Color",
+    label: 'Color',
   },
   string: {
-    label: "String",
+    label: 'String',
     min: Infinity * -1,
     max: Infinity,
   },
@@ -86,71 +86,70 @@ export const DATA_TYPES = {
 export type DataType = keyof typeof DATA_TYPES
 
 export const dataTypesByPropertyName = {
-  arcEndingAngle: "degree",
-  arcInnerRadius: "percent",
-  arcStartingAngle: "degree",
-  bottomLeftRadius: "uint",
-  bottomRadii: "uint",
-  bottomRightRadius: "uint",
-  cornerRadius: "uint",
-  fillColor: "color",
-  fillColorAlphaChannel: "uint",
-  fillColorBlueChannel: "uint",
-  fillColorBrightness: "percent",
-  fillColorGreenChannel: "uint",
-  fillColorHue: "udegree",
-  fillColorLightness: "percent",
-  fillColorRedChannel: "uint",
-  fillColorSaturation: "percent",
-  fillOpacity: "percent",
-  height: "uint",
-  innerRadius: "percent",
-  layerBlur: "uint",
-  leftRadii: "uint",
-  opacity: "percent",
-  pointCount: "pointCount",
-  position: "string", // TODO: Build this out
-  rightRadii: "uint",
-  rotation: "degree",
-  strokeBottomWeight: "uint",
-  strokeColor: "color",
-  strokeLeftWeight: "uint",
-  strokeOpacity: "percent",
-  strokeRightWeight: "uint",
-  strokeTopWeight: "uint",
-  strokeWeight: "uint",
-  text: "string",
-  topLeftRadius: "uint",
-  topRadii: "uint",
-  topRightRadius: "uint",
-  width: "uint",
-  x: "int",
-  y: "int",
+  arcEndingAngle: 'degree',
+  arcInnerRadius: 'percent',
+  arcStartingAngle: 'degree',
+  bottomLeftRadius: 'uint',
+  bottomRadii: 'uint',
+  bottomRightRadius: 'uint',
+  cornerRadius: 'uint',
+  fillColor: 'color',
+  fillColorAlphaChannel: 'uint',
+  fillColorBlueChannel: 'uint',
+  fillColorBrightness: 'percent',
+  fillColorGreenChannel: 'uint',
+  fillColorHue: 'udegree',
+  fillColorLightness: 'percent',
+  fillColorRedChannel: 'uint',
+  fillColorSaturation: 'percent',
+  fillOpacity: 'percent',
+  height: 'uint',
+  innerRadius: 'percent',
+  layerBlur: 'uint',
+  leftRadii: 'uint',
+  opacity: 'percent',
+  pointCount: 'pointCount',
+  position: 'string', // TODO: Build this out
+  rightRadii: 'uint',
+  rotation: 'degree',
+  strokeBottomWeight: 'uint',
+  strokeColor: 'color',
+  strokeLeftWeight: 'uint',
+  strokeOpacity: 'percent',
+  strokeRightWeight: 'uint',
+  strokeTopWeight: 'uint',
+  strokeWeight: 'uint',
+  text: 'string',
+  topLeftRadius: 'uint',
+  topRadii: 'uint',
+  topRightRadius: 'uint',
+  width: 'uint',
+  x: 'int',
+  y: 'int',
 } satisfies Record<string, DataType>
 
 export interface AppState {
-  activePropertyName: string
   propertySettings: Record<PropertyName, PropertySettings>
   savedPropertySettings: [string, Record<PropertyName, PropertySettings>][]
 }
 
 export type AnchorPosition =
-  | "top-left"
-  | "top-center"
-  | "top-right"
-  | "center-left"
-  | "center-center"
-  | "center-right"
-  | "bottom-left"
-  | "bottom-center"
-  | "bottom-right"
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'center-left'
+  | 'center-center'
+  | 'center-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right'
 
-export type RandomizationType = "calc" | "list" | "range"
+export type RandomizationType = 'calc' | 'list' | 'range'
 
 export type PropertySettings = {
   anchor?: AnchorPosition
-  corners?: ("topLeft" | "topRight" | "bottomRight" | "bottomLeft")[]
-  mode: "calc" | "list" | "range" | "disabled"
+  corners?: ('topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft')[]
+  mode: 'calc' | 'list' | 'range' | 'disabled'
   modeOptions: {
     calc?: {
       add: {
@@ -162,7 +161,7 @@ export type PropertySettings = {
         max: number
         min: number
       }
-      operator: "add" | "multiply"
+      operator: 'add' | 'multiply'
     }
     list?: {
       options: (string | number)[]
@@ -174,9 +173,9 @@ export type PropertySettings = {
   }
   prefix?: string
   preserveAspectRatio?: boolean
-  sortOrder: "asc" | "desc" | "random"
+  sortOrder: 'asc' | 'desc' | 'random'
   suffix?: string
-  thousandsSeparator?: " " | "," | ""
+  thousandsSeparator?: ' ' | ',' | ''
 }
 
 export type PropertyName = keyof typeof dataTypesByPropertyName

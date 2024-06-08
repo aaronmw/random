@@ -1,15 +1,15 @@
-import { AppContext } from "@/app/reducer"
-import { get } from "lodash"
-import { ComponentProps, MouseEvent, createContext, useContext } from "react"
-import { twMerge } from "tailwind-merge"
-import { FieldContainer, FieldContainerProps } from "./FieldContainer"
+import { AppContext } from '@/app/reducer'
+import { get } from 'lodash'
+import { ComponentProps, MouseEvent, createContext, useContext } from 'react'
+import { twMerge } from 'tailwind-merge'
+import { FieldContainer, FieldContainerProps } from './FieldContainer'
 
 export { SegmentedControlInputField }
 export type { SegmentedControlInputFieldProps }
 
 interface SegmentedControlInputFieldProps<V extends string | number | boolean>
-  extends Omit<ComponentProps<"div">, "onChange">,
-    Pick<FieldContainerProps, "label" | "variant"> {
+  extends Omit<ComponentProps<'div'>, 'onChange'>,
+    Pick<FieldContainerProps, 'label' | 'variant'> {
   path: string
   onChange?: (context: { path: string; value: V }) => void
 }
@@ -50,13 +50,13 @@ const SegmentedControlInputField = <V extends string | number | boolean>({
       value: newValue,
     }
 
-    if (typeof onChange === "function") {
+    if (typeof onChange === 'function') {
       onChange?.(payload)
       return
     }
 
     dispatch({
-      type: "setStateByPath",
+      type: 'setStateByPath',
       payload,
     })
   }
@@ -89,8 +89,9 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   children,
   className,
   value,
+  onClick,
   ...otherProps
-}: Omit<ComponentProps<"button">, "value"> & {
+}: Omit<ComponentProps<'button'>, 'value'> & {
   value: string | number | boolean
 }) {
   const { currentValue, handleClickButton } = useContext(
@@ -98,6 +99,11 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   )
 
   const isSelected = value === currentValue
+
+  function innerHandleClickButton(event: MouseEvent<HTMLButtonElement>) {
+    handleClickButton(value, event)
+    onClick?.(event)
+  }
 
   return (
     <button
@@ -116,7 +122,7 @@ SegmentedControlInputField.OptionButton = function OptionButton({
           `,
         className,
       )}
-      onClick={handleClickButton.bind(null, value)}
+      onClick={innerHandleClickButton}
       {...otherProps}
     >
       {children}

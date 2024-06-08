@@ -24,6 +24,7 @@ const classNames = ({ isRandomized = false }) => ({
     isRandomized
       ? `
           border-y
+          bg-bgColor
           pb-3
           [.is-randomized+&]:border-t-0
         `

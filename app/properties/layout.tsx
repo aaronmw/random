@@ -2,18 +2,11 @@
 
 import { Button } from '@/app/components/Button'
 import { Icon } from '@/app/components/Icon'
-import { PresetButtons } from '@/app/components/PresetButtons'
 import { AppContext, AppReducer, initialState } from '@/app/reducer'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
-import {
-  AppAction,
-  PluginAction,
-  PropertyName,
-  PropertySettings,
-} from '@/lib/types'
+import { AppAction, PropertyName, PropertySettings } from '@/lib/types'
 import { useReducerWithPersistedStateKeys } from '@/lib/useReducerWithPersistedStateKeys'
 import { pickBy } from 'lodash'
-import { useParams, useRouter } from 'next/navigation'
 import { ReactNode, useCallback, useEffect } from 'react'
 import { twJoin } from 'tailwind-merge'
 
@@ -55,25 +48,10 @@ const classNames = {
 }
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const router = useRouter()
-
-  const { propertyName } = useParams()
-
   const [state, dispatch] = useReducerWithPersistedStateKeys({
-    initializer: ({ finalState }) => {
-      if (propertyName) {
-        return finalState
-      }
-
-      requestAnimationFrame(() => {
-        router.push(`/properties/${finalState.activePropertyName}`)
-      })
-
-      return finalState
-    },
     initialState,
     localStorageKeyName: 'plugin-state',
-    persistedKeys: ['activePropertyName', 'savedPropertySettings'],
+    persistedKeys: ['propertySettings', 'savedPropertySettings'],
     reducer: AppReducer,
   })
 
@@ -84,17 +62,6 @@ export default function Layout({ children }: { children: ReactNode }) {
   )
 
   useEffect(() => {
-    console.log(`Writing ${propertyName} to state`)
-    dispatch({
-      type: 'setStateByPath',
-      payload: {
-        path: 'activePropertyName',
-        value: propertyName,
-      },
-    })
-  }, [dispatch, propertyName])
-
-  useEffect(() => {
     window.onmessage = (event: {
       data: {
         pluginMessage: AppAction
@@ -103,34 +70,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       dispatch(event.data.pluginMessage)
     }
   }, [dispatch])
-
-  // For some reason React can't tell when propertySettings changes
-  // const stringifiedPropertySettings = JSON.stringify(propertySettings)
-
-  const saveSettingsToSelectedNodes = useCallback(() => {
-    const randomizedPropertySettings = Object.entries(propertySettings).filter(
-      ([, { mode }]) => mode !== 'disabled',
-    )
-
-    if (randomizedPropertySettings.length === 0) {
-      return
-    }
-
-    dispatchPluginAction({
-      type: 'saveSettingsToSelectedNodes',
-      payload: {
-        propertySettings: Object.fromEntries(
-          randomizedPropertySettings,
-        ) as Record<PropertyName, PropertySettings>,
-      },
-    })
-  }, [propertySettings])
-
-  useEffect(() => {
-    dispatchPluginAction({
-      type: 'requestSettingsFromSelectedNodes',
-    })
-  }, [])
 
   async function handleClickExecute() {
     const { propertySettings } = state
@@ -146,8 +85,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         propertySettings: randomizedPropertySettings,
       },
     })
-
-    saveSettingsToSelectedNodes()
   }
 
   return (

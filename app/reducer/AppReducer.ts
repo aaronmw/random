@@ -1,20 +1,19 @@
-import { AppAction, AppState, PropertyName } from "@/lib/types"
-import update from "immutability-helper"
-import { isEqual, mapValues, set } from "lodash"
-import { getSideEffectsForEnablingRandomization } from "./state-constraints/getSideEffectsForEnablingRandomization"
-import { getSideEffectsForPreservingAspectRatio } from "./state-constraints/getSideEffectsForPreservingAspectRatio"
+import { AppAction, AppState } from '@/lib/types'
+import update from 'immutability-helper'
+import { isEqual, mapValues, set } from 'lodash'
+import { getSideEffectsForPreservingAspectRatio } from './state-constraints/getSideEffectsForPreservingAspectRatio'
 
 export { AppReducer }
 
 const AppReducer = (state: AppState, action: AppAction) => {
   let newState: AppState = structuredClone(state)
 
-  if (typeof action === "undefined") {
+  if (typeof action === 'undefined') {
     return state
   }
 
   switch (action.type) {
-    case "loadPropertySettings": {
+    case 'loadPropertySettings': {
       const { loadedProperties } = action.payload
 
       newState = {
@@ -22,7 +21,7 @@ const AppReducer = (state: AppState, action: AppAction) => {
         propertySettings: {
           ...mapValues(newState.propertySettings, (propertySetting) => ({
             ...propertySetting,
-            mode: "disabled" as const,
+            mode: 'disabled' as const,
           })),
           ...loadedProperties,
         },
@@ -30,7 +29,7 @@ const AppReducer = (state: AppState, action: AppAction) => {
       break
     }
 
-    case "setPreserveAspectRatio": {
+    case 'setPreserveAspectRatio': {
       const { preserveAspectRatio, propertyName } = action.payload
 
       const sideEffects = getSideEffectsForPreservingAspectRatio({
@@ -52,7 +51,7 @@ const AppReducer = (state: AppState, action: AppAction) => {
       break
     }
 
-    case "setStateByPath": {
+    case 'setStateByPath': {
       const { path, value } = action.payload
       set(newState, path, value)
       break
@@ -62,7 +61,7 @@ const AppReducer = (state: AppState, action: AppAction) => {
   const stateHasChanged = !isEqual(state, newState)
 
   console.log(
-    `App action ${action.type} fired${!stateHasChanged ? ", but no state change" : ""}:`,
+    `App action ${action.type} fired${!stateHasChanged ? ', but no state change' : ''}:`,
     {
       action,
       prevState: state,

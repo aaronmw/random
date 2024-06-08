@@ -79,8 +79,7 @@ const windowClassNamesByVariant = {
   default: twJoin(
     `
       max-h-[90vh]
-      min-w-60
-      max-w-screen-sm
+      w-[90vw]
       gap-9
       overflow-auto
       border
