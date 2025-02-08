@@ -3,7 +3,7 @@ import { Badge } from '@/components/Badge'
 import { Box } from '@/components/Box'
 import { Icon } from '@/components/Icon'
 import { PropertyName } from '@/lib/types'
-import { get } from 'lodash'
+import get from 'lodash/get'
 import {
   KeyboardEvent,
   ReactNode,

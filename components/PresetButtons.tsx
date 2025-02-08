@@ -6,7 +6,7 @@ import { IconButton } from '@/components/IconButton'
 import { Menu } from '@/components/Menu'
 import { ModalWindow } from '@/components/ModalWindow'
 import { PropertyName, PropertySettings } from '@/lib/types'
-import { pickBy } from 'lodash'
+import pickBy from 'lodash/pickBy'
 import {
   FocusEvent,
   FormEvent,

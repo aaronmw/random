@@ -3,7 +3,7 @@
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { ModalWindow, ModalWindowProps } from '@/components/ModalWindow'
-import { sample } from 'lodash'
+import sample from 'lodash/sample'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { twJoin } from 'tailwind-merge'
 import { queryChatGPT } from './queryChatGPT'

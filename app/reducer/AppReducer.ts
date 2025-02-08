@@ -1,6 +1,8 @@
 import { AppAction, AppState } from '@/lib/types'
 import update from 'immutability-helper'
-import { isEqual, mapValues, set } from 'lodash'
+import isEqual from 'lodash/isEqual'
+import mapValues from 'lodash/mapValues'
+import set from 'lodash/set'
 import { getSideEffectsForPreservingAspectRatio } from './state-constraints/getSideEffectsForPreservingAspectRatio'
 
 export { AppReducer }

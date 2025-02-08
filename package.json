@@ -14,36 +14,42 @@
   },
   "dependencies": {
     "@figma/plugin-typings": "*",
-    "@tailwindcss/postcss": "^4.0.0",
-    "@types/node": "^20.12.8",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.0",
+    "@tailwindcss/postcss": "^4.0.4",
+    "@types/node": "^22.13.1",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
     "@uidotdev/usehooks": "^2.4.1",
-    "esbuild": "^0.18.20",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "13.4.10",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.20.0",
+    "eslint-config-next": "15.1.6",
     "immutability-helper": "^3.1.1",
     "lodash": "^4.17.21",
     "natural-compare-lite": "^1.4.0",
-    "next": "^14.2.3",
-    "postcss": "^8.4.38",
-    "prettier": "^3.2.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-error-boundary": "^4.0.13",
-    "tailwind-merge": "^2.3.0",
-    "tailwindcss": "^4.0.0",
+    "next": "^15.1.6",
+    "postcss": "^8.5.1",
+    "prettier": "^3.4.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-error-boundary": "^5.0.0",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss": "^4.0.4",
     "tiny-invariant": "^1.3.3",
-    "typescript": "^5.4.5"
+    "typescript": "^5.7.3"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.1",
+    "@types/lodash": "^4.17.15",
     "@types/natural-compare-lite": "^1.4.2",
-    "concurrently": "^8.2.2",
-    "cypress": "^13.10.0",
+    "concurrently": "^9.1.2",
+    "cypress": "^14.0.2",
     "prettier-plugin-tailwindcss": "^0.6.11"
   },
   "config": {
     "siteURL": "https://rewrite--figma-property-randomizer.netlify.app/"
+  },
+  "overrides": {
+    "usehooks-ts": {
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0"
+    }
   }
 }

@@ -1,6 +1,6 @@
 import { AppContext } from '@/app/reducer'
 import { Box } from '@/components/Box'
-import { get } from 'lodash'
+import get from 'lodash/get'
 import {
   ChangeEvent,
   ComponentProps,

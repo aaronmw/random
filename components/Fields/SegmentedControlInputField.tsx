@@ -1,5 +1,5 @@
 import { AppContext } from '@/app/reducer'
-import { get } from 'lodash'
+import get from 'lodash/get'
 import { ComponentProps, MouseEvent, createContext, useContext } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { FieldContainer, FieldContainerProps } from './FieldContainer'

@@ -1,7 +1,7 @@
 import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
 import { setNodeProperty } from '@/lib/setNodeProperty'
 import type { PluginAction, PropertyName, PropertySettings } from '@/lib/types'
-import { pickBy } from 'lodash'
+import pickBy from 'lodash/pickBy'
 import naturalSort from 'natural-compare-lite'
 
 declare const SITE_URL: string

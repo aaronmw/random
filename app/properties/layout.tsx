@@ -6,7 +6,7 @@ import { Icon } from '@/components/Icon'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
 import { AppAction, PropertyName, PropertySettings } from '@/lib/types'
 import { useReducerWithPersistedStateKeys } from '@/lib/useReducerWithPersistedStateKeys'
-import { pickBy } from 'lodash'
+import pickBy from 'lodash/pickBy'
 import { ReactNode, useEffect } from 'react'
 import { twJoin } from 'tailwind-merge'
 
