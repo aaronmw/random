@@ -1,15 +1,15 @@
-import { Icon } from "@/app/components/Icon"
-import { PropertyName } from "@/lib/types"
-import { ComponentProps, MouseEvent, useRef, useState } from "react"
-import { twMerge } from "tailwind-merge"
-import { FieldContainerProps } from "./FieldContainer"
-import { ListInputField } from "./ListInputField"
+import { Icon } from '@/components/Icon'
+import { PropertyName } from '@/lib/types'
+import { ComponentProps, MouseEvent, useRef, useState } from 'react'
+import { twMerge } from 'tailwind-merge'
+import { FieldContainerProps } from './FieldContainer'
+import { ListInputField } from './ListInputField'
 
 export { ListInputFieldForColors }
 
 interface ListInputFieldForColorsProps
-  extends Omit<ComponentProps<"textarea">, "type">,
-    Pick<FieldContainerProps, "label" | "variant"> {
+  extends Omit<ComponentProps<'textarea'>, 'type'>,
+    Pick<FieldContainerProps, 'label' | 'variant'> {
   propertyName: PropertyName
 }
 
@@ -23,22 +23,8 @@ interface LineContext {
 const classNames = {
   colorSwatch: ({ isValid = false }) =>
     twMerge(
-      `
-        relative
-        mx-1
-        flex
-        size-6
-        cursor-pointer
-        items-center
-        justify-center
-        shadow-inner
-      `,
-      isValid
-        ? `
-          `
-        : `
-            text-fadedTextColor
-          `,
+      `relative mx-1 flex size-6 cursor-pointer items-center justify-center shadow-inner`,
+      isValid ? ` ` : `text-fadedTextColor`,
     ),
 }
 
@@ -109,8 +95,8 @@ function ListInputFieldForColors({
           </div>
         )}
         validatorFunction={(value) => {
-          if (!CSS.supports("color", value)) {
-            return "Color not recognized"
+          if (!CSS.supports('color', value)) {
+            return 'Color not recognized'
           }
           return true
         }}

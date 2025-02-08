@@ -1,121 +1,57 @@
-"use client"
+'use client'
 
-import { Icon, IconName } from "@/app/components/Icon"
-import { useIsClient } from "@uidotdev/usehooks"
-import { divide } from "lodash"
-import { ComponentProps, MouseEvent, createContext, useContext } from "react"
-import { createPortal } from "react-dom"
-import { twJoin, twMerge } from "tailwind-merge"
+import { Icon, IconName } from '@/components/Icon'
+import { useIsClient } from '@uidotdev/usehooks'
+import { ComponentProps, MouseEvent, createContext, useContext } from 'react'
+import { createPortal } from 'react-dom'
+import { twJoin, twMerge } from 'tailwind-merge'
 
 export { Menu }
 
-interface MenuProps extends ComponentProps<"ul"> {
+interface MenuProps extends ComponentProps<'ul'> {
   isOpen: boolean
 }
 
-interface MenuItemProps extends Omit<ComponentProps<"li">, "onClick"> {
+interface MenuItemProps extends Omit<ComponentProps<'li'>, 'onClick'> {
   disabled?: boolean
   icon?: IconName
   onClick?: (event: MouseEvent<HTMLLIElement>) => void
 }
 
 interface MenuItemDividerProps
-  extends Omit<ComponentProps<"div">, "children"> {}
+  extends Omit<ComponentProps<'div'>, 'children'> {}
 
 const MenuContext = createContext({ isOpen: false })
 
 const classNames = {
   backdrop: ({ isOpen = false }) =>
     twMerge(
-      `
-        fixed
-        left-0
-        top-0
-        z-10
-        h-full
-        w-full
-        bg-bgColor
-        transition-opacity
-      `,
+      `bg-bgColor fixed top-0 left-0 z-10 h-full w-full transition-opacity`,
       !isOpen
-        ? `
-            pointer-events-none
-            opacity-0
-          `
-        : `
-            pointer-events-auto
-            opacity-50
-            backdrop-blur-sm
-          `,
+        ? `pointer-events-none opacity-0`
+        : `pointer-events-auto opacity-50 backdrop-blur-xs`,
     ),
 
   container: ({ isOpen = false }) =>
     twMerge(
-      `
-        group/menu
-        absolute
-        z-50
-        max-h-[80vh]
-        overflow-y-auto
-        whitespace-nowrap
-        border
-        bg-bgColor
-        py-2
-        shadow
-        transition-opacity
-      `,
+      `group/menu bg-bgColor absolute z-50 max-h-[80vh] overflow-y-auto border py-2 whitespace-nowrap shadow transition-opacity`,
       !isOpen
-        ? `
-            pointer-events-none
-            opacity-0
-          `
-        : `
-            pointer-events-auto
-            opacity-100
-          `,
+        ? `pointer-events-none opacity-0`
+        : `pointer-events-auto opacity-100`,
     ),
 
   menuItem: ({ disabled = false }) =>
     twMerge(
-      `
-        group/menuItem
-        flex
-        w-full
-        items-center
-        gap-5
-        px-4
-        py-2.5
-      `,
+      `group/menuItem flex w-full items-center gap-5 px-4 py-2.5`,
       !disabled
-        ? `
-            hover:bg-accentColor
-            hover:text-white
-          `
-        : `
-            pointer-events-none
-            cursor-default
-            opacity-50
-          `,
+        ? `hover:bg-bg-brand-hover hover:text-white`
+        : `pointer-events-none cursor-default opacity-50`,
     ),
 
-  divider: twJoin(
-    `
-      my-2
-      border-b
-    `,
-  ),
+  divider: twJoin(`my-2 border-b`),
 
   groupHeading: twJoin(
-    `
-      sticky
-      top-0
-      bg-shadedBgColor
-      px-4
-      py-1
-      text-[10px]
-      uppercase
-      text-fadedTextColor
-    `,
+    `bg-bg-hover text-fadedTextColor sticky top-0 px-4 py-1 text-[10px] uppercase`,
   ),
 }
 
@@ -140,7 +76,7 @@ function Menu({ children, className, isOpen, ...otherProps }: MenuProps) {
 Menu.Backdrop = function MenuBackdrop({
   className,
   ...otherProps
-}: ComponentProps<"div">) {
+}: ComponentProps<'div'>) {
   const { isOpen } = useContext(MenuContext)
 
   return createPortal(
@@ -167,8 +103,8 @@ Menu.Item = function MenuItem({
       {...otherProps}
     >
       <Icon
-        className={twJoin(!icon && "opacity-0")}
-        name={icon ?? "circle-small"}
+        className={twJoin(!icon && 'opacity-0')}
+        name={icon ?? 'circle-small'}
       />
 
       {children}
@@ -192,7 +128,7 @@ Menu.GroupHeading = function MenuGroupHeading({
   children,
   className,
   ...otherProps
-}: ComponentProps<"li">) {
+}: ComponentProps<'li'>) {
   return (
     <li
       className={twMerge(classNames.groupHeading, className)}

@@ -1,50 +1,25 @@
 'use client'
 
-import { Button } from '@/app/components/Button'
-import { Icon } from '@/app/components/Icon'
 import { AppContext, AppReducer, initialState } from '@/app/reducer'
+import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
 import { AppAction, PropertyName, PropertySettings } from '@/lib/types'
 import { useReducerWithPersistedStateKeys } from '@/lib/useReducerWithPersistedStateKeys'
 import { pickBy } from 'lodash'
-import { ReactNode, useCallback, useEffect } from 'react'
+import { ReactNode, useEffect } from 'react'
 import { twJoin } from 'tailwind-merge'
 
 const classNames = {
   container: twJoin(
-    `
-      grid
-      h-full
-      grid-rows-[auto,min-content]
-      gap-px
-      overflow-hidden
-    `,
+    `grid h-full grid-rows-[auto_min-content] gap-px overflow-hidden`,
   ),
 
-  contentContainer: twJoin(
-    `
-      row-start-1
-      row-end-2
-      h-full
-      overflow-hidden
-    `,
-  ),
+  contentContainer: twJoin(`row-start-1 row-end-2 h-full overflow-hidden`),
 
-  footer: twJoin(
-    `
-      relative
-      row-start-2
-      row-end-3
-      flex
-      gap-px
-    `,
-  ),
+  footer: twJoin(`relative row-start-2 row-end-3 flex gap-px`),
 
-  executeButton: twJoin(
-    `
-      w-full
-    `,
-  ),
+  executeButton: twJoin(`w-full`),
 }
 
 export default function Layout({ children }: { children: ReactNode }) {

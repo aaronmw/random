@@ -1,14 +1,14 @@
-import { ComponentPropsWithoutRef } from "react"
-import { twJoin, twMerge } from "tailwind-merge"
-import { Icon, IconName, IconVariant } from "./Icon"
+import { ComponentPropsWithoutRef } from 'react'
+import { twJoin, twMerge } from 'tailwind-merge'
+import { Icon, IconName, IconVariant } from './Icon'
 
 export { IconButton }
 
-type TagName = "a" | "button" | "div" | "span"
+type TagName = 'a' | 'button' | 'div' | 'span'
 
 type IconButtonProps<T extends TagName> = Omit<
   ComponentPropsWithoutRef<T>,
-  "children"
+  'children'
 > & {
   as?: T
   iconName?: IconName
@@ -18,51 +18,34 @@ type IconButtonProps<T extends TagName> = Omit<
 }
 
 const classNamesByVariant = {
-  default: twJoin(`
-    hover:bg-shadedBgColor
-  `),
+  default: twJoin(`hover:bg-bg-hover`),
 
-  primary: twJoin(`
-    hover:bg-accentColorDark
-  `),
+  primary: twJoin(`hover:bg-accentColorDark`),
 }
 
 function IconButton<T extends TagName>({
   as,
   className,
   iconName,
-  iconVariant = "light",
+  iconVariant = 'light',
   label,
-  variant = "default",
+  variant = 'default',
   ...otherProps
 }: IconButtonProps<T>) {
-  const Component = String(as ?? "button")
+  const Component = String(as ?? 'button')
 
   return (
     <Component
       className={twMerge(
         classNamesByVariant[variant],
-        `
-          flex
-          h-9
-          min-w-9
-          items-center
-          justify-center
-        `,
+        `flex h-9 min-w-9 items-center justify-center`,
         !iconName && `px-2`,
         className,
       )}
       title={label}
       {...otherProps}
     >
-      <span
-        className={twJoin(
-          iconName && `sr-only`,
-          `
-            text-[9px]
-          `,
-        )}
-      >
+      <span className={twJoin(iconName && `sr-only`, `text-[9px]`)}>
         {label}
       </span>
       {iconName && (

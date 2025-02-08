@@ -1,6 +1,6 @@
 'use client'
 
-import { Icon } from '@/app/components/Icon'
+import { Icon } from '@/components/Icon'
 import { useIsClient } from '@uidotdev/usehooks'
 import { ComponentPropsWithoutRef, MouseEvent, useEffect } from 'react'
 import { createPortal } from 'react-dom'
@@ -20,72 +20,29 @@ interface ModalWindowProps extends ComponentPropsWithoutRef<'div'> {
 
 const classNames = {
   backdrop: twJoin(
-    `
-      fixed
-      left-0
-      top-0
-      z-40
-      h-full
-      w-full
-      bg-black/50
-      backdrop-blur-[1px]
-    `,
+    `fixed top-0 left-0 z-40 h-full w-full bg-black/50 backdrop-blur-[1px]`,
   ),
 
   container: ({ isOpen = false }) =>
     twMerge(
-      `
-        relative
-        z-50
-        transition-opacity
-      `,
+      `relative z-50 transition-opacity`,
       isOpen
-        ? `
-            pointer-events-auto
-            opacity-100
-          `
-        : `
-            pointer-events-none
-            opacity-0
-          `,
+        ? `pointer-events-auto opacity-100`
+        : `pointer-events-none opacity-0`,
     ),
 
   window: ({ variant = 'default' }) =>
     twMerge(
-      `
-        fixed
-        left-1/2
-        top-1/2
-        z-50
-        flex
-        -translate-x-1/2
-        -translate-y-1/2
-        flex-col
-        justify-stretch
-      `,
+      `fixed top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col justify-stretch`,
       windowClassNamesByVariant[variant as ModalWindowVariant],
     ),
 
-  closeButton: twJoin(
-    `
-      absolute
-      right-5
-      top-5
-    `,
-  ),
+  closeButton: twJoin(`absolute top-5 right-5`),
 }
 
 const windowClassNamesByVariant = {
   default: twJoin(
-    `
-      max-h-[90vh]
-      w-[90vw]
-      gap-9
-      overflow-auto
-      border
-      bg-bgColor
-      p-px
-    `,
+    `bg-bgColor max-h-[90vh] w-[90vw] gap-9 overflow-auto border p-px`,
   ),
 }
 

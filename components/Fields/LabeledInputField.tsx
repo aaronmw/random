@@ -1,6 +1,6 @@
-import { Box } from "@/app/components/Box"
-import { AppContext } from "@/app/reducer"
-import { get } from "lodash"
+import { AppContext } from '@/app/reducer'
+import { Box } from '@/components/Box'
+import { get } from 'lodash'
 import {
   ChangeEvent,
   ComponentProps,
@@ -8,16 +8,16 @@ import {
   Ref,
   forwardRef,
   useContext,
-} from "react"
-import { FieldContainer, FieldContainerProps } from "./FieldContainer"
+} from 'react'
+import { FieldContainer, FieldContainerProps } from './FieldContainer'
 
 export { LabeledInputField }
 
 type LabeledInputFieldProps<P extends string, V extends string | number> = Omit<
-  ComponentProps<"input">,
-  "value"
+  ComponentProps<'input'>,
+  'value'
 > &
-  Pick<FieldContainerProps, "label" | "variant"> &
+  Pick<FieldContainerProps, 'label' | 'variant'> &
   (
     | {
         path: P
@@ -51,7 +51,7 @@ const InnerLabeledInputField = <P extends string, V extends string | number>(
 
     if (path) {
       dispatch({
-        type: "setStateByPath",
+        type: 'setStateByPath',
         payload: {
           path,
           value: newValue,
@@ -70,11 +70,13 @@ const InnerLabeledInputField = <P extends string, V extends string | number>(
     >
       <Box
         as="input"
-        placeholder={type === "number" ? "0" : "text" ? "-" : ""}
+        placeholder={
+          type === 'number' ? '0' : type === 'text' ? '-' : undefined
+        }
         ref={ref}
         type={type}
         value={String(currentValue ?? defaultValue)}
-        variant={variant === "labelOnTop" ? "input" : "inputWithoutBorder"}
+        variant={variant === 'labelOnTop' ? 'input' : 'inputWithoutBorder'}
         onChange={handleChange}
         onFocus={(event: FocusEvent<HTMLInputElement>) => event.target.select()}
         {...otherProps}

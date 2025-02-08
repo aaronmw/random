@@ -1,7 +1,7 @@
-import { Badge } from '@/app/components/Badge'
-import { Box } from '@/app/components/Box'
-import { Icon } from '@/app/components/Icon'
 import { AppContext } from '@/app/reducer'
+import { Badge } from '@/components/Badge'
+import { Box } from '@/components/Box'
+import { Icon } from '@/components/Icon'
 import { PropertyName } from '@/lib/types'
 import { get } from 'lodash'
 import {
@@ -30,100 +30,32 @@ interface ListInputFieldProps {
 }
 
 const classNames = {
-  labelContainer: twJoin(
-    `
-      flex
-      items-center
-      justify-between
-    `,
-  ),
+  labelContainer: twJoin(`flex items-center justify-between`),
 
-  badgesContainer: twJoin(
-    `
-      flex
-      gap-1
-    `,
-  ),
+  badgesContainer: twJoin(`flex gap-1`),
 
-  container: twJoin(
-    `
-      w-full
-    `,
-  ),
+  container: twJoin(`w-full`),
 
   listContainer: twJoin(
-    `
-      group/list
-      relative
-      grid
-      w-full
-      grid-flow-col
-      grid-cols-[min-content,1fr,min-content]
-      grid-rows-[max-content]
-      overflow-y-auto
-      overflow-x-hidden
-    `,
+    `group/list relative grid w-full grid-flow-col grid-cols-[min-content_1fr_min-content] grid-rows-[max-content] overflow-x-hidden overflow-y-auto`,
   ),
 
-  leftSlotContainer: twJoin(
-    `
-      col-start-1
-      col-end-2
-    `,
-  ),
+  leftSlotContainer: twJoin(`col-start-1 col-end-2`),
 
-  textAreaContainer: twJoin(
-    `
-      col-start-2
-      col-end-3
-      row-start-1
-      row-end-[9999]
-    `,
-  ),
+  textAreaContainer: twJoin(`col-start-2 col-end-3 row-start-1 row-end-9999`),
 
   textArea: twJoin(
-    `
-      w-full
-      resize-none
-      border-0
-      bg-transparent
-      pl-2
-      font-mono
-      text-textColor
-      outline-none
-    `,
+    `text-text w-full resize-none border-0 bg-transparent pl-2 font-mono outline-hidden`,
   ),
 
   valueContainer: ({ isCommentedOut = false, isValid = false }) =>
     twMerge(
-      `
-        col-start-2
-        col-end-3
-        flex
-        min-h-9
-        w-full
-        flex-shrink-0
-        cursor-pointer
-        items-center
-        pl-2
-        font-mono
-        transition-opacity
-        hover:!text-textColor
-        group-hover/list:text-fadedTextColor
-      `,
+      `hover:!text-text group-hover/list:text-fadedTextColor col-start-2 col-end-3 flex min-h-9 w-full shrink-0 cursor-pointer items-center pl-2 font-mono transition-opacity`,
       isValid
-        ? 'odd:bg-shadedBgColor'
+        ? 'odd:bg-bg-hover'
         : isCommentedOut
-          ? `
-              bg-shadedBgColor/20
-              odd:bg-shadedBgColor/40
-              text-fadedTextColor
-            `
-          : `
-              bg-red-500/10
-              text-red-600
-              odd:bg-red-500/20
-            `,
+          ? `bg-bg-hover/20 odd:bg-bg-hover/40 text-fadedTextColor`
+          : `bg-red-500/10 text-red-600 odd:bg-red-500/20`,
     ),
 
   rightSlotContainer: ({
@@ -133,69 +65,24 @@ const classNames = {
     lineIndex = 0,
   }) =>
     twMerge(
-      `
-        group/list-item
-        relative
-        col-start-3
-        col-end-4
-        flex
-        h-9
-        items-center
-        justify-end
-        px-2
-      `,
+      `group/list-item relative col-start-3 col-end-4 flex h-9 items-center justify-end px-2`,
       // Can't use `odd:` because the number of children
       // changes when editing
       lineIndex % 2 === 0 && `is-odd`,
       isEditing &&
-        `
-          before:absolute
-          before:right-full
-          before:-z-10
-          before:col-start-2
-          before:col-end-4
-          before:h-full
-          before:w-screen
-        `,
+        `before:absolute before:right-full before:-z-10 before:col-start-2 before:col-end-4 before:h-full before:w-screen`,
       isValid
-        ? `
-            cursor-pointer
-            [&.is-odd]:bg-shadedBgColor
-            [&.is-odd]:before:bg-shadedBgColor
-          `
+        ? `[&.is-odd]:bg-bg-hover [&.is-odd]:before:bg-bg-hover cursor-pointer`
         : isCommentedOut
-          ? `
-              bg-shadedBgColor/20
-              before:bg-shadedBgColor/20
-              [&.is-odd]:bg-shadedBgColor/40
-              [&.is-odd]:before:bg-shadedBgColor/40
-              cursor-pointer
-              text-fadedTextColor
-            `
-          : `
-              bg-red-500/10
-              text-red-600
-              before:bg-red-500/10
-              [&.is-odd]:bg-red-500/20
-              [&.is-odd]:before:bg-red-500/20
-            `,
+          ? `bg-bg-hover/20 before:bg-bg-hover/20 [&.is-odd]:bg-bg-hover/40 [&.is-odd]:before:bg-bg-hover/40 text-fadedTextColor cursor-pointer`
+          : `bg-red-500/10 text-red-600 before:bg-red-500/10 [&.is-odd]:bg-red-500/20 [&.is-odd]:before:bg-red-500/20`,
     ),
 
   rightSlotStatusIcon: ({ isCommentedOut = false, isValid = false }) =>
     twMerge(
-      `
-        transition-all
-      `,
-      isValid &&
-        `
-          opacity-0
-          group-hover/list-item:opacity-100
-        `,
-      isCommentedOut &&
-        `
-          opacity-30
-          group-hover/list-item:opacity-100
-        `,
+      `transition-all`,
+      isValid && `opacity-0 group-hover/list-item:opacity-100`,
+      isCommentedOut && `opacity-30 group-hover/list-item:opacity-100`,
     ),
 }
 

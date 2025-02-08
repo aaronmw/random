@@ -1,11 +1,11 @@
-import { ConditionalWrapper } from "@/app/components/ConditionalWrapper"
-import { ComponentPropsWithoutRef, ReactNode } from "react"
-import { twJoin, twMerge } from "tailwind-merge"
+import { ConditionalWrapper } from '@/components/ConditionalWrapper'
+import { ComponentPropsWithoutRef, ReactNode } from 'react'
+import { twJoin, twMerge } from 'tailwind-merge'
 
 export { FieldContainer }
 export type { FieldContainerProps }
 
-interface FieldContainerProps extends ComponentPropsWithoutRef<"label"> {
+interface FieldContainerProps extends ComponentPropsWithoutRef<'label'> {
   label: ReactNode
   variant?: keyof typeof classNamesByVariant
 }
@@ -16,20 +16,18 @@ const classNamesForInteractiveSurface = `
   items-center
   rounded-[0.5px]
   outline-borderColor
-  hover:outline
   hover:outline-1
-  has-[:focus]:outline
-  has-[:focus]:outline-2
-  has-[:focus]:outline-accentColor
+  has-focus:outline-2
+  has-focus:outline-border-brand
 `
 
 const classNamesByVariant = {
   unlabeled: {
-    container: "",
-    interactiveSurfaceElement: "label",
+    container: '',
+    interactiveSurfaceElement: 'label',
     interactiveSurface: ``,
-    field: "",
-    label: "hidden",
+    field: '',
+    label: 'hidden',
   },
 
   full: {
@@ -40,7 +38,7 @@ const classNamesByVariant = {
       justify-between
       pl-2
     `,
-    interactiveSurfaceElement: "field",
+    interactiveSurfaceElement: 'field',
     interactiveSurface: ``,
     field: `
       flex
@@ -58,7 +56,7 @@ const classNamesByVariant = {
       grid-cols-subgrid
       pl-2
     `,
-    interactiveSurfaceElement: "label",
+    interactiveSurfaceElement: 'label',
     interactiveSurface: ``,
     label: `
       grid
@@ -81,7 +79,7 @@ const classNamesByVariant = {
       pl-2
       gap-1
     `,
-    interactiveSurfaceElement: "field",
+    interactiveSurfaceElement: 'field',
     interactiveSurface: `min-h-0`,
     field: `
       block
@@ -97,7 +95,7 @@ const FieldContainer = ({
   children,
   className,
   label,
-  variant = "unlabeled",
+  variant = 'unlabeled',
   ...otherProps
 }: FieldContainerProps) => {
   const classNames = classNamesByVariant[variant]
@@ -105,7 +103,7 @@ const FieldContainer = ({
   return (
     <label
       className={twMerge(
-        classNames.interactiveSurfaceElement === "label" &&
+        classNames.interactiveSurfaceElement === 'label' &&
           classNamesForInteractiveSurface,
         classNames.container,
         className,
@@ -115,7 +113,7 @@ const FieldContainer = ({
       <span className={twJoin(classNames.label)}>{label}</span>
       <span className={classNames.field}>
         <ConditionalWrapper
-          condition={classNames.interactiveSurfaceElement === "field"}
+          condition={classNames.interactiveSurfaceElement === 'field'}
           wrapper={(children) => (
             <span
               className={twMerge(

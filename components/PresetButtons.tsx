@@ -1,10 +1,10 @@
-import { Box } from '@/app/components/Box'
-import { Button } from '@/app/components/Button'
-import { Icon } from '@/app/components/Icon'
-import { IconButton } from '@/app/components/IconButton'
-import { Menu } from '@/app/components/Menu'
-import { ModalWindow } from '@/app/components/ModalWindow'
 import { AppContext } from '@/app/reducer'
+import { Box } from '@/components/Box'
+import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
+import { IconButton } from '@/components/IconButton'
+import { Menu } from '@/components/Menu'
+import { ModalWindow } from '@/components/ModalWindow'
 import { PropertyName, PropertySettings } from '@/lib/types'
 import { pickBy } from 'lodash'
 import {
@@ -20,81 +20,23 @@ import { twJoin } from 'tailwind-merge'
 
 const classNames = {
   container: twJoin(
-    `
-      relative
-      flex
-      w-full
-      items-center
-      justify-around
-      border-t
-      py-3
-    `,
+    `relative flex w-full items-center justify-around border-t py-3`,
   ),
 
-  menu: twJoin(
-    `
-      bottom-24
-      left-4
-      right-4
-    `,
-  ),
+  menu: twJoin(`right-4 bottom-24 left-4`),
 
   menuItemContentsContainer: twJoin(
-    `
-      relative
-      flex
-      w-full
-      items-center
-      justify-between
-      whitespace-normal
-    `,
+    `relative flex w-full items-center justify-between whitespace-normal`,
   ),
 
   hoverContainer: twJoin(
-    `
-      absolute
-      right-0
-      top-1/2
-      flex
-      h-full
-      -translate-y-1/2
-      flex-row-reverse
-      items-center
-      justify-center
-      gap-1
-      bg-bgColor
-      pl-3
-      opacity-0
-      before:absolute
-      before:right-full
-      before:top-0
-      before:h-full
-      before:w-10
-      before:bg-gradient-to-l
-      before:from-bgColor
-      before:to-transparent
-      group-hover/menuItem:bg-accentColor
-      group-hover/menuItem:opacity-100
-      group-hover/menuItem:before:from-accentColor
-    `,
+    `bg-bgColor before:from-bgColor group-hover/menuItem:bg-bg-brand group-hover/menuItem:before:from-bg-brand absolute top-1/2 right-0 flex h-full -translate-y-1/2 flex-row-reverse items-center justify-center gap-1 pl-3 opacity-0 group-hover/menuItem:opacity-100 before:absolute before:top-0 before:right-full before:h-full before:w-10 before:bg-linear-to-l before:to-transparent`,
   ),
 
-  presetConfigForm: twJoin(
-    `
-      flex
-      flex-col
-      gap-5
-      p-5
-    `,
-  ),
+  presetConfigForm: twJoin(`flex flex-col gap-5 p-5`),
 
   presetConfigFormButtonsContainer: twJoin(
-    `
-      flex
-      flex-row-reverse
-      items-center
-      gap-5
-    `,
+    `flex flex-row-reverse items-center gap-5`,
   ),
 }
 

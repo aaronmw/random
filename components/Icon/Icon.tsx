@@ -8,7 +8,7 @@ const Icon = forwardRef<HTMLSpanElement, IconProps>(
     ref,
   ) => (
     <span
-      className={twMerge(`!no-underline`, className)}
+      className={twMerge(`no-underline!`, className)}
       ref={ref}
       {...otherProps}
     >

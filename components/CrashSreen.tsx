@@ -1,23 +1,23 @@
-"use client"
+'use client'
 
-import { Button } from "@/app/components/Button"
-import { useEffect, useState } from "react"
+import { Button } from '@/components/Button'
+import { useEffect, useState } from 'react'
 
-const initialButtonLabel = "Copy Old Settings to Clipboard"
+const initialButtonLabel = 'Copy Old Settings to Clipboard'
 
 export function CrashScreen() {
   const [buttonLabel, setButtonLabel] = useState(initialButtonLabel)
-  const settingsInLocalStorage = window.localStorage.getItem("plugin-state")
+  const settingsInLocalStorage = window.localStorage.getItem('plugin-state')
 
   function handleClickCopyOldSettingsButton() {
     navigator.clipboard.writeText(
       JSON.stringify(settingsInLocalStorage, null, 2),
     )
-    setButtonLabel("Copied!")
+    setButtonLabel('Copied!')
   }
 
   function resetToDefaultSettings() {
-    window.localStorage.removeItem("plugin-state")
+    window.localStorage.removeItem('plugin-state')
     window.location.reload()
   }
 
@@ -32,19 +32,7 @@ export function CrashScreen() {
   }, [buttonLabel])
 
   return (
-    <div
-      className="
-        flex
-        h-full
-        w-screen
-        flex-col
-        items-center
-        justify-center
-        space-y-5
-        p-20
-        text-center
-      "
-    >
+    <div className="flex h-full w-screen flex-col items-center justify-center space-y-5 p-20 text-center">
       <p>
         Something went wrong. Most likely, your saved plugin state does not
         conform to a recent plugin update.

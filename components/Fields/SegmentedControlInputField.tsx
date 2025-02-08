@@ -69,15 +69,7 @@ const SegmentedControlInputField = <V extends string | number | boolean>({
         label={label}
         variant={variant}
       >
-        <div
-          className="
-            flex
-            w-fit
-            flex-row-reverse
-            overflow-hidden
-            outline-0
-          "
-        >
+        <div className="flex w-fit flex-row-reverse overflow-hidden outline-0">
           {children}
         </div>
       </FieldContainer>
@@ -108,18 +100,8 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   return (
     <button
       className={twMerge(
-        `
-          flex
-          h-9
-          min-w-9
-          items-center
-          justify-center
-          px-2
-        `,
-        isSelected &&
-          `
-            bg-selectedBgColor
-          `,
+        `flex h-9 min-w-9 items-center justify-center px-2`,
+        isSelected && `bg-bg-hover`,
         className,
       )}
       onClick={innerHandleClickButton}

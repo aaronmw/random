@@ -1,18 +1,13 @@
 import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
 import { setNodeProperty } from '@/lib/setNodeProperty'
-import type {
-  AppAction,
-  PluginAction,
-  PropertyName,
-  PropertySettings,
-} from '@/lib/types'
+import type { PluginAction, PropertyName, PropertySettings } from '@/lib/types'
 import { pickBy } from 'lodash'
 import naturalSort from 'natural-compare-lite'
 
 declare const SITE_URL: string
 
 const PLUGIN_HEIGHT = 500
-const PLUGIN_WIDTH = 250
+const PLUGIN_WIDTH = 500
 
 /*
   By enabling `theme-colors`, Figma will add either the figma-light or

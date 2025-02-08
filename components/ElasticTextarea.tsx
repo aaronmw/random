@@ -1,4 +1,4 @@
-import { Box } from '@/app/components/Box'
+import { Box } from '@/components/Box'
 import { useMultipleRefs } from '@/lib/useMultipleRefs'
 import {
   ChangeEvent,
@@ -53,15 +53,7 @@ const ElasticTextarea = forwardRef<HTMLTextAreaElement, ElasticTextareaProps>(
 
         <div
           className={twMerge(
-            `
-              pointer-events-none
-              absolute
-              left-0
-              top-0
-              whitespace-pre-wrap
-              text-base
-              opacity-0
-            `,
+            `pointer-events-none absolute top-0 left-0 text-base whitespace-pre-wrap opacity-0`,
           )}
           ref={ghostElementRef}
         >

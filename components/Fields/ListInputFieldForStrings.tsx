@@ -1,17 +1,17 @@
-import { Button } from "@/app/components/Button"
-import { Icon } from "@/app/components/Icon"
-import { Randy } from "@/app/components/Randy"
-import { AppContext } from "@/app/reducer"
-import { PropertyName } from "@/lib/types"
-import { ComponentProps, useContext, useState } from "react"
-import { FieldContainerProps } from "./FieldContainer"
-import { ListInputField } from "./ListInputField"
+import { AppContext } from '@/app/reducer'
+import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
+import { Randy } from '@/components/Randy'
+import { PropertyName } from '@/lib/types'
+import { ComponentProps, useContext, useState } from 'react'
+import { FieldContainerProps } from './FieldContainer'
+import { ListInputField } from './ListInputField'
 
 export { ListInputFieldForStrings }
 
 interface ListInputFieldForStringsProps
-  extends Omit<ComponentProps<"textarea">, "type">,
-    Pick<FieldContainerProps, "label" | "variant"> {
+  extends Omit<ComponentProps<'textarea'>, 'type'>,
+    Pick<FieldContainerProps, 'label' | 'variant'> {
   propertyName: PropertyName
 }
 
@@ -29,21 +29,11 @@ function ListInputFieldForStrings({
         label={label}
         propertyName={propertyName}
         renderBottomSlot={
-          process.env.NODE_ENV === "development" && (
-            <div
-              className="
-                mt-1
-                flex
-                justify-end
-              "
-            >
+          process.env.NODE_ENV === 'development' && (
+            <div className="mt-1 flex justify-end">
               <Button
                 as="a"
-                className="
-                  flex
-                  items-center
-                  gap-1
-                "
+                className="flex items-center gap-1"
                 variant="link"
                 onClick={() => setIsShowingRandy(true)}
               >
@@ -64,7 +54,7 @@ function ListInputFieldForStrings({
         onClose={() => setIsShowingRandy(false)}
         onResponse={(response) => {
           dispatch({
-            type: "setStateByPath",
+            type: 'setStateByPath',
             payload: {
               path: `propertySettings.${propertyName}.modeOptions.list.options`,
               value: response,

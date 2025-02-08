@@ -1,13 +1,13 @@
 'use client'
 
-import { AnchorPositionField } from '@/app/components/Fields/AnchorPositionField'
-import { LabeledInputField } from '@/app/components/Fields/LabeledInputField'
-import { ListInputFieldForColors } from '@/app/components/Fields/ListInputFieldForColors'
-import { ListInputFieldForNumbers } from '@/app/components/Fields/ListInputFieldForNumbers'
-import { ListInputFieldForStrings } from '@/app/components/Fields/ListInputFieldForStrings'
-import { SegmentedControlInputField } from '@/app/components/Fields/SegmentedControlInputField'
-import { Icon, IconName } from '@/app/components/Icon'
 import { AppContext } from '@/app/reducer'
+import { AnchorPositionField } from '@/components/Fields/AnchorPositionField'
+import { LabeledInputField } from '@/components/Fields/LabeledInputField'
+import { ListInputFieldForColors } from '@/components/Fields/ListInputFieldForColors'
+import { ListInputFieldForNumbers } from '@/components/Fields/ListInputFieldForNumbers'
+import { ListInputFieldForStrings } from '@/components/Fields/ListInputFieldForStrings'
+import { SegmentedControlInputField } from '@/components/Fields/SegmentedControlInputField'
+import { Icon, IconName } from '@/components/Icon'
 import { hasProperty } from '@/lib/hasProperty'
 import { DATA_TYPES, PropertyName, dataTypesByPropertyName } from '@/lib/types'
 import { usePrevious } from '@uidotdev/usehooks'
@@ -18,82 +18,31 @@ import invariant from 'tiny-invariant'
 const classNames = ({ isRandomized = false }) => ({
   container: twMerge(
     isRandomized && 'is-randomized',
-    `
-      transition-all
-    `,
+    `transition-all`,
     isRandomized
-      ? `
-          border-y
-          bg-bgColor
-          pb-3
-          [.is-randomized+&]:border-t-0
-        `
-      : `
-          pb-0
-        `,
+      ? `bg-bgColor border-y pb-3 [.is-randomized+&]:border-t-0`
+      : `pb-0`,
   ),
 
   headingContainer: twMerge(
-    `
-      group
-      flex
-      items-center
-      justify-between
-      py-2
-      pl-4
-      pr-2
-    `,
-    !isRandomized
-      ? `
-          opacity-50
-        `
-      : `
-          font-bold
-          opacity-100
-        `,
+    `group flex items-center justify-between py-2 pr-2 pl-4`,
+    !isRandomized ? `opacity-50` : `font-bold opacity-100`,
   ),
 
   propertyNameContainer: twMerge(
-    `
-      transition-opacity
-    `,
-    !isRandomized
-      ? `
-          opacity-50
-        `
-      : `
-          font-bold
-          opacity-100
-        `,
+    `transition-opacity`,
+    !isRandomized ? `opacity-50` : `font-bold opacity-100`,
   ),
 
   modeOptionButton: twJoin(
-    !isRandomized &&
-      `
-        opacity-0
-        transition-opacity
-        group-hover:opacity-100
-      `,
+    !isRandomized && `opacity-0 transition-opacity group-hover:opacity-100`,
   ),
 
   contentContainer: twMerge(
-    `
-      grid
-      grid-cols-4
-      gap-2
-      px-2
-      transition-all
-    `,
+    `grid grid-cols-4 gap-2 px-2 transition-all`,
     !isRandomized
-      ? `
-          max-h-0
-          overflow-hidden
-          opacity-0
-        `
-      : `
-          max-h-[2000px]
-          opacity-100
-        `,
+      ? `max-h-0 overflow-hidden opacity-0`
+      : `max-h-[2000px] opacity-100`,
   ),
 })
 export function PropertyConfigPanel({

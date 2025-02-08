@@ -12,42 +12,17 @@ interface AnchorPositionFieldProps
 }
 
 const classNames = {
-  container: twJoin(
-    `
-      flex
-      size-[30px]
-      flex-wrap
-      leading-none
-      outline-0
-    `,
-  ),
+  container: twJoin(`flex size-[30px] flex-wrap leading-none outline-0`),
 
   clickableSurface: ({ isSelected = false, isSelectable = false }) =>
     twMerge(
       isSelectable && 'is-selectable',
       isSelected && 'is-selected',
-      `
-        group
-        size-[10px]
-        [&.is-selectable]:pointer-events-auto
-        [&.is-selectable]:cursor-pointer
-        [&:not(.is-selectable)]:pointer-events-none
-      `,
+      `group size-[10px] [&.is-selectable]:pointer-events-auto [&.is-selectable]:cursor-pointer [&:not(.is-selectable)]:pointer-events-none`,
     ),
 
   visibleAnchorButton: twJoin(
-    `
-      m-[2px]
-      size-[6px]
-      group-[&.is-selectable]:border
-      group-[&.is-selectable:not(.is-selected):hover]:border-accentColor
-      group-[&.is-selectable:not(.is-selected)]:border-fadedTextColor
-      group-[&.is-selected]:border-textColor
-      group-[&.is-selectable:not(.is-selected):hover]:bg-accentColor
-      group-[&.is-selectable:not(.is-selected)]:bg-transparent
-      group-[&.is-selected]:bg-textColor
-      group-[&:not(.is-selectable)]:bg-shadedBgColor
-    `,
+    `group-[&.is-selectable:not(.is-selected):hover]:border-border-brand group-[&.is-selectable:not(.is-selected)]:border-fadedTextColor group-[&.is-selected]:border-text group-[&.is-selectable:not(.is-selected):hover]:bg-bg-brand group-[&.is-selected]:bg-text group-[&:not(.is-selectable)]:bg-bg-hover m-[2px] size-[6px] group-[&.is-selectable]:border group-[&.is-selectable:not(.is-selected)]:bg-transparent`,
   ),
 }
 

@@ -1,32 +1,32 @@
-"use client"
+'use client'
 
-import { Button } from "@/app/components/Button"
-import { Icon } from "@/app/components/Icon"
-import { ModalWindow, ModalWindowProps } from "@/app/components/ModalWindow"
-import { sample } from "lodash"
-import { FormEvent, useEffect, useRef, useState } from "react"
-import { twJoin } from "tailwind-merge"
-import { queryChatGPT } from "./queryChatGPT"
+import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
+import { ModalWindow, ModalWindowProps } from '@/components/ModalWindow'
+import { sample } from 'lodash'
+import { FormEvent, useEffect, useRef, useState } from 'react'
+import { twJoin } from 'tailwind-merge'
+import { queryChatGPT } from './queryChatGPT'
 
 const promptSuggestions = [
-  "american cities",
-  "american states",
-  "canadian cities",
-  "canadian provinces",
-  "cities",
-  "corporation names",
-  "amounts between $9.99 and $999.99",
-  "fake company names",
-  "famous people",
-  "famous animals",
-  "first and last names",
+  'american cities',
+  'american states',
+  'canadian cities',
+  'canadian provinces',
+  'cities',
+  'corporation names',
+  'amounts between $9.99 and $999.99',
+  'fake company names',
+  'famous people',
+  'famous animals',
+  'first and last names',
   "popular bands from the 90's",
-  "silly names",
-  "types of fish",
-  "types of dog",
+  'silly names',
+  'types of fish',
+  'types of dog',
 ]
 
-interface RandyProps extends Pick<ModalWindowProps, "isOpen" | "onClose"> {
+interface RandyProps extends Pick<ModalWindowProps, 'isOpen' | 'onClose'> {
   onResponse: (response: string[]) => void
 }
 
@@ -83,30 +83,14 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
     >
       <form
         className={twJoin(
-          `
-            m-0
-            flex
-            transition-opacity
-          `,
-          isFetchingResults &&
-            `
-              pointer-events-none
-              animate-pulse
-            `,
+          `m-0 flex transition-opacity`,
+          isFetchingResults && `pointer-events-none animate-pulse`,
         )}
         onSubmit={handleSubmit}
       >
         <input
           autoFocus={true}
-          className="
-            w-full
-            border
-            bg-bgColor
-            px-5
-            py-2
-            text-center
-            text-textColor
-          "
+          className="bg-bg text-text w-full border px-5 py-2 text-center"
           maxLength={40}
           ref={inputRef}
           type="text"
