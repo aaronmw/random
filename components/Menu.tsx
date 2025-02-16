@@ -1,140 +1,22 @@
-'use client'
+import { MenuItem, MenuItemProps } from '@/components/MenuItem'
+import { ComponentProps } from 'react'
+import { twMerge } from 'tailwind-merge'
 
-import { Icon, IconName } from '@/components/Icon'
-import { useIsClient } from '@uidotdev/usehooks'
-import { ComponentProps, MouseEvent, createContext, useContext } from 'react'
-import { createPortal } from 'react-dom'
-import { twJoin, twMerge } from 'tailwind-merge'
-
-export { Menu }
-
-interface MenuProps extends ComponentProps<'ul'> {
-  isOpen: boolean
+export interface MenuProps extends Omit<ComponentProps<'ul'>, 'children'> {
+  items: MenuItemProps<any>[]
 }
 
-interface MenuItemProps extends Omit<ComponentProps<'li'>, 'onClick'> {
-  disabled?: boolean
-  icon?: IconName
-  onClick?: (event: MouseEvent<HTMLLIElement>) => void
-}
-
-interface MenuItemDividerProps
-  extends Omit<ComponentProps<'div'>, 'children'> {}
-
-const MenuContext = createContext({ isOpen: false })
-
-const classNames = {
-  backdrop: ({ isOpen = false }) =>
-    twMerge(
-      `bg-bgColor fixed top-0 left-0 z-10 h-full w-full transition-opacity`,
-      !isOpen
-        ? `pointer-events-none opacity-0`
-        : `pointer-events-auto opacity-50 backdrop-blur-xs`,
-    ),
-
-  container: ({ isOpen = false }) =>
-    twMerge(
-      `group/menu bg-bgColor absolute z-50 max-h-[80vh] overflow-y-auto border py-2 whitespace-nowrap shadow transition-opacity`,
-      !isOpen
-        ? `pointer-events-none opacity-0`
-        : `pointer-events-auto opacity-100`,
-    ),
-
-  menuItem: ({ disabled = false }) =>
-    twMerge(
-      `group/menuItem flex w-full items-center gap-5 px-4 py-2.5`,
-      !disabled
-        ? `hover:bg-bg-brand-hover hover:text-white`
-        : `pointer-events-none cursor-default opacity-50`,
-    ),
-
-  divider: twJoin(`my-2 border-b`),
-
-  groupHeading: twJoin(
-    `bg-bg-hover text-fadedTextColor sticky top-0 px-4 py-1 text-[10px] uppercase`,
-  ),
-}
-
-function Menu({ children, className, isOpen, ...otherProps }: MenuProps) {
-  const isClient = useIsClient()
-
-  return !isClient
-    ? null
-    : createPortal(
-        <MenuContext.Provider value={{ isOpen }}>
-          <ul
-            className={twMerge(classNames.container({ isOpen }), className)}
-            {...otherProps}
-          >
-            {children}
-          </ul>
-        </MenuContext.Provider>,
-        document.body,
-      )
-}
-
-Menu.Backdrop = function MenuBackdrop({
-  className,
-  ...otherProps
-}: ComponentProps<'div'>) {
-  const { isOpen } = useContext(MenuContext)
-
-  return createPortal(
-    <div
-      className={twMerge(classNames.backdrop({ isOpen }), className)}
-      {...otherProps}
-    />,
-    document.body,
-  )
-}
-
-Menu.Item = function MenuItem({
-  children,
-  className,
-  disabled,
-  icon,
-  ...otherProps
-}: MenuItemProps) {
+export function Menu({ items, ...props }: MenuProps) {
   return (
-    <li
-      className={twMerge(classNames.menuItem({ disabled }), className)}
-      role="button"
-      tabIndex={0}
-      {...otherProps}
-    >
-      <Icon
-        className={twJoin(!icon && 'opacity-0')}
-        name={icon ?? 'circle-small'}
-      />
-
-      {children}
-    </li>
-  )
-}
-
-Menu.Divider = function MenuItemDivider({
-  className,
-  ...otherProps
-}: MenuItemDividerProps) {
-  return (
-    <div
-      className={twMerge(classNames.divider, className)}
-      {...otherProps}
-    />
-  )
-}
-
-Menu.GroupHeading = function MenuGroupHeading({
-  children,
-  className,
-  ...otherProps
-}: ComponentProps<'li'>) {
-  return (
-    <li
-      className={twMerge(classNames.groupHeading, className)}
-      {...otherProps}
-    >
-      {children}
-    </li>
+    <ul {...props}>
+      {items.map(({ className, ...buttonProps }, index) => (
+        <li key={index}>
+          <MenuItem
+            className={twMerge('w-full', className)}
+            {...buttonProps}
+          />
+        </li>
+      ))}
+    </ul>
   )
 }

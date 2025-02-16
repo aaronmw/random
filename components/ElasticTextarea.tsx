@@ -1,4 +1,4 @@
-import { Box } from '@/components/Box'
+import { StyledText } from '@/components/StyledText'
 import { useMultipleRefs } from '@/lib/useMultipleRefs'
 import {
   ChangeEvent,
@@ -41,7 +41,8 @@ const ElasticTextarea = forwardRef<HTMLTextAreaElement, ElasticTextareaProps>(
 
     return (
       <div className="relative w-full [font-size:0]">
-        <Box
+        <StyledText
+          variant="input"
           as="textarea"
           className={className}
           ref={refs}

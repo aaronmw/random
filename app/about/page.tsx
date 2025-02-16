@@ -1,6 +1,7 @@
 'use client'
 
-import { IconButton } from '@/components/IconButton'
+import { Icon } from '@/components/Icon'
+import { StyledText } from '@/components/StyledText'
 import Image from 'next/image'
 
 export default function AboutPage() {
@@ -17,44 +18,38 @@ export default function AboutPage() {
       <div className="text-lg">Aaron M. Wright</div>
 
       <div className="flex items-center gap-5 text-lg">
-        <IconButton
-          iconName="figma"
-          iconVariant="brands"
-          label="Figma"
-          onClick={() => window.open('https://www.figma.com/@aaronmw')}
-        />
-        <IconButton
-          iconName="github"
-          iconVariant="brands"
-          label="Github"
-          onClick={() => window.open('https://github.com/aaronmw/random')}
-        />
-        <IconButton
-          iconName="linkedin"
-          iconVariant="brands"
-          label="LinkedIn"
-          onClick={() =>
-            window.open('https://www.linkedin.com/in/aaron-wright-849a887/')
-          }
-        />
-        <IconButton
-          iconName="envelope"
-          label="Email"
-          onClick={() => window.open('mailto:aaronmw@gmail.com?subject=Randy')}
-        />
-        <IconButton
-          iconName="instagram"
-          iconVariant="brands"
-          label="Instagram"
-          onClick={() => window.open('https://www.instagram.com/aaronmw/')}
-        />
-        <IconButton
-          className="flex size-9 items-center justify-center rounded-full border-4 border-amber-300 bg-amber-500 text-white hover:bg-amber-400"
-          iconName="cup-togo"
-          iconVariant="solid"
-          label="Tip Jar"
-          onClick={() => window.open('https://ko-fi.com/aaronwright')}
-        />
+        {(
+          [
+            ['Figma', 'brands:figma', 'https://www.figma.com/@aaronmw'],
+            ['Github', 'brands:github', 'https://github.com/aaronmw/random'],
+            [
+              'LinkedIn',
+              'brands:linkedin',
+              'https://www.linkedin.com/in/aaron-wright-849a887/',
+            ],
+            [
+              'Email',
+              'solid:envelope',
+              'mailto:aaronmw@gmail.com?subject=Randy',
+            ],
+            [
+              'Instagram',
+              'brands:instagram',
+              'https://www.instagram.com/aaronmw/',
+            ],
+            ['Tip Jar', 'solid:dollar-sign', 'https://ko-fi.com/aaronwright'],
+          ] as const
+        ).map(([label, icon, href]) => (
+          <StyledText
+            key={href}
+            href={href}
+            as="a"
+            variant="button.icon"
+          >
+            <Icon name={icon} />
+            <span className="sr-only">{label}</span>
+          </StyledText>
+        ))}
       </div>
 
       <div>

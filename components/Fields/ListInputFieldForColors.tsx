@@ -9,7 +9,7 @@ export { ListInputFieldForColors }
 
 interface ListInputFieldForColorsProps
   extends Omit<ComponentProps<'textarea'>, 'type'>,
-    Pick<FieldContainerProps, 'label' | 'variant'> {
+    Pick<FieldContainerProps<'label'>, 'label' | 'variant'> {
   propertyName: PropertyName
 }
 
@@ -24,7 +24,7 @@ const classNames = {
   colorSwatch: ({ isValid = false }) =>
     twMerge(
       `relative mx-1 flex size-6 cursor-pointer items-center justify-center shadow-inner`,
-      isValid ? ` ` : `text-fadedTextColor`,
+      isValid ? ` ` : `text-text-secondary`,
     ),
 }
 

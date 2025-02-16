@@ -1,10 +1,11 @@
 'use client'
 
 import { Icon } from '@/components/Icon'
-import { useIsClient } from '@uidotdev/usehooks'
-import { ComponentPropsWithoutRef, MouseEvent, useEffect } from 'react'
+import { StyledText } from '@/components/StyledText'
+import { ComponentPropsWithoutRef, MouseEvent, useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { twJoin, twMerge } from 'tailwind-merge'
+import { useIsClient } from 'usehooks-ts'
 
 export { ModalWindow }
 export type { ModalWindowProps }
@@ -18,32 +19,8 @@ interface ModalWindowProps extends ComponentPropsWithoutRef<'div'> {
   onClose: () => void
 }
 
-const classNames = {
-  backdrop: twJoin(
-    `fixed top-0 left-0 z-40 h-full w-full bg-black/50 backdrop-blur-[1px]`,
-  ),
-
-  container: ({ isOpen = false }) =>
-    twMerge(
-      `relative z-50 transition-opacity`,
-      isOpen
-        ? `pointer-events-auto opacity-100`
-        : `pointer-events-none opacity-0`,
-    ),
-
-  window: ({ variant = 'default' }) =>
-    twMerge(
-      `fixed top-1/2 left-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 flex-col justify-stretch`,
-      windowClassNamesByVariant[variant as ModalWindowVariant],
-    ),
-
-  closeButton: twJoin(`absolute top-5 right-5`),
-}
-
 const windowClassNamesByVariant = {
-  default: twJoin(
-    `bg-bgColor max-h-[90vh] w-[90vw] gap-9 overflow-auto border p-px`,
-  ),
+  default: twJoin('max-h-[75vh] w-[75vw]', 'p-3', 'overflow-auto'),
 }
 
 const ModalWindow = ({
@@ -56,6 +33,7 @@ const ModalWindow = ({
   ...otherProps
 }: ModalWindowProps) => {
   const isClient = useIsClient()
+  const modalWindowContainerId = useId()
 
   useEffect(() => {
     const handleKeyPress = (event: KeyboardEvent) => {
@@ -97,18 +75,37 @@ const ModalWindow = ({
     ? null
     : createPortal(
         <div
-          className={twMerge(classNames.container({ isOpen }), className)}
+          id={`modal-window-container-${modalWindowContainerId}`}
+          className={twMerge(
+            'relative z-50 transition-opacity',
+            isOpen
+              ? 'pointer-events-auto opacity-100'
+              : 'pointer-events-none opacity-0',
+            className,
+          )}
           {...otherProps}
         >
           <div
-            className={classNames.backdrop}
+            id={`modal-window-backdrop-${modalWindowContainerId}`}
+            className="fixed top-0 left-0 z-40 h-full w-full bg-black/50 backdrop-blur-[1px]"
             onClick={onClose}
           />
 
-          <div className={twMerge(classNames.window({ variant }))}>
-            <button
+          <div
+            id={`modal-window-${modalWindowContainerId}`}
+            className={twMerge(
+              'fixed top-1/2 left-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
+              'flex flex-col justify-stretch',
+              'bg-bg border-border rounded-2xl shadow-2xl',
+              windowClassNamesByVariant[variant as ModalWindowVariant],
+            )}
+          >
+            <StyledText
+              as="button"
+              id={`modal-window-close-button-${modalWindowContainerId}`}
+              variant="button.icon"
               className={twMerge(
-                classNames.closeButton,
+                'absolute top-3 right-3',
                 classNamesForCloseButton,
               )}
             >
@@ -116,7 +113,7 @@ const ModalWindow = ({
                 name="xmark"
                 onClick={handleClickClose}
               />
-            </button>
+            </StyledText>
 
             {children}
           </div>

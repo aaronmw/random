@@ -9,7 +9,7 @@ export type AppAction =
   | {
       type: 'loadPropertySettings'
       payload: {
-        loadedProperties: Partial<AppState['propertySettings']>
+        loadedProperties: Partial<PropertySettingsObject>
       }
     }
   | {
@@ -19,12 +19,18 @@ export type AppAction =
         value: unknown
       }
     }
+  | {
+      type: 'setSelectionCount'
+      payload: {
+        count: number
+      }
+    }
 
 export type PluginAction =
   | {
       type: 'execute'
       payload: {
-        propertySettings: Record<PropertyName, PropertySettings>
+        propertySettings: PropertySettingsObject
       }
     }
   | {
@@ -39,7 +45,7 @@ export type PluginAction =
   | {
       type: 'saveSettingsToSelectedNodes'
       payload: {
-        propertySettings: Record<PropertyName, PropertySettings>
+        propertySettings: PropertySettingsObject
       }
     }
 
@@ -128,9 +134,17 @@ export const dataTypesByPropertyName = {
   y: 'int',
 } satisfies Record<string, DataType>
 
+export type PropertyName = keyof typeof dataTypesByPropertyName
+
+// export type PropertySettingsObject = Record<PropertyName, PropertySettings>
+export type PropertySettingsObject = {
+  [key in PropertyName]: PropertySettings
+}
+
 export interface AppState {
-  propertySettings: Record<PropertyName, PropertySettings>
-  savedPropertySettings: [string, Record<PropertyName, PropertySettings>][]
+  propertySettings: PropertySettingsObject
+  savedPropertySettings: [label: string, PropertySettingsObject][]
+  selectionCount: number
 }
 
 export type AnchorPosition =
@@ -147,9 +161,10 @@ export type AnchorPosition =
 export type RandomizationType = 'calc' | 'list' | 'range'
 
 export type PropertySettings = {
-  anchor?: AnchorPosition
+  anchorPosition?: AnchorPosition
   corners?: ('topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft')[]
-  mode: 'calc' | 'list' | 'range' | 'disabled'
+  disabled: boolean
+  mode: 'calc' | 'list' | 'range'
   modeOptions: {
     calc?: {
       add: {
@@ -177,5 +192,3 @@ export type PropertySettings = {
   suffix?: string
   thousandsSeparator?: ' ' | ',' | ''
 }
-
-export type PropertyName = keyof typeof dataTypesByPropertyName

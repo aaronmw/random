@@ -1,19 +1,11 @@
-import { AppContext } from '@/app/reducer'
 import { Badge } from '@/components/Badge'
-import { Box } from '@/components/Box'
 import { Icon } from '@/components/Icon'
 import { PropertyName } from '@/lib/types'
 import get from 'lodash/get'
-import {
-  KeyboardEvent,
-  ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { KeyboardEvent, ReactNode, useEffect, useRef, useState } from 'react'
 import { twJoin, twMerge } from 'tailwind-merge'
 import { FieldContainer } from './FieldContainer'
+import { useAppContext } from '@/app/reducer/AppContext'
 
 interface ListInputFieldProps {
   label: ReactNode
@@ -50,11 +42,11 @@ const classNames = {
 
   valueContainer: ({ isCommentedOut = false, isValid = false }) =>
     twMerge(
-      `hover:!text-text group-hover/list:text-fadedTextColor col-start-2 col-end-3 flex min-h-9 w-full shrink-0 cursor-pointer items-center pl-2 font-mono transition-opacity`,
+      `hover:!text-text group-hover/list:text-text-secondary col-start-2 col-end-3 flex min-h-9 w-full shrink-0 cursor-pointer items-center pl-2 font-mono transition-opacity`,
       isValid
         ? 'odd:bg-bg-hover'
         : isCommentedOut
-          ? `bg-bg-hover/20 odd:bg-bg-hover/40 text-fadedTextColor`
+          ? `bg-bg-hover/20 odd:bg-bg-hover/40 text-text-secondary`
           : `bg-red-500/10 text-red-600 odd:bg-red-500/20`,
     ),
 
@@ -74,7 +66,7 @@ const classNames = {
       isValid
         ? `[&.is-odd]:bg-bg-hover [&.is-odd]:before:bg-bg-hover cursor-pointer`
         : isCommentedOut
-          ? `bg-bg-hover/20 before:bg-bg-hover/20 [&.is-odd]:bg-bg-hover/40 [&.is-odd]:before:bg-bg-hover/40 text-fadedTextColor cursor-pointer`
+          ? `bg-bg-hover/20 before:bg-bg-hover/20 [&.is-odd]:bg-bg-hover/40 [&.is-odd]:before:bg-bg-hover/40 text-text-secondary cursor-pointer`
           : `bg-red-500/10 text-red-600 before:bg-red-500/10 [&.is-odd]:bg-red-500/20 [&.is-odd]:before:bg-red-500/20`,
     ),
 
@@ -98,7 +90,7 @@ export function ListInputField({
   const [isEditing, setIsEditing] = useState(false)
   const [scrollTop, setScrollTop] = useState<number | null>(null)
   const [clickedLineIndex, setClickedLineIndex] = useState<number | null>(null)
-  const { dispatch, state } = useContext(AppContext)
+  const { dispatch, state } = useAppContext()
   const path = `propertySettings.${propertyName}.modeOptions.list.options`
   const values = get(state, path) as string[]
   const [metaDataByLineIndex, setMetaDataByLineIndex] = useState<
@@ -240,10 +232,9 @@ export function ListInputField({
             values.map((value, lineIndex) => {
               const isValid = metaDataByLineIndex[lineIndex] === true
               return (
-                <Box
+                <div
                   className={classNames.leftSlotContainer}
                   key={`${value}-${lineIndex}`}
-                  variant="contentCentered"
                 >
                   {renderLeftSlot({
                     isValid,
@@ -252,7 +243,7 @@ export function ListInputField({
                     value,
                     values,
                   })}
-                </Box>
+                </div>
               )
             })}
 

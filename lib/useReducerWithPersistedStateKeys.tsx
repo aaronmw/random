@@ -1,7 +1,7 @@
-"use client"
+'use client'
 
-import { pick } from "lodash"
-import { Dispatch, Reducer, useEffect, useReducer } from "react"
+import pick from 'lodash/pick'
+import { Dispatch, Reducer, useEffect, useReducer } from 'react'
 
 export const useReducerWithPersistedStateKeys = <T, A>({
   initializer,
@@ -21,7 +21,7 @@ export const useReducerWithPersistedStateKeys = <T, A>({
   reducer: Reducer<T, A>
 }): [state: T, dispatch: Dispatch<A>] => {
   const [state, dispatch] = useReducer(reducer, initialState, () => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return initialState
     }
 

@@ -1,6 +1,8 @@
-import { AppAction, AppState } from "@/lib/types"
-import { Dispatch, createContext } from "react"
-import { initialState } from "./initialState"
+'use client'
+
+import { AppAction, AppState } from '@/lib/types'
+import { Dispatch, createContext, useContext } from 'react'
+import { initialState } from './initialState'
 
 export { AppContext }
 export type { AppContextObject }
@@ -14,3 +16,13 @@ const AppContext = createContext<AppContextObject>({
   dispatch: () => {},
   state: initialState,
 })
+
+export function useAppContext() {
+  const context = useContext(AppContext)
+
+  if (!context) {
+    throw new Error('useAppContext must be used within an AppContext')
+  }
+
+  return context
+}

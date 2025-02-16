@@ -1,3 +1,16 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["lodash"],
+            "message": "Import specific lodash methods instead. Example: import pickBy from 'lodash/pickBy'"
+          }
+        ]
+      }
+    ]
+  }
 }

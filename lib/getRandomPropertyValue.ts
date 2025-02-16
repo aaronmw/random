@@ -1,6 +1,9 @@
-import { PropertyName, PropertySettings } from "@/lib/types"
-import { get, random, sample, toInteger } from "lodash"
-import invariant from "tiny-invariant"
+import { PropertyName, PropertySettings } from '@/lib/types'
+import get from 'lodash/get'
+import random from 'lodash/random'
+import sample from 'lodash/sample'
+import toInteger from 'lodash/toInteger'
+import invariant from 'tiny-invariant'
 
 export { getRandomPropertyValue }
 
@@ -25,7 +28,7 @@ const getRandomPropertyValue = ({
   let randomValue, newPropertyValue
 
   switch (mode) {
-    case "range": {
+    case 'range': {
       invariant(modeOptions.range, `No range options for "${propertyName}"`)
 
       const { min, max } = modeOptions.range
@@ -35,7 +38,7 @@ const getRandomPropertyValue = ({
       break
     }
 
-    case "calc": {
+    case 'calc': {
       invariant(modeOptions.calc, `No calc options for "${propertyName}"`)
 
       const {
@@ -44,13 +47,13 @@ const getRandomPropertyValue = ({
       } = modeOptions.calc
 
       const currentPropValue =
-        propertyName === "text"
+        propertyName === 'text'
           ? toInteger(
               get(
                 (node as TextNode).characters.match(/[0-9,]+(\.[0-9]+)?/),
-                "0",
-                "0",
-              ).replace(/,/g, ""),
+                '0',
+                '0',
+              ).replace(/,/g, ''),
             )
           : hasProp(node, propertyName)
             ? node[propertyName]
@@ -59,10 +62,10 @@ const getRandomPropertyValue = ({
       randomValue = random(min, max)
 
       switch (operator) {
-        case "add":
+        case 'add':
           newPropertyValue = currentPropValue + randomValue
           break
-        case "multiply":
+        case 'multiply':
           newPropertyValue = currentPropValue * randomValue
           break
         default:
@@ -71,11 +74,11 @@ const getRandomPropertyValue = ({
       break
     }
 
-    case "list": {
+    case 'list': {
       invariant(modeOptions.list, `No list options for "${propertyName}"`)
 
       const enabledItems = modeOptions.list.options.filter(
-        (listItem) => !String(listItem).startsWith("//"),
+        (listItem) => !String(listItem).startsWith('//'),
       )
 
       randomValue = sample(enabledItems)

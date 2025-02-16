@@ -1,24 +1,26 @@
-import { PropertySettings } from "@/lib/types"
+import { PropertySettings } from '@/lib/types'
 
 export const colorBasedPropertyOptions: PropertySettings = {
-  mode: "disabled",
+  disabled: true,
+  mode: 'list',
   modeOptions: {
     list: {
       options: [
-        "#000000",
-        "#f23b27",
-        "#fd605a",
-        "#9851f9",
-        "#1ab7fa",
-        "#1bca7c",
+        '#000000',
+        '#f23b27',
+        '#fd605a',
+        '#9851f9',
+        '#1ab7fa',
+        '#1bca7c',
       ],
     },
   },
-  sortOrder: "random",
+  sortOrder: 'random',
 }
 
 export const degreeBasedPropertyOptions: PropertySettings = {
-  mode: "disabled",
+  disabled: true,
+  mode: 'list',
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -30,7 +32,7 @@ export const degreeBasedPropertyOptions: PropertySettings = {
         max: 2,
         min: 0.5,
       },
-      operator: "add",
+      operator: 'add',
     },
     list: {
       options: [0, 45, 90, 135, 180, 225, 270, 315, 360],
@@ -40,11 +42,12 @@ export const degreeBasedPropertyOptions: PropertySettings = {
       max: 360,
     },
   },
-  sortOrder: "random",
+  sortOrder: 'random',
 }
 
 export const integerBasedPropertyOptions: PropertySettings = {
-  mode: "disabled",
+  disabled: true,
+  mode: 'list',
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -56,7 +59,7 @@ export const integerBasedPropertyOptions: PropertySettings = {
         max: 2,
         min: 0.5,
       },
-      operator: "add",
+      operator: 'add',
     },
     list: {
       options: [50, 100, 150, 200, 250, 300, 350, 400, 450, 500],
@@ -66,7 +69,7 @@ export const integerBasedPropertyOptions: PropertySettings = {
       max: 200,
     },
   },
-  sortOrder: "random",
+  sortOrder: 'random',
 }
 
 export const colorChannelBasedPropertyOptions: PropertySettings = {
@@ -82,7 +85,7 @@ export const colorChannelBasedPropertyOptions: PropertySettings = {
         max: 5,
         min: 0.5,
       },
-      operator: "add",
+      operator: 'add',
     },
     list: {
       options: [
@@ -100,7 +103,8 @@ export const colorChannelBasedPropertyOptions: PropertySettings = {
 }
 
 export const percentageBasedPropertyOptions: PropertySettings = {
-  mode: "disabled",
+  disabled: true,
+  mode: 'list',
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -112,7 +116,7 @@ export const percentageBasedPropertyOptions: PropertySettings = {
         max: 2,
         min: 0.5,
       },
-      operator: "add",
+      operator: 'add',
     },
     list: {
       options: [0, 25, 50, 75, 100],
@@ -122,11 +126,12 @@ export const percentageBasedPropertyOptions: PropertySettings = {
       min: 0,
     },
   },
-  sortOrder: "random",
+  sortOrder: 'random',
 }
 
 export const textBasedPropertyOptions: PropertySettings = {
-  mode: "disabled",
+  disabled: true,
+  mode: 'list',
   modeOptions: {
     calc: {
       decimalPlaces: 0,
@@ -138,30 +143,30 @@ export const textBasedPropertyOptions: PropertySettings = {
         max: 2,
         min: 0.5,
       },
-      operator: "add",
+      operator: 'add',
     },
     list: {
       options: [
-        "Bubbles McFluffy",
-        "Squeaky McSqueak",
-        "Professor Wigglesworth",
-        "Lady Pancake",
-        "Sir Fuzzybottom",
-        "Baron von Biscuit",
-        "Captain Wobblepants",
-        "Princess Snugglebuns",
-        "Count Fluffernutter",
-        "Duchess Puddingpop",
-        "Lord Tickles",
-        "Queen Wiggletail",
-        "Doctor Quackenbush",
-        "Muffin McSprinkle",
-        "Squire Pompom",
-        "Madame Fluffernoodle",
-        "General Flapjack",
-        "Sheriff Cuddles",
-        "Admiral Buttercup",
-        "Miss Puddingfoot",
+        'Bubbles McFluffy',
+        'Squeaky McSqueak',
+        'Professor Wigglesworth',
+        'Lady Pancake',
+        'Sir Fuzzybottom',
+        'Baron von Biscuit',
+        'Captain Wobblepants',
+        'Princess Snugglebuns',
+        'Count Fluffernutter',
+        'Duchess Puddingpop',
+        'Lord Tickles',
+        'Queen Wiggletail',
+        'Doctor Quackenbush',
+        'Muffin McSprinkle',
+        'Squire Pompom',
+        'Madame Fluffernoodle',
+        'General Flapjack',
+        'Sheriff Cuddles',
+        'Admiral Buttercup',
+        'Miss Puddingfoot',
       ],
     },
     range: {
@@ -169,8 +174,8 @@ export const textBasedPropertyOptions: PropertySettings = {
       min: 50,
     },
   },
-  sortOrder: "random",
-  prefix: "",
-  suffix: "",
-  thousandsSeparator: "",
+  sortOrder: 'random',
+  prefix: '',
+  suffix: '',
+  thousandsSeparator: '',
 }

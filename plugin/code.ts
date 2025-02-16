@@ -6,8 +6,8 @@ import naturalSort from 'natural-compare-lite'
 
 declare const SITE_URL: string
 
-const PLUGIN_HEIGHT = 500
-const PLUGIN_WIDTH = 500
+const PLUGIN_HEIGHT = 550
+const PLUGIN_WIDTH = 300
 
 /*
   By enabling `theme-colors`, Figma will add either the figma-light or
@@ -53,7 +53,7 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
 
       const randomizedPropertySettings = pickBy(
         propertySettings,
-        ({ mode }) => mode !== 'disabled',
+        ({ disabled }) => !disabled,
       )
 
       const { selection } = figma.currentPage
@@ -115,3 +115,13 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
 
   console.log(`Plugin action "${action.type}" fired:`, { action })
 }
+
+figma.on('selectionchange', () => {
+  const selectionCount = figma.currentPage.selection.length
+  figma.ui.postMessage({
+    type: 'setSelectionCount',
+    payload: {
+      count: selectionCount,
+    },
+  })
+})

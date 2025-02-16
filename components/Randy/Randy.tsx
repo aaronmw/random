@@ -1,8 +1,8 @@
 'use client'
 
-import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { ModalWindow, ModalWindowProps } from '@/components/ModalWindow'
+import { StyledText } from '@/components/StyledText'
 import sample from 'lodash/sample'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { twJoin } from 'tailwind-merge'
@@ -98,15 +98,16 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
           onChange={(event) => setUserPrompt(event.target.value)}
         />
 
-        <Button
+        <StyledText
+          as="button"
           type="submit"
-          variant="primary"
+          variant="button.primary"
         >
           <Icon
             name="robot"
             variant="solid"
           />
-        </Button>
+        </StyledText>
       </form>
     </ModalWindow>
   )

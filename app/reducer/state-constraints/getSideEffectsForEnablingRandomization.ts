@@ -1,5 +1,5 @@
-import { AppState, PropertyName } from "@/lib/types"
-import { mutualExclusivityMap } from "./mutualExclusivityMap"
+import { AppState, PropertyName } from '@/lib/types'
+import { mutualExclusivityMap } from './mutualExclusivityMap'
 
 export function getSideEffectsForEnablingRandomization({
   propertyName,
@@ -8,42 +8,25 @@ export function getSideEffectsForEnablingRandomization({
   propertyName: PropertyName
   state: AppState
 }) {
-  const mutuallyExclusiveConstraints =
-    mutualExclusivityMap[propertyName]?.reduce(
-      (acc, propertyNameToStopRandomizing) => {
-        return {
-          ...acc,
-          [propertyNameToStopRandomizing]: {
-            mode: {
-              $set: "disabled",
-            },
-          },
-        }
-      },
-      {},
-    ) ?? {}
+  const sideEffects = []
 
-  let widthAndHeightConstraints = {}
+  mutualExclusivityMap[propertyName]?.forEach((propName) => {
+    sideEffects.push([`${propName}.disabled`, true])
+  })
 
-  if (propertyName === "height" || propertyName === "width") {
-    const oppositePropertyName = propertyName === "height" ? "width" : "height"
+  if (propertyName === 'height' || propertyName === 'width') {
+    const oppositePropertyName = propertyName === 'height' ? 'width' : 'height'
 
     const oppositePropertySettings =
       state.propertySettings[oppositePropertyName]
 
-    widthAndHeightConstraints =
-      oppositePropertySettings.mode !== "disabled" &&
-      oppositePropertySettings.preserveAspectRatio
-        ? {
-            [oppositePropertyName]: {
-              preserveAspectRatio: { $set: false },
-            },
-          }
-        : {}
+    if (
+      oppositePropertySettings.disabled === false &&
+      oppositePropertySettings.preserveAspectRatio === true
+    ) {
+      sideEffects.push([`${oppositePropertyName}.preserveAspectRatio`, false])
+    }
   }
 
-  return {
-    ...mutuallyExclusiveConstraints,
-    ...widthAndHeightConstraints,
-  }
+  return sideEffects
 }

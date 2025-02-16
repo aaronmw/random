@@ -1,57 +1,58 @@
 'use client'
 
-import { AppContext, AppReducer, initialState } from '@/app/reducer'
-import { Button } from '@/components/Button'
+import { useAppContext } from '@/app/reducer/AppContext'
 import { Icon } from '@/components/Icon'
+import { PropertyMenu } from '@/components/PropertyMenu'
+import { StyledText } from '@/components/StyledText'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
-import { AppAction, PropertyName, PropertySettings } from '@/lib/types'
-import { useReducerWithPersistedStateKeys } from '@/lib/useReducerWithPersistedStateKeys'
-import pickBy from 'lodash/pickBy'
-import { ReactNode, useEffect } from 'react'
+import { pluralize } from '@/lib/pluralize'
+import { PropertyName, PropertySettings } from '@/lib/types'
+import { some } from 'lodash'
+import omitBy from 'lodash/omitBy'
+import { ReactNode, useEffect, useRef } from 'react'
 import { twJoin } from 'tailwind-merge'
+import { useLocalStorage } from 'usehooks-ts'
 
-const classNames = {
-  container: twJoin(
-    `grid h-full grid-rows-[auto_min-content] gap-px overflow-hidden`,
-  ),
+export default function PropertiesPageLayout({
+  children,
+}: {
+  children: ReactNode
+}) {
+  const { state } = useAppContext()
+  const { propertySettings, selectionCount } = state
+  const hasPropertiesEnabled = some(propertySettings, (p) => !p.disabled)
+  const hasNodesSelected = selectionCount > 0
+  const canExecute = hasPropertiesEnabled && hasNodesSelected
 
-  contentContainer: twJoin(`row-start-1 row-end-2 h-full overflow-hidden`),
-
-  footer: twJoin(`relative row-start-2 row-end-3 flex gap-px`),
-
-  executeButton: twJoin(`w-full`),
-}
-
-export default function Layout({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducerWithPersistedStateKeys({
-    initialState,
-    localStorageKeyName: 'plugin-state',
-    persistedKeys: ['propertySettings', 'savedPropertySettings'],
-    reducer: AppReducer,
-  })
-
-  const { propertySettings } = state
-
-  const hasRandomizedProperties = Object.entries(propertySettings).some(
-    ([_, { mode }]) => mode !== 'disabled',
+  const phraseIndexRef = useRef(0)
+  const lastUpdateTimeRef = useRef(0)
+  const [storedPhraseIndex, setStoredPhraseIndex] = useLocalStorage(
+    'propertyPhraseIndex',
+    0,
   )
 
+  // Initialize ref from localStorage on mount
   useEffect(() => {
-    window.onmessage = (event: {
-      data: {
-        pluginMessage: AppAction
-      }
-    }) => {
-      dispatch(event.data.pluginMessage)
+    phraseIndexRef.current = storedPhraseIndex
+    lastUpdateTimeRef.current = Date.now()
+  }, [])
+
+  // Only increment if 5 seconds have passed since last update
+  useEffect(() => {
+    const now = Date.now()
+    if (now - lastUpdateTimeRef.current >= 2000) {
+      phraseIndexRef.current += 1
+      setStoredPhraseIndex(phraseIndexRef.current)
+      lastUpdateTimeRef.current = now
     }
-  }, [dispatch])
+  })
 
   async function handleClickExecute() {
     const { propertySettings } = state
 
-    const randomizedPropertySettings = pickBy(
+    const randomizedPropertySettings = omitBy(
       propertySettings,
-      ({ mode }) => mode !== 'disabled',
+      'disabled',
     ) as Record<PropertyName, PropertySettings>
 
     dispatchPluginAction({
@@ -63,27 +64,44 @@ export default function Layout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AppContext.Provider
-      value={{
-        dispatch,
-        state,
-      }}
+    <div
+      className={twJoin(
+        'grid grid-cols-1 grid-rows-[min-content_1fr_min-content]',
+        'overflow-auto',
+      )}
     >
-      <main className={classNames.container}>
-        <div className={classNames.contentContainer}>{children}</div>
+      <PropertyMenu
+        id="ui-property-menu"
+        className={twJoin('overflow-hidden')}
+      />
 
-        <footer className={classNames.footer}>
-          <Button
-            className={classNames.executeButton}
-            disabled={!hasRandomizedProperties}
-            variant="primary"
-            onClick={handleClickExecute}
-          >
-            Run
+      <div
+        className={twJoin(
+          'grid grid-rows-[min-content_auto]',
+          'overflow-hidden',
+        )}
+      >
+        {children}
+      </div>
+
+      <StyledText
+        variant="button.primary"
+        as="button"
+        className={twJoin('w-full')}
+        disabled={!canExecute}
+        onClick={handleClickExecute}
+      >
+        {!hasNodesSelected ? (
+          'Select at least one node'
+        ) : !hasPropertiesEnabled ? (
+          'Enable at least one property'
+        ) : (
+          <>
+            <span>Randomize {pluralize(selectionCount, 'node')}</span>
             <Icon name="shuffle" />
-          </Button>
-        </footer>
-      </main>
-    </AppContext.Provider>
+          </>
+        )}
+      </StyledText>
+    </div>
   )
 }

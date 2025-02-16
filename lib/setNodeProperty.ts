@@ -1,15 +1,15 @@
-import { anyColorStringToRGB } from "@/lib/anyColorStringToRGB"
-import { hasProperty } from "@/lib/hasProperty"
-import { rotateOriginXY } from "@/lib/rotateOriginXY"
-import { setCharacters } from "@/lib/setCharacters"
-import { toDegrees } from "@/lib/toDegrees"
-import { toPercentage } from "@/lib/toPercentage"
+import { anyColorStringToRGB } from '@/lib/anyColorStringToRGB'
+import { hasProperty } from '@/lib/hasProperty'
+import { rotateOriginXY } from '@/lib/rotateOriginXY'
+import { setCharacters } from '@/lib/setCharacters'
+import { toDegrees } from '@/lib/toDegrees'
+import { toPercentage } from '@/lib/toPercentage'
 import type {
   AnchorPosition,
   PropertyName,
   PropertySettings,
-} from "@/lib/types"
-import { cloneDeep } from "lodash"
+} from '@/lib/types'
+import cloneDeep from 'lodash/cloneDeep'
 
 export async function setNodeProperty({
   node,
@@ -23,8 +23,8 @@ export async function setNodeProperty({
   value: string | number
 }) {
   switch (propertyName) {
-    case "text": {
-      if (!hasProperty(node, "characters")) {
+    case 'text': {
+      if (!hasProperty(node, 'characters')) {
         break
       }
 
@@ -38,9 +38,9 @@ export async function setNodeProperty({
       break
     }
 
-    case "height":
-    case "width": {
-      const oppositeDimension = propertyName === "width" ? "height" : "width"
+    case 'height':
+    case 'width': {
+      const oppositeDimension = propertyName === 'width' ? 'height' : 'width'
       const currentValue = node[propertyName]
       const currentOppositeValue = node[oppositeDimension]
       const newValue = Number(value)
@@ -50,29 +50,29 @@ export async function setNodeProperty({
           ? currentOppositeValue * scaleFactor
           : currentOppositeValue
       const [verticalOriginName, horizontalOriginName] =
-        propertySettings.anchor!.split("-")
+        propertySettings.anchorPosition!.split('-')
       const currentWidth = node.width
       const currentHeight = node.height
-      const newWidth = propertyName === "width" ? newValue : newOppositeValue
-      const newHeight = propertyName === "width" ? newOppositeValue : newValue
+      const newWidth = propertyName === 'width' ? newValue : newOppositeValue
+      const newHeight = propertyName === 'width' ? newOppositeValue : newValue
 
-      if (!("resize" in node)) {
+      if (!('resize' in node)) {
         break
       }
 
       node.resize(newWidth, newHeight)
 
       const newNodeX =
-        horizontalOriginName === "center"
+        horizontalOriginName === 'center'
           ? node.x + (newWidth - currentWidth) / -2
-          : horizontalOriginName === "right"
+          : horizontalOriginName === 'right'
             ? node.x + (newWidth - currentWidth) / -1
             : node.x
 
       const newNodeY =
-        verticalOriginName === "center"
+        verticalOriginName === 'center'
           ? node.y + (newHeight - currentHeight) / 2
-          : verticalOriginName === "top"
+          : verticalOriginName === 'top'
             ? node.y + (newHeight - currentHeight)
             : node.y
 
@@ -81,16 +81,16 @@ export async function setNodeProperty({
       break
     }
 
-    case "fillColor":
-    case "strokeColor":
-    case "fillOpacity":
-    case "strokeOpacity": {
+    case 'fillColor':
+    case 'strokeColor':
+    case 'fillOpacity':
+    case 'strokeOpacity': {
       const isFillProperty =
-        propertyName === "fillColor" || propertyName === "fillOpacity"
+        propertyName === 'fillColor' || propertyName === 'fillOpacity'
       const isColorProperty =
-        propertyName === "fillColor" || propertyName === "strokeColor"
-      const fillsOrStrokesPropertyName = isFillProperty ? "fills" : "strokes"
-      const colorOrOpacityPropertyName = isColorProperty ? "color" : "opacity"
+        propertyName === 'fillColor' || propertyName === 'strokeColor'
+      const fillsOrStrokesPropertyName = isFillProperty ? 'fills' : 'strokes'
+      const colorOrOpacityPropertyName = isColorProperty ? 'color' : 'opacity'
 
       if (!hasProperty(node, fillsOrStrokesPropertyName)) {
         break
@@ -106,15 +106,15 @@ export async function setNodeProperty({
       break
     }
 
-    case "layerBlur": {
-      if (!hasProperty(node, "effects")) {
+    case 'layerBlur': {
+      if (!hasProperty(node, 'effects')) {
         break
       }
 
       const effects = cloneDeep(node.effects)
 
       effects[0] = {
-        type: "LAYER_BLUR",
+        type: 'LAYER_BLUR',
         radius: Number(value),
         visible: true,
       }
@@ -123,24 +123,24 @@ export async function setNodeProperty({
       break
     }
 
-    case "arcInnerRadius":
-    case "arcEndingAngle":
-    case "arcStartingAngle": {
-      if (!hasProperty(node, "arcData")) {
+    case 'arcInnerRadius':
+    case 'arcEndingAngle':
+    case 'arcStartingAngle': {
+      if (!hasProperty(node, 'arcData')) {
         break
       }
 
       const { arcPropertyName, valueTransformer } = {
         arcStartingAngle: {
-          arcPropertyName: "startingAngle",
+          arcPropertyName: 'startingAngle',
           valueTransformer: toDegrees,
         },
         arcEndingAngle: {
-          arcPropertyName: "endingAngle",
+          arcPropertyName: 'endingAngle',
           valueTransformer: toDegrees,
         },
         arcInnerRadius: {
-          arcPropertyName: "innerRadius",
+          arcPropertyName: 'innerRadius',
           valueTransformer: toPercentage,
         },
       }[propertyName]
@@ -152,28 +152,28 @@ export async function setNodeProperty({
       break
     }
 
-    case "rotation": {
-      const { anchor = "center-center" } = propertySettings
+    case 'rotation': {
+      const { anchorPosition = 'center-center' } = propertySettings
 
       const [xOffset, yOffset] = (
         {
-          "top-left": [0, 0],
-          "top-center": [0.5, 0],
-          "top-right": [1, 0],
-          "center-left": [0, 0.5],
-          "center-center": [0.5, 0.5],
-          "center-right": [1, 0.5],
-          "bottom-left": [0, 1],
-          "bottom-center": [0.5, 1],
-          "bottom-right": [1, 1],
+          'top-left': [0, 0],
+          'top-center': [0.5, 0],
+          'top-right': [1, 0],
+          'center-left': [0, 0.5],
+          'center-center': [0.5, 0.5],
+          'center-right': [1, 0.5],
+          'bottom-left': [0, 1],
+          'bottom-center': [0.5, 1],
+          'bottom-right': [1, 1],
         } as Record<AnchorPosition, [number, number]>
-      )[anchor]
+      )[anchorPosition]
 
-      rotateOriginXY([node], Number(value), xOffset, yOffset, "%", "%")
+      rotateOriginXY([node], Number(value), xOffset, yOffset, '%', '%')
       break
     }
 
-    case "pointCount": {
+    case 'pointCount': {
       if (!hasProperty(node, propertyName)) {
         break
       }
@@ -182,22 +182,22 @@ export async function setNodeProperty({
       break
     }
 
-    case "x":
-    case "y":
-    case "innerRadius":
-    case "opacity":
-    case "strokeWeight":
-    case "cornerRadius":
-    case "topLeftRadius":
-    case "topRightRadius":
-    case "bottomRightRadius":
-    case "bottomLeftRadius": {
+    case 'x':
+    case 'y':
+    case 'innerRadius':
+    case 'opacity':
+    case 'strokeWeight':
+    case 'cornerRadius':
+    case 'topLeftRadius':
+    case 'topRightRadius':
+    case 'bottomRightRadius':
+    case 'bottomLeftRadius': {
       if (!hasProperty(node, propertyName)) {
         break
       }
 
       const valueTransformer =
-        propertyName === "innerRadius" || propertyName === "opacity"
+        propertyName === 'innerRadius' || propertyName === 'opacity'
           ? toPercentage
           : Number
 

@@ -1,13 +1,13 @@
-"use client"
+'use client'
 
-import { dispatchPluginAction } from "@/lib/dispatchPluginAction"
-import { useLocalStorage } from "@uidotdev/usehooks"
-import { MouseEvent, useEffect, useState } from "react"
+import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
+import { MouseEvent, useEffect, useState } from 'react'
+import { useLocalStorage } from 'usehooks-ts'
 
 export function ResizeHandle() {
   const [storedPluginHeight, setStoredPluginHeight] = useLocalStorage<
     number | null
-  >("pluginHeight", null)
+  >('pluginHeight', null)
 
   const [hasRestoredPluginHeight, setHasRestoredPluginHeight] = useState(false)
 
@@ -33,7 +33,7 @@ export function ResizeHandle() {
   useEffect(() => {
     if (!hasRestoredPluginHeight && storedPluginHeight) {
       dispatchPluginAction({
-        type: "setPluginHeight",
+        type: 'setPluginHeight',
         payload: { height: storedPluginHeight },
       })
 
@@ -51,7 +51,7 @@ export function ResizeHandle() {
       const newHeight = startingWindowHeight + deltaFromStart
 
       dispatchPluginAction({
-        type: "setPluginHeight",
+        type: 'setPluginHeight',
         payload: { height: newHeight },
       })
 
@@ -59,29 +59,22 @@ export function ResizeHandle() {
     }
 
     if (isResizing) {
-      window.addEventListener("mousemove", handleMouseMove as any)
-      window.addEventListener("mouseup", handleMouseUp)
+      window.addEventListener('mousemove', handleMouseMove as any)
+      window.addEventListener('mouseup', handleMouseUp)
     } else {
-      window.removeEventListener("mousemove", handleMouseMove as any)
-      window.removeEventListener("mouseup", handleMouseUp)
+      window.removeEventListener('mousemove', handleMouseMove as any)
+      window.removeEventListener('mouseup', handleMouseUp)
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove as any)
-      window.removeEventListener("mouseup", handleMouseUp)
+      window.removeEventListener('mousemove', handleMouseMove as any)
+      window.removeEventListener('mouseup', handleMouseUp)
     }
   }, [isResizing, setStoredPluginHeight, startingClientY, startingWindowHeight])
 
   return (
     <div
-      className="
-        fixed
-        bottom-0
-        left-0
-        h-2
-        w-full
-        cursor-ns-resize
-      "
+      className="fixed bottom-0 left-0 h-2 w-full cursor-ns-resize"
       onMouseDown={handleMouseDown}
     />
   )

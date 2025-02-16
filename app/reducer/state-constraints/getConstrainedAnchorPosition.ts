@@ -1,36 +1,37 @@
-import { AnchorPosition } from "@/lib/types"
-import { xor } from "lodash"
+import { AnchorPosition } from '@/lib/types'
+import xor from 'lodash/xor'
 
 export const anchorPositions = [
-  "top-left",
-  "top-center",
-  "top-right",
-  "center-left",
-  "center-center",
-  "center-right",
-  "bottom-left",
-  "bottom-center",
-  "bottom-right",
+  'top-left',
+  'top-center',
+  'top-right',
+  'center-left',
+  'center-center',
+  'center-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
 ] as const
 
 const anchorConstraints = {
-  height: ["top-center", "center-center", "bottom-center"],
-  width: ["center-left", "center-center", "center-right"],
+  height: ['top-center', 'center-center', 'bottom-center'],
+  width: ['center-left', 'center-center', 'center-right'],
 } as const
 
 export const getConstrainedAnchorPosition = ({
-  anchor,
+  anchorPosition,
   preserveAspectRatio,
   propertyName,
 }: {
-  anchor: AnchorPosition
+  anchorPosition: AnchorPosition
   preserveAspectRatio: boolean
-  propertyName: "width" | "height"
+  propertyName: 'width' | 'height'
 }) => {
   const allowedAnchorPositions = anchorConstraints[propertyName]
   const disallowedAnchorPositions = xor(anchorPositions, allowedAnchorPositions)
 
-  return !preserveAspectRatio && disallowedAnchorPositions.includes(anchor)
-    ? "center-center"
-    : anchor
+  return !preserveAspectRatio &&
+    disallowedAnchorPositions.includes(anchorPosition)
+    ? 'center-center'
+    : anchorPosition
 }

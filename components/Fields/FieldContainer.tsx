@@ -1,124 +1,108 @@
 import { ConditionalWrapper } from '@/components/ConditionalWrapper'
-import { ComponentPropsWithoutRef, ReactNode } from 'react'
+import { Icon } from '@/components/Icon'
+import { Tooltip } from '@/components/Tooltip'
+import { ComponentProps, ElementType, ReactNode } from 'react'
 import { twJoin, twMerge } from 'tailwind-merge'
 
 export { FieldContainer }
 export type { FieldContainerProps }
 
-interface FieldContainerProps extends ComponentPropsWithoutRef<'label'> {
+type FieldContainerProps<T extends 'label' | 'div'> = Omit<
+  ComponentProps<T>,
+  'variant'
+> & {
+  as?: T
   label: ReactNode
+  description?: ReactNode
+  classNamesForInteractiveSurface?: string
   variant?: keyof typeof classNamesByVariant
 }
 
-const classNamesForInteractiveSurface = `
-  min-h-9
-  flex
-  items-center
-  rounded-[0.5px]
-  outline-borderColor
-  hover:outline-1
-  has-focus:outline-2
-  has-focus:outline-border-brand
-`
+const defaultClassNamesForInteractiveSurface = twJoin(
+  'flex min-h-9 items-center',
+  'bg-bg-secondary rounded-lg',
+  'hover:outline',
+  'hover:outline-border',
+  'has-focus:outline',
+  'has-focus:outline-border-selected',
+)
 
 const classNamesByVariant = {
   unlabeled: {
     container: '',
     interactiveSurfaceElement: 'label',
-    interactiveSurface: ``,
+    interactiveSurface: '',
     field: '',
     label: 'hidden',
   },
 
   full: {
-    container: `
-      col-span-4
-      flex
-      items-center
-      justify-between
-      pl-2
-    `,
+    container: 'col-span-4 flex items-center justify-between pl-2',
     interactiveSurfaceElement: 'field',
-    interactiveSurface: ``,
-    field: `
-      flex
-      justify-end
-    `,
-    label: `
-      text-fadedTextColor
-    `,
+    interactiveSurface: '',
+    field: 'flex justify-end',
+    label: 'text-text-secondary flex items-center gap-1',
   },
 
   half: {
-    container: `
-      col-span-2
-      grid
-      grid-cols-subgrid
-      pl-2
-    `,
+    container: 'col-span-2 grid grid-cols-subgrid pl-2',
     interactiveSurfaceElement: 'label',
-    interactiveSurface: ``,
-    label: `
-      grid
-      text-fadedTextColor
-      col-start-1
-      col-end-2
-    `,
-    field: `
-      grid
-      col-start-2
-      col-end-3
-    `,
+    interactiveSurface: '',
+    label: 'grid text-text-secondary col-start-1 col-end-2',
+    field: 'grid col-start-2 col-end-3',
   },
 
   labelOnTop: {
-    container: `
-      col-span-4
-      flex
-      flex-col
-      pl-2
-      gap-1
-    `,
+    container: 'col-span-4 flex flex-col pl-2 gap-1',
     interactiveSurfaceElement: 'field',
-    interactiveSurface: `min-h-0`,
-    field: `
-      block
-    `,
-    label: `
-      text-fadedTextColor
-      block
-    `,
+    interactiveSurface: 'min-h-0',
+    field: 'block',
+    label: 'text-text-secondary flex items-center gap-1',
   },
 }
 
-const FieldContainer = ({
+const FieldContainer = <T extends 'label' | 'div'>({
   children,
   className,
+  classNamesForInteractiveSurface,
+  description,
   label,
   variant = 'unlabeled',
+  as,
   ...otherProps
-}: FieldContainerProps) => {
+}: FieldContainerProps<T>) => {
   const classNames = classNamesByVariant[variant]
+  const Component = (as ?? 'label') as ElementType
 
   return (
-    <label
+    <Component
       className={twMerge(
-        classNames.interactiveSurfaceElement === 'label' &&
+        classNames.interactiveSurfaceElement === 'label' && [
+          defaultClassNamesForInteractiveSurface,
           classNamesForInteractiveSurface,
+        ],
         classNames.container,
         className,
       )}
       {...otherProps}
     >
-      <span className={twJoin(classNames.label)}>{label}</span>
+      <span className={classNames.label}>
+        <span>{label}</span>
+        {description && (
+          <Tooltip tipContents={description}>
+            <Icon name="circle-question" />
+          </Tooltip>
+        )}
+      </span>
       <span className={classNames.field}>
         <ConditionalWrapper
           condition={classNames.interactiveSurfaceElement === 'field'}
           wrapper={(children) => (
             <span
               className={twMerge(
-                classNamesForInteractiveSurface,
+                defaultClassNamesForInteractiveSurface,
                 classNames.interactiveSurface,
+                classNamesForInteractiveSurface,
               )}
             >
               {children}
@@ -128,6 +112,6 @@ const FieldContainer = ({
           {children}
         </ConditionalWrapper>
       </span>
-    </label>
+    </Component>
   )
 }

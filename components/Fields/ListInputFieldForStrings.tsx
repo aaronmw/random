@@ -1,9 +1,9 @@
-import { AppContext } from '@/app/reducer'
-import { Button } from '@/components/Button'
+import { useAppContext } from '@/app/reducer/AppContext'
 import { Icon } from '@/components/Icon'
 import { Randy } from '@/components/Randy'
+import { StyledText } from '@/components/StyledText'
 import { PropertyName } from '@/lib/types'
-import { ComponentProps, useContext, useState } from 'react'
+import { ComponentProps, useState } from 'react'
 import { FieldContainerProps } from './FieldContainer'
 import { ListInputField } from './ListInputField'
 
@@ -11,7 +11,7 @@ export { ListInputFieldForStrings }
 
 interface ListInputFieldForStringsProps
   extends Omit<ComponentProps<'textarea'>, 'type'>,
-    Pick<FieldContainerProps, 'label' | 'variant'> {
+    Pick<FieldContainerProps<'label'>, 'label' | 'variant'> {
   propertyName: PropertyName
 }
 
@@ -19,7 +19,7 @@ function ListInputFieldForStrings({
   label,
   propertyName,
 }: ListInputFieldForStringsProps) {
-  const { dispatch } = useContext(AppContext)
+  const { dispatch } = useAppContext()
 
   const [isShowingRandy, setIsShowingRandy] = useState(false)
 
@@ -31,10 +31,10 @@ function ListInputFieldForStrings({
         renderBottomSlot={
           process.env.NODE_ENV === 'development' && (
             <div className="mt-1 flex justify-end">
-              <Button
-                as="a"
+              <StyledText
+                as="button"
                 className="flex items-center gap-1"
-                variant="link"
+                variant="button.secondary"
                 onClick={() => setIsShowingRandy(true)}
               >
                 <Icon
@@ -42,7 +42,7 @@ function ListInputFieldForStrings({
                   variant="solid"
                 />
                 Randy
-              </Button>
+              </StyledText>
             </div>
           )
         }

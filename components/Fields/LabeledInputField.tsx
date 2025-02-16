@@ -1,14 +1,7 @@
-import { AppContext } from '@/app/reducer'
-import { Box } from '@/components/Box'
+import { useAppContext } from '@/app/reducer/AppContext'
+import { StyledText } from '@/components/StyledText'
 import get from 'lodash/get'
-import {
-  ChangeEvent,
-  ComponentProps,
-  FocusEvent,
-  Ref,
-  forwardRef,
-  useContext,
-} from 'react'
+import { ChangeEvent, ComponentProps, FocusEvent, Ref, forwardRef } from 'react'
 import { FieldContainer, FieldContainerProps } from './FieldContainer'
 
 export { LabeledInputField }
@@ -17,7 +10,7 @@ type LabeledInputFieldProps<P extends string, V extends string | number> = Omit<
   ComponentProps<'input'>,
   'value'
 > &
-  Pick<FieldContainerProps, 'label' | 'variant'> &
+  Pick<FieldContainerProps<'label'>, 'label' | 'variant'> &
   (
     | {
         path: P
@@ -42,7 +35,7 @@ const InnerLabeledInputField = <P extends string, V extends string | number>(
   }: LabeledInputFieldProps<P, V>,
   ref: Ref<HTMLInputElement>,
 ) => {
-  const { dispatch, state } = useContext(AppContext)
+  const { dispatch, state } = useAppContext()
 
   const currentValue = value ?? (path ? String(get(state, path)) : undefined)
 
@@ -68,7 +61,7 @@ const InnerLabeledInputField = <P extends string, V extends string | number>(
       label={label}
       variant={variant}
     >
-      <Box
+      <StyledText
         as="input"
         placeholder={
           type === 'number' ? '0' : type === 'text' ? '-' : undefined

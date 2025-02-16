@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@/components/Button'
+import { StyledText } from '@/components/StyledText'
 import { useEffect, useState } from 'react'
 
 const initialButtonLabel = 'Copy Old Settings to Clipboard'
@@ -37,22 +37,25 @@ export function CrashScreen() {
         Something went wrong. Most likely, your saved plugin state does not
         conform to a recent plugin update.
       </p>
+
       <div className="flex gap-5">
         {settingsInLocalStorage && (
-          <Button
-            variant="primary"
+          <StyledText
+            as="button"
+            variant="button.primary"
             onClick={handleClickCopyOldSettingsButton}
           >
             {buttonLabel}
-          </Button>
+          </StyledText>
         )}
 
-        <Button
-          variant="primary"
+        <StyledText
+          as="button"
+          variant="button.primary"
           onClick={resetToDefaultSettings}
         >
           Reset &amp; Reload
-        </Button>
+        </StyledText>
       </div>
     </div>
   )

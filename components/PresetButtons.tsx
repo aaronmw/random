@@ -1,65 +1,37 @@
-import { AppContext } from '@/app/reducer'
-import { Box } from '@/components/Box'
-import { Button } from '@/components/Button'
+import { useAppContext } from '@/app/reducer/AppContext'
 import { Icon } from '@/components/Icon'
-import { IconButton } from '@/components/IconButton'
-import { Menu } from '@/components/Menu'
+import { MenuButton } from '@/components/MenuButton'
+import { MenuItemProps } from '@/components/MenuItem'
 import { ModalWindow } from '@/components/ModalWindow'
+import { StyledText } from '@/components/StyledText'
+import { Tooltip } from '@/components/Tooltip'
 import { PropertyName, PropertySettings } from '@/lib/types'
 import pickBy from 'lodash/pickBy'
 import {
   FocusEvent,
   FormEvent,
   MouseEvent,
-  useContext,
   useEffect,
   useRef,
   useState,
 } from 'react'
-import { twJoin } from 'tailwind-merge'
-
-const classNames = {
-  container: twJoin(
-    `relative flex w-full items-center justify-around border-t py-3`,
-  ),
-
-  menu: twJoin(`right-4 bottom-24 left-4`),
-
-  menuItemContentsContainer: twJoin(
-    `relative flex w-full items-center justify-between whitespace-normal`,
-  ),
-
-  hoverContainer: twJoin(
-    `bg-bgColor before:from-bgColor group-hover/menuItem:bg-bg-brand group-hover/menuItem:before:from-bg-brand absolute top-1/2 right-0 flex h-full -translate-y-1/2 flex-row-reverse items-center justify-center gap-1 pl-3 opacity-0 group-hover/menuItem:opacity-100 before:absolute before:top-0 before:right-full before:h-full before:w-10 before:bg-linear-to-l before:to-transparent`,
-  ),
-
-  presetConfigForm: twJoin(`flex flex-col gap-5 p-5`),
-
-  presetConfigFormButtonsContainer: twJoin(
-    `flex flex-row-reverse items-center gap-5`,
-  ),
-}
 
 export function PresetButtons() {
-  const { state, dispatch } = useContext(AppContext)
-
+  const { state, dispatch } = useAppContext()
   const { propertySettings, savedPropertySettings } = state
-
   const [presetMenuMode, setPresetMenuMode] = useState<
-    'saving' | 'loading' | 'closed'
+    'write' | 'read' | 'closed'
   >('closed')
-
   const [isPresetConfigModalOpen, setIsPresetConfigModalOpen] = useState(false)
-
   const [presetIndexBeingEdited, setPresetIndexBeingEdited] = useState<
     number | null
   >(null)
-
   const presetNameInputRef = useRef<HTMLInputElement>(null)
-
   const hasRandomizedProperties = Object.entries(propertySettings).some(
-    ([_, { mode }]) => mode !== 'disabled',
+    ([_, settings]) => settings.disabled !== true,
   )
+
+  const disabled = savedPropertySettings.length === 0
 
   useEffect(() => {
     if (isPresetConfigModalOpen) {
@@ -83,7 +55,7 @@ export function PresetButtons() {
       }) {
     const randomizedPropertySettings = pickBy(
       propertySettings,
-      ({ mode }) => mode !== 'disabled',
+      (settings) => settings.disabled !== true,
     ) as Record<PropertyName, PropertySettings>
 
     let newSavedPropertySettings = [...savedPropertySettings]
@@ -204,106 +176,104 @@ export function PresetButtons() {
     })
   }
 
+  const savedPresetButtons = savedPropertySettings.map(
+    ([presetName, settings], presetIndex) => {
+      const menuItem: MenuItemProps<'button'> = {
+        onClick:
+          presetMenuMode === 'write'
+            ? handleClickResavePreset.bind(null, presetIndex)
+            : handleClickLoadPreset.bind(null, settings),
+        icon: 'file',
+        id: `${presetMenuMode === 'write' ? 'save' : 'load'}-preset-button-${presetIndex}`,
+        label: (
+          <span className="flex w-full items-center justify-between">
+            <span>{presetName || '(Untitled)'}</span>
+
+            <span className="flex items-center">
+              {presetMenuMode === 'read' && (
+                <>
+                  {(
+                    [
+                      {
+                        id: 'rename',
+                        icon: 'pencil',
+                        label: 'Rename',
+                        onClick: handleClickRenamePreset,
+                      },
+                      {
+                        id: 'delete',
+                        icon: 'trash',
+                        label: 'Delete',
+                        onClick: handleClickDeletePreset,
+                      },
+                    ] as const
+                  ).map(({ id, icon, onClick, label }) => (
+                    <StyledText
+                      key={id}
+                      as="span"
+                      variant="button.icon"
+                      id={`${id}-preset-button-${presetIndex}`}
+                      onClick={onClick.bind(null, presetIndex)}
+                    >
+                      <Icon name={icon} />
+                      <span className="sr-only">{label}</span>
+                    </StyledText>
+                  ))}
+                </>
+              )}
+              {presetMenuMode === 'write' && (
+                <span className="text-text-secondary">Re-Save</span>
+              )}
+            </span>
+          </span>
+        ),
+      }
+
+      return menuItem
+    },
+  )
+
   return (
-    <div className={classNames.container}>
-      <Button
-        disabled={!hasRandomizedProperties}
-        id="save-preset-menu-button"
-        title="Save as Preset"
-        variant="link"
-        onClick={() => setPresetMenuMode('saving')}
+    <>
+      <MenuButton
+        disabled={disabled}
+        buttons={savedPresetButtons}
       >
-        <Icon
-          name="floppy-disk"
-          variant="solid"
-        />
-        Save as Preset
-      </Button>
-
-      <Button
-        disabled={savedPropertySettings.length === 0}
-        id="load-preset-menu-button"
-        title="Presets Menu"
-        variant="link"
-        onClick={() => setPresetMenuMode('loading')}
-      >
-        <Icon
-          name="folder-open"
-          variant="solid"
-        />
-        Load Preset
-      </Button>
-
-      <Menu
-        className={classNames.menu}
-        isOpen={presetMenuMode !== 'closed'}
-      >
-        <Menu.Backdrop onClick={() => setPresetMenuMode('closed')} />
-
-        {presetMenuMode === 'saving' && (
-          <>
-            <Menu.Item
-              icon="plus-large"
-              onClick={handleClickCreateNew}
+        <div className="flex items-center gap-1">
+          <Tooltip tipContents="Save this configuration as a preset">
+            <StyledText
+              as="button"
+              disabled={!hasRandomizedProperties}
+              id="save-preset-menu-button"
+              variant="button.icon"
+              onClick={() => setPresetMenuMode('write')}
             >
-              Create New...
-            </Menu.Item>
-            <Menu.Divider />
-          </>
-        )}
+              <Icon
+                name="floppy-disk"
+                variant="solid"
+              />
+              <span className="sr-only">Save as Preset</span>
+            </StyledText>
+          </Tooltip>
 
-        {savedPropertySettings.length === 0 ? (
-          <Menu.Item disabled>No Saved Presets</Menu.Item>
-        ) : (
-          savedPropertySettings.map(([presetName, settings], presetIndex) => (
-            <Menu.Item
-              icon="file"
-              id={`${presetMenuMode === 'saving' ? 'save' : 'load'}-preset-button-${presetIndex}`}
-              key={presetName}
-              onClick={
-                presetMenuMode === 'saving'
-                  ? handleClickResavePreset.bind(null, presetIndex)
-                  : handleClickLoadPreset.bind(null, settings)
-              }
+          <Tooltip tipContents={disabled ? 'No presets' : 'Load Preset...'}>
+            <StyledText
+              as="button"
+              disabled={disabled}
+              id="load-preset-menu-button"
+              title="Presets Menu"
+              variant="button.icon"
+              onClick={() => setPresetMenuMode('read')}
             >
-              <div className={classNames.menuItemContentsContainer}>
-                <div>{presetName || '(Untitled)'}</div>
-
-                <div className={classNames.hoverContainer}>
-                  {presetMenuMode === 'loading' && (
-                    <>
-                      <IconButton
-                        iconName="pencil"
-                        id={`rename-preset-button-${presetIndex}`}
-                        label="Rename"
-                        variant="primary"
-                        onClick={handleClickRenamePreset.bind(
-                          null,
-                          presetIndex,
-                        )}
-                      />
-                      <IconButton
-                        iconName="trash"
-                        id={`delete-preset-button-${presetIndex}`}
-                        label="Delete"
-                        variant="primary"
-                        onClick={handleClickDeletePreset.bind(
-                          null,
-                          presetIndex,
-                        )}
-                      />
-                    </>
-                  )}
-
-                  {presetMenuMode === 'saving' && (
-                    <div className="text-fadedTextColor">Re-Save</div>
-                  )}
-                </div>
-              </div>
-            </Menu.Item>
-          ))
-        )}
-      </Menu>
+              <Icon
+                name="folder-open"
+                variant="solid"
+              />
+              <span className="sr-only">Load Preset</span>
+            </StyledText>
+          </Tooltip>
+        </div>
+      </MenuButton>
 
       <ModalWindow
         classNamesForCloseButton="hidden"
@@ -311,10 +281,10 @@ export function PresetButtons() {
         onClose={() => setIsPresetConfigModalOpen(false)}
       >
         <form
-          className={classNames.presetConfigForm}
+          className="flex flex-col gap-3"
           onSubmit={handleSubmit}
         >
-          <Box
+          <StyledText
             as="input"
             id="preset-name-input"
             name="presetName"
@@ -327,25 +297,27 @@ export function PresetButtons() {
             }
           />
 
-          <div className={classNames.presetConfigFormButtonsContainer}>
-            <Button
+          <div className="flex flex-row-reverse items-center gap-3">
+            <StyledText
+              as="button"
               id="save-preset-button"
               type="submit"
-              variant="primary"
+              variant="button.primary"
             >
               Save
-            </Button>
+            </StyledText>
 
-            <Button
+            <StyledText
+              as="button"
               type="button"
-              variant="link"
+              variant="button.secondary"
               onClick={() => setIsPresetConfigModalOpen(false)}
             >
               Cancel
-            </Button>
+            </StyledText>
           </div>
         </form>
       </ModalWindow>
-    </div>
+    </>
   )
 }

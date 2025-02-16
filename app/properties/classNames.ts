@@ -16,7 +16,7 @@ export const classNames = {
   ),
 
   keyboardShortcut: twJoin(
-    `text-fadedTextColor absolute top-1/2 right-6 -translate-y-1/2 pt-0.5 text-sm group-has-[input:focus]:opacity-0`,
+    `text-text-secondary absolute top-1/2 right-6 -translate-y-1/2 pt-0.5 text-sm group-has-[input:focus]:opacity-0`,
   ),
 
   groupsContainer: twJoin(

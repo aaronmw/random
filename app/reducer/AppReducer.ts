@@ -1,5 +1,4 @@
 import { AppAction, AppState } from '@/lib/types'
-import update from 'immutability-helper'
 import isEqual from 'lodash/isEqual'
 import mapValues from 'lodash/mapValues'
 import set from 'lodash/set'
@@ -23,7 +22,7 @@ const AppReducer = (state: AppState, action: AppAction) => {
         propertySettings: {
           ...mapValues(newState.propertySettings, (propertySetting) => ({
             ...propertySetting,
-            mode: 'disabled' as const,
+            disabled: false,
           })),
           ...loadedProperties,
         },
@@ -40,22 +39,28 @@ const AppReducer = (state: AppState, action: AppAction) => {
         state: newState,
       })
 
-      newState = update(newState, {
-        propertySettings: {
-          [propertyName]: {
-            preserveAspectRatio: {
-              $set: preserveAspectRatio,
-            },
-          },
-          ...sideEffects,
-        },
+      newState = set(
+        newState,
+        `${propertyName}.preserveAspectRatio`,
+        preserveAspectRatio,
+      )
+
+      sideEffects.forEach(([path, value]) => {
+        set(newState, path, value)
       })
+
       break
     }
 
     case 'setStateByPath': {
       const { path, value } = action.payload
       set(newState, path, value)
+      break
+    }
+
+    case 'setSelectionCount': {
+      const { count } = action.payload
+      newState.selectionCount = count
       break
     }
   }
@@ -72,4 +77,9 @@ const AppReducer = (state: AppState, action: AppAction) => {
   )
 
   return stateHasChanged ? newState : state
+}
+
+export const initialState = {
+  selectionCount: 0,
+  // ... existing state
 }

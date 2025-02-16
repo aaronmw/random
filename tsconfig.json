@@ -20,7 +20,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "lodash/*": ["./node_modules/@types/lodash/*"]
     },
     "typeRoots": ["./node_modules/@figma"]
   },

@@ -1,15 +1,22 @@
-import { forwardRef } from "react"
-import { twMerge } from "tailwind-merge"
-import { IconProps } from "./types"
+'use client'
 
-const Icon = forwardRef<HTMLSpanElement, IconProps>(
-  (
-    { className, name, rotate, spin = false, variant = "light", ...otherProps },
-    ref,
-  ) => (
+import { iconStringToVariantAndName } from '@/lib/iconStringToVariantAndName'
+import { twMerge } from 'tailwind-merge'
+import { IconProps } from './types'
+
+export function Icon({
+  className,
+  name,
+  rotate,
+  spin = false,
+  variant = 'regular',
+  ...otherProps
+}: IconProps) {
+  const [iconVariant = variant, iconName] = iconStringToVariantAndName(name)
+
+  return (
     <span
       className={twMerge(`no-underline!`, className)}
-      ref={ref}
       {...otherProps}
     >
       <i
@@ -17,25 +24,21 @@ const Icon = forwardRef<HTMLSpanElement, IconProps>(
           `
             fa
             fa-fw
-            fa-${name}
+            fa-${iconName}
           `,
-          typeof rotate === "string" && `fa-${rotate}`,
-          typeof rotate === "number" && `fa-rotate-${rotate}`,
+          typeof rotate === 'string' && `fa-${rotate}`,
+          typeof rotate === 'number' && `fa-rotate-${rotate}`,
           spin && `fa-spin`,
-          variant.startsWith("sharp-")
+          iconVariant && iconVariant.startsWith('sharp-')
             ? `
               fa-sharp
-              fa-${variant.replace("sharp-", "")}
+              fa-${iconVariant.replace('sharp-', '')}
             `
             : `
-              fa-${variant}
+              fa-${iconVariant}
             `,
         )}
       />
     </span>
-  ),
-)
-
-Icon.displayName = "Icon"
-
-export { Icon }
+  )
+}

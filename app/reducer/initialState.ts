@@ -29,7 +29,7 @@ export const initialState: AppState = {
     fillOpacity: { ...percentageBasedPropertyOptions },
     height: {
       ...integerBasedPropertyOptions,
-      anchor: 'center-center',
+      anchorPosition: 'center-center',
       preserveAspectRatio: false,
     },
     innerRadius: { ...percentageBasedPropertyOptions },
@@ -65,7 +65,7 @@ export const initialState: AppState = {
     rightRadii: { ...integerBasedPropertyOptions },
     rotation: {
       ...degreeBasedPropertyOptions,
-      anchor: 'center-center',
+      anchorPosition: 'center-center',
     },
     strokeBottomWeight: { ...integerBasedPropertyOptions },
     strokeColor: { ...colorBasedPropertyOptions },
@@ -80,7 +80,7 @@ export const initialState: AppState = {
     topRightRadius: { ...integerBasedPropertyOptions },
     width: {
       ...integerBasedPropertyOptions,
-      anchor: 'center-center',
+      anchorPosition: 'center-center',
       preserveAspectRatio: false,
     },
     x: { ...integerBasedPropertyOptions },
