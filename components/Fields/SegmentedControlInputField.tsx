@@ -1,7 +1,13 @@
-import { useAppContext } from '@/app/reducer/AppContext'
-import { StyledText, StyledTextProps } from '@/components/StyledText'
-import get from 'lodash/get'
-import { ComponentProps, MouseEvent, createContext, useContext } from 'react'
+import { Atom, AtomProps } from '@/components/Atom'
+import {
+  ComponentProps,
+  MouseEvent,
+  createContext,
+  useContext,
+  useRef,
+  useState,
+} from 'react'
+import { twJoin, twMerge } from 'tailwind-merge'
 import { FieldContainer, FieldContainerProps } from './FieldContainer'
 
 export { SegmentedControlInputField }
@@ -10,16 +16,16 @@ export type { SegmentedControlInputFieldProps }
 interface SegmentedControlInputFieldProps<V extends string | number | boolean>
   extends Omit<ComponentProps<'div'>, 'onChange'>,
     Pick<FieldContainerProps<'label'>, 'label' | 'description' | 'variant'> {
-  path: string
-  variantForButton?: StyledTextProps['variant']
-  onChange?: (context: { path: string; value: V }) => void
+  variantForButton?: AtomProps['variant']
+  onChange?: (newValue: V, event: MouseEvent<HTMLButtonElement>) => void
+  value?: V
 }
 
 interface SegmentedControlInputContextObject<
   V extends string | number | boolean,
 > {
   currentValue?: V
-  variantForButton?: StyledTextProps['variant']
+  variantForButton?: AtomProps['variant']
   handleClickButton: (newValue: V, event: MouseEvent<HTMLButtonElement>) => void
 }
 
@@ -33,49 +39,49 @@ const SegmentedControlInputContext = createContext<
 
 const SegmentedControlInputField = <V extends string | number | boolean>({
   children,
+  className,
   description,
   label,
-  path,
+  value,
   variant,
   variantForButton = 'button.icon.togglable',
   onChange,
+  ...otherProps
 }: SegmentedControlInputFieldProps<V>) => {
-  const { dispatch, state } = useAppContext()
-  const currentValue = get(state, path)
+  const [currentValue, setCurrentValue] = useState<V | undefined>(value)
+
+  // Add key to force re-render on hot reload
+  const instanceId = useRef(Math.random().toString(36).slice(2))
 
   function handleClickButton(
     newValue: V,
     event: MouseEvent<HTMLButtonElement>,
   ) {
     event.preventDefault()
-
-    const payload = {
-      path,
-      value: newValue,
-    }
-
-    if (typeof onChange === 'function') {
-      onChange?.(payload)
-      return
-    }
-
-    dispatch({
-      type: 'setStateByPath',
-      payload,
-    })
+    setCurrentValue(newValue)
+    onChange?.(newValue, event)
   }
 
   return (
     <SegmentedControlInputContext
+      key={instanceId.current}
       value={{ currentValue, handleClickButton, variantForButton }}
     >
       <FieldContainer
         label={label}
         description={description}
         variant={variant}
-        className="bg-transparent"
+        className={twMerge('bg-transparent', className)}
+        {...otherProps}
       >
-        <div className="flex w-fit flex-row-reverse overflow-hidden outline-0">
+        <div
+          className={twJoin(
+            'group w-fit outline-0',
+            'flex flex-row-reverse',
+            'overflow-hidden',
+            'hover:inset-shadow-white',
+          )}
+        >
           {children}
         </div>
       </FieldContainer>
@@ -88,7 +94,7 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   value,
   onClick,
   ...otherProps
-}: Omit<ComponentProps<'button'>, 'value'> & {
+}: Omit<AtomProps<'button'>, 'value'> & {
   value: string | number | boolean
 }) {
   const { currentValue, handleClickButton, variantForButton } = useContext(
@@ -103,7 +109,7 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   }
 
   return (
-    <StyledText
+    <Atom
       variant={variantForButton}
       as="button"
       data-active={isSelected ? 'true' : undefined}
@@ -111,6 +117,6 @@ SegmentedControlInputField.OptionButton = function OptionButton({
       {...otherProps}
     >
       {children}
-    </StyledText>
+    </Atom>
   )
 }

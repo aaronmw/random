@@ -1,7 +1,7 @@
 'use client'
 
+import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
-import { StyledText } from '@/components/StyledText'
 import { ComponentPropsWithoutRef, MouseEvent, useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
 import { twJoin, twMerge } from 'tailwind-merge'
@@ -100,7 +100,7 @@ const ModalWindow = ({
               windowClassNamesByVariant[variant as ModalWindowVariant],
             )}
           >
-            <StyledText
+            <Atom
               as="button"
               id={`modal-window-close-button-${modalWindowContainerId}`}
               variant="button.icon"
@@ -113,7 +113,7 @@ const ModalWindow = ({
                 name="xmark"
                 onClick={handleClickClose}
               />
-            </StyledText>
+            </Atom>
 
             {children}
           </div>

@@ -1,12 +1,11 @@
 'use client'
 
+import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
 import { ModalWindow, ModalWindowProps } from '@/components/ModalWindow'
-import { StyledText } from '@/components/StyledText'
 import sample from 'lodash/sample'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { twJoin } from 'tailwind-merge'
-import { queryChatGPT } from './queryChatGPT'
 
 const promptSuggestions = [
   'american cities',
@@ -59,9 +58,15 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
     setIsFetchingResults(true)
 
     try {
-      const response = (await queryChatGPT(safePrompt)) || []
+      const response =
+        (await fetch('/api/query-chatgpt', {
+          method: 'POST',
+          body: JSON.stringify({ prompt: safePrompt }),
+        })) || []
 
-      onResponse(response)
+      const data = await response.json()
+
+      onResponse(data)
 
       onClose()
     } catch (error) {
@@ -98,7 +103,7 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
           onChange={(event) => setUserPrompt(event.target.value)}
         />
 
-        <StyledText
+        <Atom
           as="button"
           type="submit"
           variant="button.primary"
@@ -107,7 +112,7 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
             name="robot"
             variant="solid"
           />
-        </StyledText>
+        </Atom>
       </form>
     </ModalWindow>
   )

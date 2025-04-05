@@ -40,10 +40,16 @@ export function getSideEffectsForPreservingAspectRatio({
 
   const sideEffects: [string, unknown][] = []
 
-  sideEffects.push([`${oppositePropertyName}.preserveAspectRatio`, false])
+  sideEffects.push([
+    `propertySettings.${oppositePropertyName}.preserveAspectRatio`,
+    false,
+  ])
 
   if (preserveAspectRatio === true) {
-    sideEffects.push([`${oppositePropertyName}.disabled`, true])
+    sideEffects.push([
+      `propertySettings.${oppositePropertyName}.isEnabled`,
+      false,
+    ])
   }
 
   const newOppositePropertyAnchorPosition = getConstrainedAnchorPosition({
@@ -53,12 +59,12 @@ export function getSideEffectsForPreservingAspectRatio({
   })
 
   sideEffects.push([
-    `${oppositePropertyName}.anchorPosition`,
+    `propertySettings.${oppositePropertyName}.anchorPosition`,
     newOppositePropertyAnchorPosition,
   ])
 
   sideEffects.push([
-    `${propertyName}.anchorPosition`,
+    `propertySettings.${propertyName}.anchorPosition`,
     getConstrainedAnchorPosition({
       anchorPosition,
       preserveAspectRatio,
@@ -66,7 +72,10 @@ export function getSideEffectsForPreservingAspectRatio({
     }),
   ])
 
-  sideEffects.push([`${propertyName}.preserveAspectRatio`, preserveAspectRatio])
+  sideEffects.push([
+    `propertySettings.${propertyName}.preserveAspectRatio`,
+    preserveAspectRatio,
+  ])
 
   return sideEffects
 }

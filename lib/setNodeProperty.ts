@@ -1,4 +1,3 @@
-import { anyColorStringToRGB } from '@/lib/anyColorStringToRGB'
 import { hasProperty } from '@/lib/hasProperty'
 import { rotateOriginXY } from '@/lib/rotateOriginXY'
 import { setCharacters } from '@/lib/setCharacters'
@@ -8,15 +7,23 @@ import type {
   AnchorPosition,
   PropertyName,
   PropertySettings,
+  PropertySettingsObject,
 } from '@/lib/types'
+import { colord, extend } from 'colord'
+import a11yPlugin from 'colord/plugins/a11y'
+import namesPlugin from 'colord/plugins/names'
 import cloneDeep from 'lodash/cloneDeep'
 
+extend([a11yPlugin, namesPlugin])
+
 export async function setNodeProperty({
+  enabledPropertySettings,
   node,
   propertySettings,
   propertyName,
   value,
 }: {
+  enabledPropertySettings: Partial<PropertySettingsObject>
   node: SceneNode
   propertySettings: PropertySettings
   propertyName: PropertyName
@@ -28,13 +35,36 @@ export async function setNodeProperty({
         break
       }
 
-      const { thousandsSeparator, prefix, suffix } = propertySettings
+      const {
+        decimalPlaces = 0,
+        decimalCharacter = '.',
+        thousandsSeparator = '',
+        prefix = '',
+        suffix = '',
+      } = propertySettings
 
-      const formattedValue = thousandsSeparator
-        ? Number(value).toLocaleString()
-        : value
+      const formattedValue = String(value)
+        .split('.')
+        .map((part, index) => {
+          if (index === 0 && thousandsSeparator) {
+            return part.replace(/\B(?=(\d{3})+(?!\d))/g, thousandsSeparator)
+          }
+          return part
+        })
+        .join(decimalCharacter)
 
-      setCharacters({ node, characters: `${prefix}${formattedValue}${suffix}` })
+      const decimalPart = formattedValue.split(decimalCharacter)[1] || ''
+      const roundedDecimalPart = decimalPart.slice(0, decimalPlaces)
+
+      await setCharacters({
+        node,
+        characters: [
+          prefix,
+          formattedValue.split(decimalCharacter)[0],
+          roundedDecimalPart ? decimalCharacter + roundedDecimalPart : '',
+          suffix,
+        ].join(''),
+      })
       break
     }
 
@@ -81,6 +111,73 @@ export async function setNodeProperty({
       break
     }
 
+    case 'fillColorRedChannel':
+    case 'fillColorGreenChannel':
+    case 'fillColorBlueChannel':
+    case 'strokeColorRedChannel':
+    case 'strokeColorGreenChannel':
+    case 'strokeColorBlueChannel': {
+      const fillsOrStrokes = propertyName.startsWith('fill')
+        ? 'fills'
+        : 'strokes'
+
+      if (!hasProperty(node, fillsOrStrokes)) {
+        break
+      }
+
+      const channel = propertyName
+        .replaceAll(/(fill|stroke)Color/, '')
+        .charAt(0)
+        .toLowerCase()
+      const newfillsOrStrokes = cloneDeep(node[fillsOrStrokes])
+
+      newfillsOrStrokes[0].color[channel] = Number(value) / 255
+      node[fillsOrStrokes] = newfillsOrStrokes
+
+      break
+    }
+
+    case 'fillColorHue':
+    case 'fillColorSaturation':
+    case 'fillColorLightness':
+    case 'strokeColorHue':
+    case 'strokeColorSaturation':
+    case 'strokeColorLightness': {
+      const fillsOrStrokes = propertyName.startsWith('fill')
+        ? 'fills'
+        : 'strokes'
+
+      if (!hasProperty(node, fillsOrStrokes)) {
+        break
+      }
+
+      const newFillsOrStrokes = cloneDeep(node[fillsOrStrokes])
+      const currentColorObj = newFillsOrStrokes[0].color
+      const hslProperty = propertyName
+        .replace(/(fill|stroke)Color/, '')
+        .charAt(0)
+        .toLowerCase() as 'h' | 's' | 'l'
+      const currentHSL = colord({
+        r: Math.round(currentColorObj.r * 255),
+        g: Math.round(currentColorObj.g * 255),
+        b: Math.round(currentColorObj.b * 255),
+      }).toHsl()
+      const newHSL = colord({
+        ...currentHSL,
+        [hslProperty]: Number(value),
+      })
+      const newRGB = newHSL.toRgb()
+
+      newFillsOrStrokes[0].color = {
+        r: newRGB.r / 255,
+        g: newRGB.g / 255,
+        b: newRGB.b / 255,
+      }
+      node[fillsOrStrokes] = newFillsOrStrokes
+
+      break
+    }
+
     case 'fillColor':
     case 'strokeColor':
     case 'fillOpacity':
@@ -96,13 +193,21 @@ export async function setNodeProperty({
         break
       }
 
-      const fillsOrStrokes = cloneDeep(node[fillsOrStrokesPropertyName])
+      const newFillsOrStrokes = cloneDeep(node[fillsOrStrokesPropertyName])
+
       const colorOrOpacity = isColorProperty
-        ? anyColorStringToRGB(value)
+        ? (() => {
+            const rgb = colord(String(value)).toRgb()
+            return {
+              r: rgb.r / 255,
+              g: rgb.g / 255,
+              b: rgb.b / 255,
+            }
+          })()
         : toPercentage(value)
 
-      fillsOrStrokes[0][colorOrOpacityPropertyName] = colorOrOpacity
-      node[fillsOrStrokesPropertyName] = fillsOrStrokes
+      newFillsOrStrokes[0][colorOrOpacityPropertyName] = colorOrOpacity
+      node[fillsOrStrokesPropertyName] = newFillsOrStrokes
       break
     }
 
@@ -187,6 +292,10 @@ export async function setNodeProperty({
     case 'innerRadius':
     case 'opacity':
     case 'strokeWeight':
+    case 'strokeTopWeight':
+    case 'strokeRightWeight':
+    case 'strokeBottomWeight':
+    case 'strokeLeftWeight':
     case 'cornerRadius':
     case 'topLeftRadius':
     case 'topRightRadius':
@@ -205,6 +314,11 @@ export async function setNodeProperty({
       break
     }
   }
+
+  node.setPluginData(
+    'propertySettings',
+    JSON.stringify(enabledPropertySettings),
+  )
 
   return true
 }

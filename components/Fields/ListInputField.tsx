@@ -1,118 +1,90 @@
-import { Badge } from '@/components/Badge'
+import { singlePropertySettingsAtom } from '@/app/atoms/singlePropertySettingsAtom'
+import { Atom } from '@/components/Atom'
+import { ConditionalWrapper } from '@/components/ConditionalWrapper'
 import { Icon } from '@/components/Icon'
+import { Randy } from '@/components/Randy'
+import { Tooltip } from '@/components/Tooltip'
+import { dataTypes } from '@/lib/dataTypes'
+import { dataTypesByPropertyName } from '@/lib/dataTypesByPropertyName'
+import { pluralize } from '@/lib/pluralize'
 import { PropertyName } from '@/lib/types'
+import { useAtom } from 'jotai'
 import get from 'lodash/get'
-import { KeyboardEvent, ReactNode, useEffect, useRef, useState } from 'react'
+import merge from 'lodash/merge'
+import set from 'lodash/set'
+import {
+  ChangeEvent,
+  MouseEvent,
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { twJoin, twMerge } from 'tailwind-merge'
+import { useOnClickOutside } from 'usehooks-ts'
 import { FieldContainer } from './FieldContainer'
-import { useAppContext } from '@/app/reducer/AppContext'
 
 interface ListInputFieldProps {
-  label: ReactNode
   propertyName: PropertyName
-  renderBottomSlot?: ReactNode
-  renderLeftSlot?: (context: {
-    isValid: boolean
-    lineIndex: number
-    setValues: (values: string[]) => void
-    value: string
-    values: string[]
-  }) => ReactNode
-  validatorFunction: (value: string) => string | true
 }
 
-const classNames = {
-  labelContainer: twJoin(`flex items-center justify-between`),
-
-  badgesContainer: twJoin(`flex gap-1`),
-
-  container: twJoin(`w-full`),
-
-  listContainer: twJoin(
-    `group/list relative grid w-full grid-flow-col grid-cols-[min-content_1fr_min-content] grid-rows-[max-content] overflow-x-hidden overflow-y-auto`,
-  ),
-
-  leftSlotContainer: twJoin(`col-start-1 col-end-2`),
-
-  textAreaContainer: twJoin(`col-start-2 col-end-3 row-start-1 row-end-9999`),
-
-  textArea: twJoin(
-    `text-text w-full resize-none border-0 bg-transparent pl-2 font-mono outline-hidden`,
-  ),
-
-  valueContainer: ({ isCommentedOut = false, isValid = false }) =>
-    twMerge(
-      `hover:!text-text group-hover/list:text-text-secondary col-start-2 col-end-3 flex min-h-9 w-full shrink-0 cursor-pointer items-center pl-2 font-mono transition-opacity`,
-      isValid
-        ? 'odd:bg-bg-hover'
-        : isCommentedOut
-          ? `bg-bg-hover/20 odd:bg-bg-hover/40 text-text-secondary`
-          : `bg-red-500/10 text-red-600 odd:bg-red-500/20`,
-    ),
-
-  rightSlotContainer: ({
-    isCommentedOut = false,
-    isEditing = false,
-    isValid = false,
-    lineIndex = 0,
-  }) =>
-    twMerge(
-      `group/list-item relative col-start-3 col-end-4 flex h-9 items-center justify-end px-2`,
-      // Can't use `odd:` because the number of children
-      // changes when editing
-      lineIndex % 2 === 0 && `is-odd`,
-      isEditing &&
-        `before:absolute before:right-full before:-z-10 before:col-start-2 before:col-end-4 before:h-full before:w-screen`,
-      isValid
-        ? `[&.is-odd]:bg-bg-hover [&.is-odd]:before:bg-bg-hover cursor-pointer`
-        : isCommentedOut
-          ? `bg-bg-hover/20 before:bg-bg-hover/20 [&.is-odd]:bg-bg-hover/40 [&.is-odd]:before:bg-bg-hover/40 text-text-secondary cursor-pointer`
-          : `bg-red-500/10 text-red-600 before:bg-red-500/10 [&.is-odd]:bg-red-500/20 [&.is-odd]:before:bg-red-500/20`,
-    ),
-
-  rightSlotStatusIcon: ({ isCommentedOut = false, isValid = false }) =>
-    twMerge(
-      `transition-all`,
-      isValid && `opacity-0 group-hover/list-item:opacity-100`,
-      isCommentedOut && `opacity-30 group-hover/list-item:opacity-100`,
-    ),
+interface LineContext {
+  lineIndex: number
+  setValues: (values: string[]) => void
+  value: string
+  values: string[]
 }
 
-export function ListInputField({
-  label,
-  propertyName,
-  renderLeftSlot,
-  renderBottomSlot,
-  validatorFunction,
-}: ListInputFieldProps) {
-  const scrollingElementRef = useRef<HTMLDivElement>(null)
+export function ListInputField({ propertyName }: ListInputFieldProps) {
+  const propertyAtom = useMemo(
+    () => singlePropertySettingsAtom(propertyName),
+    [propertyName],
+  )
+  const [singlePropertySettings, setSinglePropertySettings] =
+    useAtom(propertyAtom)
+
+  const colorPickerElementRef = useRef<HTMLInputElement>(null)
+  const scrollingElementRef = useRef<HTMLElement>(null)
   const textareaElementRef = useRef<HTMLTextAreaElement>(null)
-  const [isEditing, setIsEditing] = useState(false)
-  const [scrollTop, setScrollTop] = useState<number | null>(null)
-  const [clickedLineIndex, setClickedLineIndex] = useState<number | null>(null)
-  const { dispatch, state } = useAppContext()
-  const path = `propertySettings.${propertyName}.modeOptions.list.options`
-  const values = get(state, path) as string[]
-  const [metaDataByLineIndex, setMetaDataByLineIndex] = useState<
-    (string | true)[]
-  >([])
 
-  useEffect(() => {
-    setMetaDataByLineIndex(
-      values.map((value) =>
-        String(value).startsWith('//') ? true : validatorFunction(value),
-      ),
-    )
-  }, [validatorFunction, values])
+  const [clickedLineIndex, setClickedLineIndex] = useState<number | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [isShowingRandy, setIsShowingRandy] = useState(false)
+  const [lineContext, setLineContext] = useState<LineContext | null>(null)
+  const [scrollTop, setScrollTop] = useState<number | null>(null)
+  const [isClient, setIsClient] = useState(false)
+
+  const pathToValue = 'modeOptions.list.options'
+  const values = get(singlePropertySettings, pathToValue) as string[]
+  const dataType = dataTypesByPropertyName[propertyName]
+  const dataTypeConfig = dataTypes[dataType]
+  const { label, min, max, validator } = dataTypeConfig
+
+  const validationMessagesByLineIndex = values.map((value) => {
+    return String(value).startsWith('//')
+      ? true
+      : validator({ value, min, max })
+  })
+
+  const numDisabledValues = values.filter((value) =>
+    String(value).startsWith('//'),
+  ).length
+
+  const errorMessages = validationMessagesByLineIndex.filter(
+    (validationMessage) => typeof validationMessage === 'string',
+  )
+
+  useOnClickOutside(scrollingElementRef as RefObject<HTMLElement>, () => {
+    setLineContext(null)
+  })
 
   useEffect(() => {
     const scrollingElement = scrollingElementRef.current
-
     if (!scrollingElement) return
-
     const handleScroll = () => setScrollTop(scrollingElement.scrollTop)
-
-    scrollingElement.addEventListener('scroll', handleScroll)
+    scrollingElement.addEventListener('scroll', handleScroll, { passive: true })
 
     return () => {
       scrollingElement.removeEventListener('scroll', handleScroll)
@@ -133,225 +105,246 @@ export function ListInputField({
           .slice(0, clickedLineIndex)
           .reduce((totalOffset, value) => totalOffset + value.length + 1, 0)
         const endingIndex = startingIndex + values[clickedLineIndex].length
-
         textareaElement.setSelectionRange(startingIndex, endingIndex)
         setClickedLineIndex(null)
       }
     }
   }, [clickedLineIndex, isEditing, scrollTop, values])
 
-  function startEditingLineIndex({ lineIndex }: { lineIndex: number }) {
-    setClickedLineIndex(lineIndex)
-    setIsEditing(true)
-  }
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
-  function stopEditing() {
+  const startEditingLineIndex = useCallback(
+    ({ lineIndex }: { lineIndex: number }) => {
+      setClickedLineIndex(lineIndex)
+      setIsEditing(true)
+    },
+    [],
+  )
+
+  const stopEditing = useCallback(() => {
     setIsEditing(false)
-  }
+  }, [])
 
-  function handleChange(event: { target: { value: string } }) {
-    const { value } = event.target
-    const newValues = value.split('\n')
-    setValues(newValues)
-  }
+  const setValues = useCallback(
+    (values: string[]) => {
+      const newSinglePropertySettings = merge({}, singlePropertySettings)
+      set(newSinglePropertySettings, pathToValue, values)
+      setSinglePropertySettings(newSinglePropertySettings)
+    },
+    [pathToValue, singlePropertySettings, setSinglePropertySettings],
+  )
 
-  function handleClickToggleComment(args: { lineIndex: number }) {
-    const { lineIndex } = args
-    setValues(
-      values.map((value, index) =>
-        index === lineIndex
-          ? value.startsWith('//')
-            ? value.replace(/^\/\/\s*/, '')
-            : `// ${value}`
-          : value,
-      ),
-    )
-  }
+  const handleChange = useCallback(
+    (event: { target: { value: string } }) => {
+      const { value } = event.target
+      const newValues = value.split('\n')
+      setValues(newValues)
+    },
+    [setValues],
+  )
 
-  // Re-enable CMD+A to select all text in textarea
-  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === 'a' && event.metaKey) {
-      textareaElementRef.current?.select()
-    }
-  }
+  const handleClickColorSwatch = useCallback(
+    (lineContext: LineContext, event: MouseEvent<HTMLDivElement>) => {
+      event.preventDefault()
+      event.stopPropagation()
 
-  function setValues(values: string[]) {
-    dispatch({
-      type: 'setStateByPath',
-      payload: {
-        path,
-        value: values,
-      },
-    })
-  }
+      setLineContext(lineContext)
 
-  const numDisabledValues = values.filter((value) =>
-    String(value).startsWith('//'),
-  ).length
+      requestAnimationFrame(() => {
+        colorPickerElementRef.current?.click()
+      })
+    },
+    [],
+  )
 
-  const errorMessages = metaDataByLineIndex.filter(
-    (metaData) => typeof metaData === 'string',
+  const handleChangeColorPicker = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      if (!lineContext) return
+
+      lineContext.setValues(
+        lineContext.values.map((v, i) =>
+          i === lineContext.lineIndex ? event.target.value : v,
+        ),
+      )
+    },
+    [lineContext],
   )
 
   return (
-    <FieldContainer
-      label={
-        <div className={classNames.labelContainer}>
-          {label}
-          <div className={classNames.badgesContainer}>
-            {errorMessages.length >= 1 && (
-              <Badge
-                className="cursor-help"
-                title="Number of Invalid Values"
-                variant="danger"
-              >
-                <Icon
-                  name="triangle-exclamation"
-                  variant="solid"
-                />{' '}
-                {errorMessages.length}
-              </Badge>
-            )}
-            {numDisabledValues >= 1 && (
-              <Badge title="Number of Disabled Values">
-                {'// '}
-                {numDisabledValues}
-              </Badge>
-            )}
-          </div>
-        </div>
-      }
-      variant="labelOnTop"
-    >
-      <div className={classNames.container}>
-        <div
-          className={classNames.listContainer}
-          ref={scrollingElementRef}
-        >
-          {typeof renderLeftSlot === 'function' &&
-            values.map((value, lineIndex) => {
-              const isValid = metaDataByLineIndex[lineIndex] === true
-              return (
-                <div
-                  className={classNames.leftSlotContainer}
-                  key={`${value}-${lineIndex}`}
+    <>
+      <div className="relative col-span-4 w-full">
+        <span className="absolute top-0 right-0 z-10 flex gap-3">
+          {isClient && (
+            <>
+              {process.env.NODE_ENV === 'development' && (
+                <Atom
+                  variant="link"
+                  as="button"
+                  className="flex items-center gap-1"
+                  onClick={() => setIsShowingRandy(true)}
                 >
-                  {renderLeftSlot({
-                    isValid,
-                    lineIndex,
-                    setValues,
-                    value,
-                    values,
-                  })}
-                </div>
-              )
-            })}
+                  <Icon
+                    name="robot"
+                    variant="solid"
+                  />
+                  Randy
+                </Atom>
+              )}
 
-          {isEditing ? (
-            <div className={classNames.textAreaContainer}>
-              <textarea
-                className={classNames.textArea}
-                spellCheck={false}
-                ref={textareaElementRef}
-                rows={values.length}
-                value={values.join('\n')}
-                onKeyDown={handleKeyDown}
-                onBlur={stopEditing}
-                onChange={handleChange}
-              />
-            </div>
-          ) : (
-            values.map((value, lineIndex) => {
-              const isCommentedOut = String(value).startsWith('//')
-
-              const isValid =
-                !isCommentedOut &&
-                (typeof metaDataByLineIndex[lineIndex] === 'undefined' ||
-                  metaDataByLineIndex[lineIndex] === true)
-
-              return (
-                <div
-                  className={classNames.valueContainer({
-                    isValid,
-                    isCommentedOut,
-                  })}
-                  role="button"
-                  key={lineIndex}
-                  onClick={startEditingLineIndex.bind(null, {
-                    lineIndex,
-                  })}
+              {errorMessages.length >= 1 && (
+                <Atom
+                  className="cursor-help"
+                  tooltip="Number of invalid values omitted"
+                  variant="pill.danger"
                 >
-                  {value}
-                </div>
-              )
-            })
+                  <Icon
+                    name="triangle-exclamation"
+                    variant="solid"
+                  />{' '}
+                  {errorMessages.length}
+                </Atom>
+              )}
+
+              {numDisabledValues >= 1 && (
+                <Atom
+                  tooltip={`${pluralize(
+                    numDisabledValues,
+                    'value is',
+                    'values are',
+                  )} commented out`}
+                  variant="pill.neutral"
+                >
+                  {'// '}
+                  {numDisabledValues}
+                </Atom>
+              )}
+            </>
           )}
+        </span>
 
-          {values.map((value, lineIndex) => {
-            const isCommentedOut = String(value).startsWith('//')
-
-            const isValid =
-              !isCommentedOut &&
-              (typeof metaDataByLineIndex[lineIndex] === 'undefined' ||
-                metaDataByLineIndex[lineIndex] === true)
-
-            const iconInfo = (
-              {
-                isCommentedOut: {
-                  icon: 'eye',
-                  label: 'Enable',
-                },
-                isValid: {
-                  icon: 'eye-slash',
-                  label: 'Disable',
-                },
-                isInvalid: {
-                  className: 'cursor-help',
-                  icon: 'triangle-exclamation',
-                  label: `Invalid: ${metaDataByLineIndex[lineIndex]}`,
-                },
-              } as const
-            )[
-              isCommentedOut
-                ? 'isCommentedOut'
-                : isValid
-                  ? 'isValid'
-                  : 'isInvalid'
-            ]
-
-            return (
-              <div
-                className={twMerge(
-                  classNames.rightSlotContainer({
-                    isCommentedOut,
-                    isEditing,
-                    isValid,
-                    lineIndex,
-                  }),
-                  iconInfo.className,
-                )}
-                key={lineIndex}
-                title={iconInfo.label}
-                onClick={handleClickToggleComment.bind(null, {
-                  lineIndex,
-                })}
-              >
-                <Icon
-                  className={classNames.rightSlotStatusIcon({
-                    isCommentedOut,
-                    isValid,
-                  })}
-                  name={iconInfo.icon}
-                  variant="solid"
+        <FieldContainer
+          variant="labelOnTop"
+          classNamesForInteractiveSurface="outline-hidden bg-transparent"
+          label={pluralize(2, label, undefined, false)}
+          className="relative lowercase outline-hidden"
+        >
+          {!isClient ? (
+            <span className="block h-8 w-full" />
+          ) : (
+            <span
+              className="overflow-x-hidden overflow-y-auto"
+              ref={scrollingElementRef}
+            >
+              {isEditing ? (
+                <Atom
+                  variant="input"
+                  as="textarea"
+                  className={twJoin(
+                    'w-full resize-none px-0 outline-hidden',
+                    'border-0 bg-transparent text-left',
+                    'text-text font-mono',
+                  )}
+                  spellCheck={false}
+                  ref={textareaElementRef}
+                  rows={values.length}
+                  value={values.join('\n')}
+                  onBlur={stopEditing}
+                  onChange={handleChange}
                 />
-                <div className="sr-only">{iconInfo.label}</div>
-              </div>
-            )
-          })}
-        </div>
+              ) : (
+                <span className="flex flex-wrap items-center gap-1 p-1">
+                  {values
+                    .filter((value) => !String(value).startsWith('//'))
+                    .map((value, lineIndex) => {
+                      const validationMessage =
+                        validationMessagesByLineIndex[lineIndex]
+                      const isValid = validationMessage === true
 
-        {renderBottomSlot}
+                      return (
+                        <ConditionalWrapper
+                          condition={!isValid}
+                          key={lineIndex}
+                          wrapper={(children) => (
+                            <Tooltip tipContents={validationMessage}>
+                              {children}
+                            </Tooltip>
+                          )}
+                        >
+                          <Atom
+                            variant="badge.propertyValue"
+                            role="button"
+                            className={twJoin(
+                              !isValid && [
+                                'bg-bg-danger text-text-ondanger border-transparent',
+                                'hover:bg-bg-danger-hover',
+                              ],
+                            )}
+                            onClick={startEditingLineIndex.bind(null, {
+                              lineIndex,
+                            })}
+                          >
+                            {dataType === 'color' && (
+                              <div
+                                className={twJoin(
+                                  'relative',
+                                  '-ml-0.5 size-4 -translate-y-[0.5px]',
+                                  'rounded-xs',
+                                )}
+                                style={{
+                                  backgroundColor: isValid ? value : undefined,
+                                }}
+                                onClick={handleClickColorSwatch.bind(null, {
+                                  lineIndex,
+                                  setValues,
+                                  value,
+                                  values,
+                                })}
+                              >
+                                <div
+                                  className={twMerge(
+                                    'absolute inset-0 rounded-xs',
+                                    'border-text border mix-blend-overlay',
+                                    !isValid && 'border-text-ondanger',
+                                  )}
+                                />
+                              </div>
+                            )}
+
+                            {value}
+                          </Atom>
+                        </ConditionalWrapper>
+                      )
+                    })}
+
+                  {lineContext !== null && (
+                    <input
+                      className="absolute top-full left-0 size-1"
+                      ref={colorPickerElementRef}
+                      type="color"
+                      value={lineContext.values[lineContext.lineIndex]}
+                      onChange={handleChangeColorPicker}
+                    />
+                  )}
+                </span>
+              )}
+            </span>
+          )}
+        </FieldContainer>
       </div>
-    </FieldContainer>
+
+      {isClient && (
+        <Randy
+          isOpen={isShowingRandy}
+          onClose={() => setIsShowingRandy(false)}
+          onResponse={(response) => {
+            const newSinglePropertySettings = merge({}, singlePropertySettings)
+            set(newSinglePropertySettings, `modeOptions.list.options`, response)
+            setSinglePropertySettings(newSinglePropertySettings)
+          }}
+        />
+      )}
+    </>
   )
 }

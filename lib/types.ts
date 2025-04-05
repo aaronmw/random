@@ -1,151 +1,5 @@
-export type AppAction =
-  | {
-      type: 'setPreserveAspectRatio'
-      payload: {
-        propertyName: PropertyName
-        preserveAspectRatio: boolean
-      }
-    }
-  | {
-      type: 'loadPropertySettings'
-      payload: {
-        loadedProperties: Partial<PropertySettingsObject>
-      }
-    }
-  | {
-      type: 'setStateByPath'
-      payload: {
-        path: string
-        value: unknown
-      }
-    }
-  | {
-      type: 'setSelectionCount'
-      payload: {
-        count: number
-      }
-    }
-
-export type PluginAction =
-  | {
-      type: 'execute'
-      payload: {
-        propertySettings: PropertySettingsObject
-      }
-    }
-  | {
-      type: 'requestSettingsFromSelectedNodes'
-    }
-  | {
-      type: 'setPluginHeight'
-      payload: {
-        height: number
-      }
-    }
-  | {
-      type: 'saveSettingsToSelectedNodes'
-      payload: {
-        propertySettings: PropertySettingsObject
-      }
-    }
-
-export const DATA_TYPES = {
-  int: {
-    label: 'Signed Integer',
-    min: -9999,
-    max: 9999,
-  },
-  uint: {
-    label: 'Unsigned Integer',
-    min: 0,
-    max: 9999,
-  },
-  udegree: {
-    label: 'Unsigned Degree',
-    min: 0,
-    max: 9999,
-  },
-  degree: {
-    label: 'Degree',
-    min: -9999,
-    max: 9999,
-  },
-  percent: {
-    label: 'Percentage',
-    min: 0,
-    max: 100,
-  },
-  pointCount: {
-    min: 3,
-    max: 100,
-  },
-  color: {
-    label: 'Color',
-  },
-  string: {
-    label: 'String',
-    min: Infinity * -1,
-    max: Infinity,
-  },
-} as const
-
-export type DataType = keyof typeof DATA_TYPES
-
-export const dataTypesByPropertyName = {
-  arcEndingAngle: 'degree',
-  arcInnerRadius: 'percent',
-  arcStartingAngle: 'degree',
-  bottomLeftRadius: 'uint',
-  bottomRadii: 'uint',
-  bottomRightRadius: 'uint',
-  cornerRadius: 'uint',
-  fillColor: 'color',
-  fillColorAlphaChannel: 'uint',
-  fillColorBlueChannel: 'uint',
-  fillColorBrightness: 'percent',
-  fillColorGreenChannel: 'uint',
-  fillColorHue: 'udegree',
-  fillColorLightness: 'percent',
-  fillColorRedChannel: 'uint',
-  fillColorSaturation: 'percent',
-  fillOpacity: 'percent',
-  height: 'uint',
-  innerRadius: 'percent',
-  layerBlur: 'uint',
-  leftRadii: 'uint',
-  opacity: 'percent',
-  pointCount: 'pointCount',
-  position: 'string', // TODO: Build this out
-  rightRadii: 'uint',
-  rotation: 'degree',
-  strokeBottomWeight: 'uint',
-  strokeColor: 'color',
-  strokeLeftWeight: 'uint',
-  strokeOpacity: 'percent',
-  strokeRightWeight: 'uint',
-  strokeTopWeight: 'uint',
-  strokeWeight: 'uint',
-  text: 'string',
-  topLeftRadius: 'uint',
-  topRadii: 'uint',
-  topRightRadius: 'uint',
-  width: 'uint',
-  x: 'int',
-  y: 'int',
-} satisfies Record<string, DataType>
-
-export type PropertyName = keyof typeof dataTypesByPropertyName
-
-// export type PropertySettingsObject = Record<PropertyName, PropertySettings>
-export type PropertySettingsObject = {
-  [key in PropertyName]: PropertySettings
-}
-
-export interface AppState {
-  propertySettings: PropertySettingsObject
-  savedPropertySettings: [label: string, PropertySettingsObject][]
-  selectionCount: number
-}
+import { dataTypes } from '@/lib/dataTypes'
+import { dataTypesByPropertyName } from '@/lib/dataTypesByPropertyName'
 
 export type AnchorPosition =
   | 'top-left'
@@ -158,20 +12,73 @@ export type AnchorPosition =
   | 'bottom-center'
   | 'bottom-right'
 
-export type RandomizationType = 'calc' | 'list' | 'range'
+export type PluginToAppMessage = {
+  type: 'setSelectedNodePluginData'
+  payload: Partial<PropertySettingsObject>[]
+}
+
+export interface AppState {
+  presets: Record<string, Partial<PropertySettingsObject>>
+  propertySettings: PropertySettingsObject
+  selectedNodePluginData: Partial<PropertySettingsObject>[]
+  isGroupedByType: boolean
+  isGroupedByStatus: boolean
+}
+
+export type DataType = keyof typeof dataTypes
+
+export type DataTypeDescriptor = {
+  label: string
+  min: number | null
+  max: number | null
+  validator: ({
+    value,
+    min,
+    max,
+  }: {
+    value: string
+    min: number | null
+    max: number | null
+  }) => string | true
+}
+
+export type PluginAction =
+  | {
+      type: 'execute'
+      payload: {
+        propertySettings: Partial<PropertySettingsObject>
+      }
+    }
+  | {
+      type: 'setPluginHeight'
+      payload: {
+        height: number
+      }
+    }
+  | {
+      type: 'upgrade'
+    }
+
+export type PropertyName = keyof typeof dataTypesByPropertyName
 
 export type PropertySettings = {
   anchorPosition?: AnchorPosition
   corners?: ('topLeft' | 'topRight' | 'bottomRight' | 'bottomLeft')[]
-  disabled: boolean
-  mode: 'calc' | 'list' | 'range'
+  decimalPlaces?: number
+  decimalCharacter?: string
+  isEnabled: boolean
+  mode: RandomizationType
+  prefix?: string
+  preserveAspectRatio?: boolean
+  sortOrder: 'asc' | 'desc' | 'random'
+  suffix?: string
+  thousandsSeparator?: string
   modeOptions: {
     calc?: {
       add: {
         max: number
         min: number
       }
-      decimalPlaces: number
       multiply: {
         max: number
         min: number
@@ -185,10 +92,16 @@ export type PropertySettings = {
       max: number
       min: number
     }
+    chatgpt?: {
+      prompt: string
+    }
   }
-  prefix?: string
-  preserveAspectRatio?: boolean
-  sortOrder: 'asc' | 'desc' | 'random'
-  suffix?: string
-  thousandsSeparator?: ' ' | ',' | ''
 }
+
+export type PropertySettingsObject = {
+  [key in PropertyName]: PropertySettings
+}
+
+export type RandomizationType = 'calc' | 'list' | 'range'
+
+export type SideEffect = [path: string, newValue: unknown]

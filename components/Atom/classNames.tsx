@@ -2,25 +2,30 @@ import { twJoin, twMerge } from 'tailwind-merge'
 
 const buttonClassNames = twJoin(
   'inline-flex items-center justify-center gap-1.5',
-  'cursor-pointer whitespace-nowrap transition-all',
+  'cursor-default whitespace-nowrap transition-all',
   'rounded-lg',
-  'disabled:pointer-events-none',
-  'disabled:bg-bg-disabled',
-  'disabled:text-text-ondisabled',
+  'data-disabled:pointer-events-none',
+  'data-disabled:text-text-disabled',
 )
 
 const inputClassNames = twJoin(
   'w-full border-0 outline-0',
-  'text-text bg-transparent [font-size:inherit]',
+  'cursor-default',
+  'text-text bg-transparent text-center [font-size:inherit]',
   'placeholder:text-text-tertiary',
-  'disabled:bg-bg-disabled',
-  'disabled:text-text-ondisabled',
+  'data-disabled:bg-bg-disabled',
+  'data-disabled:text-text-ondisabled',
+)
+
+const badgeClassNames = twJoin(
+  'px-2 pt-1 pb-[0.2em] leading-none',
+  'inline-flex items-center gap-1 rounded-full',
+  'whitespace-nowrap not-italic',
+  'cursor-default',
 )
 
 export const classNames = {
-  'link': twMerge(buttonClassNames, 'whitespace-wrap text-brand-color inline'),
-
-  'link.subtle': twMerge(buttonClassNames, 'whitespace-wrap inline'),
+  'link': twMerge(buttonClassNames, 'whitespace-wrap text-text-brand inline'),
 
   'button.primary': twMerge(
     buttonClassNames,
@@ -28,6 +33,8 @@ export const classNames = {
     'px-4 py-3',
     'bg-bg-brand text-text-onbrand',
     'hover:bg-bg-brand-hover hover:text-text-onbrand-hover',
+    'data-disabled:bg-bg-disabled',
+    'data-disabled:text-text-ondisabled',
   ),
 
   'button.secondary': twMerge(
@@ -36,6 +43,16 @@ export const classNames = {
     'px-4 py-3',
     'text-text-secondary',
     'hover:bg-bg-hover hover:text-text-hover',
+  ),
+
+  'button.ghost': twMerge(
+    buttonClassNames,
+    'js-button-ghost',
+    'px-4 py-3',
+    'text-text-brand',
+    'border-border-brand border-2 border-dashed',
+    'bg-bg-brand/5',
+    'hover:bg-bg-brand/10',
   ),
 
   'button.togglable': twMerge(
@@ -81,21 +98,49 @@ export const classNames = {
     'data-[active]:border-border',
   ),
 
-  'footnote': twJoin(
-    'text-faded-text-color inverted:text-faded-text-colorInDarkMode dark:text-faded-text-colorInDarkMode text-xs leading-relaxed',
-  ),
-
   'input': twJoin(
     inputClassNames,
-    'rounded-lg',
     'px-2 py-1',
+    'bg-bg-secondary rounded-lg',
     'hover:outline-border hover:outline',
     'focus:outline-border-selected focus:outline',
   ),
 
   'inputWithoutBorder': inputClassNames,
 
-  'label': twJoin(
-    'text-faded-text-color inverted:text-faded-text-colorInDarkMode dark:text-faded-text-colorInDarkMode text-sm',
+  'label': twJoin('text-text-secondary text-sm'),
+
+  'label.group': twJoin(
+    'sticky top-0 right-0 left-0 z-40',
+    'text-text-secondary text-sm uppercase',
+    'bg-bg-tertiary px-5 py-2',
   ),
-}
+
+  'badge.propertyName': twJoin(
+    badgeClassNames,
+    'text-text-component font-mono',
+    'border-border-component rounded-lg border-2',
+  ),
+
+  'badge.propertyValue': twJoin(
+    badgeClassNames,
+    'text-text font-mono',
+    'border-border rounded-lg border',
+    'hover:bg-bg-hover',
+  ),
+
+  'pill.danger': twJoin(badgeClassNames, 'bg-bg-danger text-text-ondanger'),
+
+  'pill.neutral': twJoin(badgeClassNames, 'bg-bg-hover text-text-hover'),
+
+  'pill.interactive': twJoin(
+    badgeClassNames,
+    'border border-transparent',
+    'bg-bg text-text',
+    'hover:text-text-brand',
+    'hover:bg-bg-hover',
+    'hover:border-border-brand',
+  ),
+
+  'popover': twJoin('dark', 'block py-2', 'rounded-2xl bg-black/90 text-white'),
+} satisfies Record<string, string>

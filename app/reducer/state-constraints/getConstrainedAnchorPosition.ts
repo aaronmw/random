@@ -1,4 +1,4 @@
-import { AnchorPosition } from '@/lib/types'
+import { AnchorPosition, PropertyName } from '@/lib/types'
 import xor from 'lodash/xor'
 
 export const anchorPositions = [
@@ -11,12 +11,33 @@ export const anchorPositions = [
   'bottom-left',
   'bottom-center',
   'bottom-right',
-] as const
+] as AnchorPosition[]
 
 const anchorConstraints = {
   height: ['top-center', 'center-center', 'bottom-center'],
   width: ['center-left', 'center-center', 'center-right'],
-} as const
+} as Record<PropertyName, AnchorPosition[]>
+
+const anchorFallbackPositions = {
+  height: {
+    'top-left': 'top-center',
+    'top-right': 'top-center',
+    'bottom-left': 'bottom-center',
+    'bottom-right': 'bottom-center',
+    'center-left': 'center-center',
+    'center-right': 'center-center',
+    'center-center': 'center-center',
+  },
+  width: {
+    'top-left': 'center-left',
+    'top-right': 'center-right',
+    'bottom-left': 'center-left',
+    'bottom-right': 'center-right',
+    'center-center': 'center-center',
+    'center-left': 'center-left',
+    'center-right': 'center-right',
+  },
+} as Record<PropertyName, Record<AnchorPosition, AnchorPosition>>
 
 export const getConstrainedAnchorPosition = ({
   anchorPosition,
@@ -25,13 +46,13 @@ export const getConstrainedAnchorPosition = ({
 }: {
   anchorPosition: AnchorPosition
   preserveAspectRatio: boolean
-  propertyName: 'width' | 'height'
+  propertyName: PropertyName
 }) => {
   const allowedAnchorPositions = anchorConstraints[propertyName]
   const disallowedAnchorPositions = xor(anchorPositions, allowedAnchorPositions)
 
   return !preserveAspectRatio &&
     disallowedAnchorPositions.includes(anchorPosition)
-    ? 'center-center'
+    ? anchorFallbackPositions[propertyName][anchorPosition]
     : anchorPosition
 }

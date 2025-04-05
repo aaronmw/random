@@ -9,7 +9,7 @@ export default function PropertiesIndexPage() {
   const isLightMode = params.get('isLightMode') === 'true'
 
   useEffect(() => {
-    document.querySelector('html')?.classList.toggle('dark', !isLightMode)
-    router.push(`properties`)
+    document.querySelector('body')?.classList.toggle('dark', !isLightMode)
+    router.push('/properties')
   }, [isLightMode, router])
 }

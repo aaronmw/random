@@ -1,3 +1,2 @@
-export { AppContext } from "./AppContext"
-export { AppReducer } from "./AppReducer"
-export { initialState } from "./initialState"
+export { AppReducer } from './AppReducer'
+export { initialState } from './initialState'

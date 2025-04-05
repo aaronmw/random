@@ -63,7 +63,6 @@ export const mutualExclusivityMap: Partial<
 
   fillColor: [
     'fillColorBlueChannel',
-    'fillColorBrightness',
     'fillColorGreenChannel',
     'fillColorHue',
     'fillColorLightness',
@@ -83,31 +82,21 @@ export const mutualExclusivityMap: Partial<
     'fillColorGreenChannel',
     'fillColorRedChannel',
   ],
-  fillColorBrightness: [
-    'fillColor',
-    'fillColorBlueChannel',
-    'fillColorGreenChannel',
-    'fillColorLightness',
-    'fillColorRedChannel',
-  ],
   fillColorLightness: [
     'fillColor',
     'fillColorBlueChannel',
-    'fillColorBrightness',
     'fillColorGreenChannel',
     'fillColorRedChannel',
   ],
 
   fillColorRedChannel: [
     'fillColor',
-    'fillColorBrightness',
     'fillColorHue',
     'fillColorLightness',
     'fillColorSaturation',
   ],
   fillColorGreenChannel: [
     'fillColor',
-    'fillColorBrightness',
     'fillColorHue',
     'fillColorLightness',
     'fillColorSaturation',
@@ -115,7 +104,6 @@ export const mutualExclusivityMap: Partial<
   fillColorBlueChannel: [
     'fillColor',
     'fillColorHue',
-    'fillColorBrightness',
     'fillColorLightness',
     'fillColorSaturation',
   ],

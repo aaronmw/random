@@ -1,27 +1,38 @@
+import { PropertyNameTag } from '@/components/PropertyNameTag'
+
 export const tooltips = {
   // Modes
   range: (propertyName: string) => (
     <>
       <p>
-        For each selected node, generates a random <code>{propertyName}</code>{' '}
-        between a minimum and maximum value
+        <strong>Range</strong>
+        <br />
+        For each selected node, generates a random{' '}
+        <PropertyNameTag>{propertyName}</PropertyNameTag> between a minimum
+        and&nbsp;maximum&nbsp;value
       </p>
     </>
   ),
   list: (propertyName: string) => (
     <>
       <p>
-        For each selected node, generates a random <code>{propertyName}</code>{' '}
-        from a list of possible values
+        <strong>List</strong>
+        <br />
+        For each selected node, generates a random{' '}
+        <PropertyNameTag>{propertyName}</PropertyNameTag> from a list
+        of&nbsp;possible&nbsp;values
       </p>
     </>
   ),
   calc: (propertyName: string) => (
     <>
       <p>
+        <strong>Calculate</strong>
+        <br />
         For each selected node, generates a random number between a minimum and
         maximum value, then adds or multiplies the current{' '}
-        <code>{propertyName}</code> by that number
+        <PropertyNameTag>{propertyName}</PropertyNameTag>{' '}
+        by&nbsp;that&nbsp;number
       </p>
     </>
   ),
@@ -31,7 +42,8 @@ export const tooltips = {
     <>
       <p>
         The mathematical operation to perform on the generated random numbers
-        and each node's current <code>{propertyName}</code>.
+        and each node&rsquo;s current&nbsp;
+        <PropertyNameTag>{propertyName}</PropertyNameTag>.
       </p>
     </>
   ),
@@ -39,8 +51,8 @@ export const tooltips = {
     <>
       <p>
         For all selected nodes, generates random values for{' '}
-        <code>{propertyName}</code>, then optionally sorts them in ascending or
-        descending order before applying them
+        <PropertyNameTag>{propertyName}</PropertyNameTag>, then optionally sorts
+        them in ascending or descending order before&nbsp;applying&nbsp;them
       </p>
     </>
   ),
@@ -48,7 +60,61 @@ export const tooltips = {
     <>
       <p>
         The point around which <strong>each selected node</strong> is scaled or
-        rotated when changing its <code>{propertyName}</code>
+        rotated when changing its&nbsp;
+        <PropertyNameTag>{propertyName}</PropertyNameTag>
+      </p>
+    </>
+  ),
+  presetsMenu: (
+    <>
+      <p>
+        Choose a preset to load. It will override unsaved changes to properties
+        enabled in&nbsp;the&nbsp;preset.
+      </p>
+    </>
+  ),
+  presetsMenuEmpty: (
+    <>
+      <p>You haven&rsquo;t saved any presets&nbsp;yet.</p>
+    </>
+  ),
+  savePresetMenu: (
+    <>
+      <p>
+        Save this configuration as a preset so you can load it again later on
+        other&nbsp;projects.
+      </p>
+    </>
+  ),
+  savePresetMenuDisabled: (
+    <>
+      <p>You must enable at least one property to save a&nbsp;preset.</p>
+    </>
+  ),
+  disableAll: (
+    <>
+      <p>Turns off all property randomization so you can start&nbsp;fresh.</p>
+    </>
+  ),
+  stopRandomizing: (propertyName: string) => (
+    <>
+      <p>
+        Stop randomizing <PropertyNameTag>{propertyName}</PropertyNameTag>
+      </p>
+    </>
+  ),
+  savePreset: (
+    <>
+      <p>
+        Save this configuration as a preset. You can load it later to apply the
+        same settings to&nbsp;other&nbsp;nodes.
+      </p>
+    </>
+  ),
+  chatgpt: (propertyName: string) => (
+    <>
+      <p>
+        For each selected node, generates a random value using&nbsp;ChatGPT.
       </p>
     </>
   ),

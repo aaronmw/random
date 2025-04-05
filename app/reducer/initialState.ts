@@ -9,6 +9,10 @@ import {
 import { AppState } from '@/lib/types'
 
 export const initialState: AppState = {
+  isGroupedByType: false,
+  isGroupedByStatus: false,
+  presets: {},
+  selectedNodePluginData: [],
   propertySettings: {
     arcEndingAngle: { ...degreeBasedPropertyOptions },
     arcInnerRadius: { ...percentageBasedPropertyOptions },
@@ -18,9 +22,7 @@ export const initialState: AppState = {
     bottomRightRadius: { ...integerBasedPropertyOptions },
     cornerRadius: { ...integerBasedPropertyOptions },
     fillColor: { ...colorBasedPropertyOptions },
-    fillColorAlphaChannel: { ...percentageBasedPropertyOptions },
     fillColorBlueChannel: { ...colorChannelBasedPropertyOptions },
-    fillColorBrightness: { ...percentageBasedPropertyOptions },
     fillColorGreenChannel: { ...colorChannelBasedPropertyOptions },
     fillColorHue: { ...degreeBasedPropertyOptions },
     fillColorLightness: { ...percentageBasedPropertyOptions },
@@ -61,7 +63,6 @@ export const initialState: AppState = {
         },
       },
     },
-    position: { ...integerBasedPropertyOptions },
     rightRadii: { ...integerBasedPropertyOptions },
     rotation: {
       ...degreeBasedPropertyOptions,
@@ -69,6 +70,12 @@ export const initialState: AppState = {
     },
     strokeBottomWeight: { ...integerBasedPropertyOptions },
     strokeColor: { ...colorBasedPropertyOptions },
+    strokeColorBlueChannel: { ...colorChannelBasedPropertyOptions },
+    strokeColorGreenChannel: { ...colorChannelBasedPropertyOptions },
+    strokeColorHue: { ...degreeBasedPropertyOptions },
+    strokeColorLightness: { ...percentageBasedPropertyOptions },
+    strokeColorRedChannel: { ...colorChannelBasedPropertyOptions },
+    strokeColorSaturation: { ...percentageBasedPropertyOptions },
     strokeLeftWeight: { ...integerBasedPropertyOptions },
     strokeOpacity: { ...percentageBasedPropertyOptions },
     strokeRightWeight: { ...integerBasedPropertyOptions },
@@ -86,5 +93,4 @@ export const initialState: AppState = {
     x: { ...integerBasedPropertyOptions },
     y: { ...integerBasedPropertyOptions },
   },
-  savedPropertySettings: [],
 }

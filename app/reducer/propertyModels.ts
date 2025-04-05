@@ -1,8 +1,9 @@
 import { PropertySettings } from '@/lib/types'
 
 export const colorBasedPropertyOptions: PropertySettings = {
-  disabled: true,
+  isEnabled: false,
   mode: 'list',
+  sortOrder: 'random',
   modeOptions: {
     list: {
       options: [
@@ -14,16 +15,19 @@ export const colorBasedPropertyOptions: PropertySettings = {
         '#1bca7c',
       ],
     },
+    chatgpt: {
+      prompt: 'fall shades',
+    },
   },
-  sortOrder: 'random',
 }
 
 export const degreeBasedPropertyOptions: PropertySettings = {
-  disabled: true,
+  decimalPlaces: 0,
+  isEnabled: false,
   mode: 'list',
+  sortOrder: 'random',
   modeOptions: {
     calc: {
-      decimalPlaces: 0,
       add: {
         max: 180,
         min: 0,
@@ -42,15 +46,15 @@ export const degreeBasedPropertyOptions: PropertySettings = {
       max: 360,
     },
   },
-  sortOrder: 'random',
 }
 
 export const integerBasedPropertyOptions: PropertySettings = {
-  disabled: true,
+  decimalPlaces: 0,
+  isEnabled: false,
   mode: 'list',
+  sortOrder: 'random',
   modeOptions: {
     calc: {
-      decimalPlaces: 0,
       add: {
         max: 50,
         min: 0,
@@ -68,22 +72,23 @@ export const integerBasedPropertyOptions: PropertySettings = {
       min: 50,
       max: 200,
     },
+    chatgpt: {
+      prompt: 'dollar amounts',
+    },
   },
-  sortOrder: 'random',
 }
 
 export const colorChannelBasedPropertyOptions: PropertySettings = {
   ...integerBasedPropertyOptions,
   modeOptions: {
     calc: {
-      decimalPlaces: 0,
       add: {
-        max: 50,
-        min: 0,
+        max: 10,
+        min: -10,
       },
       multiply: {
-        max: 5,
-        min: 0.5,
+        max: 1.1,
+        min: 0.9,
       },
       operator: 'add',
     },
@@ -96,18 +101,19 @@ export const colorChannelBasedPropertyOptions: PropertySettings = {
       ],
     },
     range: {
-      min: 50,
-      max: 200,
+      min: 0,
+      max: 255,
     },
   },
 }
 
 export const percentageBasedPropertyOptions: PropertySettings = {
-  disabled: true,
+  decimalPlaces: 0,
+  isEnabled: false,
+  sortOrder: 'random',
   mode: 'list',
   modeOptions: {
     calc: {
-      decimalPlaces: 0,
       add: {
         max: 100,
         min: 0,
@@ -126,15 +132,19 @@ export const percentageBasedPropertyOptions: PropertySettings = {
       min: 0,
     },
   },
-  sortOrder: 'random',
 }
 
 export const textBasedPropertyOptions: PropertySettings = {
-  disabled: true,
+  decimalPlaces: 0,
+  decimalCharacter: '.',
+  isEnabled: false,
   mode: 'list',
+  prefix: '',
+  sortOrder: 'random',
+  suffix: '',
+  thousandsSeparator: ',',
   modeOptions: {
     calc: {
-      decimalPlaces: 0,
       add: {
         max: 50,
         min: 0,
@@ -173,9 +183,8 @@ export const textBasedPropertyOptions: PropertySettings = {
       max: 200,
       min: 50,
     },
+    chatgpt: {
+      prompt: 'silly names',
+    },
   },
-  sortOrder: 'random',
-  prefix: '',
-  suffix: '',
-  thousandsSeparator: '',
 }

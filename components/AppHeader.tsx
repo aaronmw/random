@@ -1,6 +1,6 @@
 'use client'
 
-import { StyledText } from '@/components/StyledText'
+import { Atom } from '@/components/Atom'
 import startCase from 'lodash/startCase'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -15,7 +15,7 @@ export function AppHeader() {
         className="flex h-15 items-center justify-between border-b px-5"
       >
         {(['properties', 'about'] as const).map((path) => (
-          <StyledText
+          <Atom
             key={path}
             variant="button.togglable"
             as={Link}
@@ -24,7 +24,7 @@ export function AppHeader() {
             href={`/${path}`}
           >
             {startCase(path)}
-          </StyledText>
+          </Atom>
         ))}
       </nav>
     </header>

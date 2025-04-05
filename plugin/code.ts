@@ -1,6 +1,11 @@
 import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
 import { setNodeProperty } from '@/lib/setNodeProperty'
-import type { PluginAction, PropertyName, PropertySettings } from '@/lib/types'
+import type {
+  PluginAction,
+  PropertyName,
+  PropertySettings,
+  PropertySettingsObject,
+} from '@/lib/types'
 import pickBy from 'lodash/pickBy'
 import naturalSort from 'natural-compare-lite'
 
@@ -25,7 +30,7 @@ figma.showUI(
             const isLightMode = classList.contains('figma-light')
             const isDarkMode = classList.contains('figma-dark')
             if (isLightMode || isDarkMode) {
-              window.location.href = '${SITE_URL}?isLightMode=' + isLightMode
+              window.location.href = '${SITE_URL}?isLightMode=' + isLightMode + '&selectionCount=' + ${figma.currentPage.selection.length};
               return
             }
             setTimeout(redirectWhenLightOrDarkModeDetected, 10)
@@ -47,24 +52,23 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
     return
   }
 
+  console.log('Plugin action:', { action })
+
   switch (action.type) {
     case 'execute': {
       const { propertySettings } = action.payload
 
-      const randomizedPropertySettings = pickBy(
-        propertySettings,
-        ({ disabled }) => !disabled,
-      )
+      const enabledPropertySettings = pickBy(propertySettings, 'isEnabled')
 
       const { selection } = figma.currentPage
 
       if (!selection.length) {
-        figma.notify('No layers selected')
+        figma.notify('No nodes selected')
         break
       }
 
       ;(
-        Object.entries(randomizedPropertySettings) as [
+        Object.entries(enabledPropertySettings) as [
           propertyName: PropertyName,
           PropertySettings,
         ][]
@@ -90,8 +94,8 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
         await Promise.all(
           selection.map(async (node, index) => {
             const value = randomValues[index]
-
             await setNodeProperty({
+              enabledPropertySettings,
               node,
               propertySettings,
               propertyName,
@@ -109,6 +113,24 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
       break
     }
 
+    case 'upgrade': {
+      figma.notify('Upgrade action received')
+
+      if (!figma.payments) {
+        figma.notify('Payments API is not available')
+        break
+      }
+
+      figma.notify('Opening upgrade modal...')
+
+      await figma.payments.initiateCheckoutAsync({
+        interstitial: 'PAID_FEATURE',
+      })
+
+      figma.notify('Upgrade modal should be open??')
+      break
+    }
+
     default:
       break
   }
@@ -117,11 +139,15 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
 }
 
 figma.on('selectionchange', () => {
-  const selectionCount = figma.currentPage.selection.length
-  figma.ui.postMessage({
-    type: 'setSelectionCount',
-    payload: {
-      count: selectionCount,
+  const selectedNodePluginData = figma.currentPage.selection.map(
+    (selectedNode) => {
+      const pluginData = selectedNode.getPluginData('propertySettings')
+      return JSON.parse(pluginData || '{}') as Partial<PropertySettingsObject>
     },
+  )
+
+  figma.ui.postMessage({
+    type: 'setSelectedNodePluginData',
+    payload: selectedNodePluginData,
   })
 })

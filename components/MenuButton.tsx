@@ -1,38 +1,57 @@
-import { Menu } from '@/components/Menu'
-import { MenuItemProps } from '@/components/MenuItem'
-import Link from 'next/link'
-import { ComponentProps } from 'react'
-import { twMerge } from 'tailwind-merge'
-import { Popover } from './Popover'
+import { Atom, AtomProps } from '@/components/Atom'
+import { MenuItem, MenuItemProps } from '@/components/MenuItem'
+import { Menu as BaseUIMenu } from '@base-ui-components/react'
+import { MouseEvent } from 'react'
 
-export interface MenuButtonProps<T extends 'button' | 'a' | typeof Link>
-  extends ComponentProps<'div'> {
-  className?: string
-  buttons: MenuItemProps<T>[]
+export type MenuButtonProps = AtomProps<'span'> & {
+  items: MenuItemProps<'button'>[]
   disabled?: boolean
 }
 
-export function MenuButton<T extends 'button' | 'a' | typeof Link>({
+export function MenuButton({
   children,
-  className,
-  buttons,
   disabled,
+  items,
   ...otherProps
-}: MenuButtonProps<T>) {
+}: MenuButtonProps) {
+  const itemsModifiedToBlurOnClick = items.map((item) => ({
+    ...item,
+    onClick: (event: MouseEvent<any>) => {
+      item.onClick?.(event)
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur()
+      }
+    },
+  }))
+
   return (
-    <Popover
-      className={className}
-      disabled={disabled}
-      triggerType="click"
-      popoverPosition="below"
-      classNamesForPopover={twMerge(
-        'rounded-2xl bg-black/90 text-white',
-        'min-w-60 py-2',
-      )}
-      childrenForPopover={<Menu items={buttons} />}
-      {...otherProps}
-    >
-      {children}
-    </Popover>
+    <BaseUIMenu.Root disabled={disabled}>
+      <BaseUIMenu.Trigger render={<span />}>
+        <Atom
+          disabled={disabled}
+          variant="button.icon"
+          {...otherProps}
+        >
+          {children}
+        </Atom>
+      </BaseUIMenu.Trigger>
+      <BaseUIMenu.Portal>
+        <BaseUIMenu.Positioner sideOffset={8}>
+          <Atom
+            as={BaseUIMenu.Popup}
+            variant="popover"
+          >
+            {itemsModifiedToBlurOnClick.map((item, index) => (
+              <BaseUIMenu.Item key={index}>
+                <MenuItem
+                  key={index}
+                  {...item}
+                />
+              </BaseUIMenu.Item>
+            ))}
+          </Atom>
+        </BaseUIMenu.Positioner>
+      </BaseUIMenu.Portal>
+    </BaseUIMenu.Root>
   )
 }

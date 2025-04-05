@@ -1,45 +1,35 @@
 'use client'
 
+import { Atom } from '@/components/Atom'
+import { Tooltip as BaseUITooltip } from '@base-ui-components/react/tooltip'
 import { twMerge } from 'tailwind-merge'
-import { Popover, PopoverProps } from './Popover'
-
-type SharedPopoverProps = Omit<
-  PopoverProps,
-  'childrenForPopover' | 'classNamesForPopover'
->
-
-export interface TooltipProps extends SharedPopoverProps {
-  classNamesForTooltip?: string
-  tipContents: PopoverProps['childrenForPopover']
-}
 
 export function Tooltip({
   children,
-  className,
-  classNamesForTooltip,
   tipContents,
-  ...otherProps
-}: TooltipProps) {
+  classNamesForTooltip,
+}: {
+  children: React.ReactNode
+  tipContents: React.ReactNode
+  classNamesForTooltip?: string
+}) {
   return (
-    <Popover
-      className={className}
-      classNamesForPopover={twMerge(
-        'pointer-events-none',
-        'w-60 px-4 py-2',
-        'rounded-2xl bg-black/90 text-white',
-        'text-left text-sm font-normal',
-        '**:[code]:text-text-oncomponent',
-        '**:[code]:font-mono',
-        '**:[code]:bg-bg-component',
-        '**:[code]:rounded-md',
-        '**:[code]:px-1',
-        '**:[code]:py-0.5',
-        classNamesForTooltip,
-      )}
-      childrenForPopover={tipContents}
-      {...otherProps}
-    >
-      {children}
-    </Popover>
+    <BaseUITooltip.Root>
+      <BaseUITooltip.Trigger render={<span />}>
+        {children}
+      </BaseUITooltip.Trigger>
+      <BaseUITooltip.Portal>
+        <BaseUITooltip.Positioner sideOffset={10}>
+          <BaseUITooltip.Popup>
+            <Atom
+              variant="popover"
+              className={twMerge('max-w-72 px-5', classNamesForTooltip)}
+            >
+              {tipContents}
+            </Atom>
+          </BaseUITooltip.Popup>
+        </BaseUITooltip.Positioner>
+      </BaseUITooltip.Portal>
+    </BaseUITooltip.Root>
   )
 }

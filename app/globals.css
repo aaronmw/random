@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@plugin 'tailwind-scrollbar';
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -192,27 +194,6 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-border);
-  }
-
-  /* Webkit scrollbar styling */
-  ::-webkit-scrollbar {
-    width: 12px;
-    height: 12px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: var(--color-text-tertiary);
-    border-radius: 0;
-  }
-
-  /* Firefox scrollbar styling */
-  * {
-    scrollbar-width: thin; /* Can be "auto", "thin", or "none" */
-    scrollbar-color: var(--color-text-tertiary) transparent;
   }
 
   /* Remove number input spinners */

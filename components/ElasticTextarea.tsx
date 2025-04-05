@@ -1,4 +1,4 @@
-import { StyledText } from '@/components/StyledText'
+import { Atom } from '@/components/Atom'
 import { useMultipleRefs } from '@/lib/useMultipleRefs'
 import {
   ChangeEvent,
@@ -41,7 +41,7 @@ const ElasticTextarea = forwardRef<HTMLTextAreaElement, ElasticTextareaProps>(
 
     return (
       <div className="relative w-full [font-size:0]">
-        <StyledText
+        <Atom
           variant="input"
           as="textarea"
           className={className}
@@ -54,7 +54,9 @@ const ElasticTextarea = forwardRef<HTMLTextAreaElement, ElasticTextareaProps>(
 
         <div
           className={twMerge(
-            `pointer-events-none absolute top-0 left-0 text-base whitespace-pre-wrap opacity-0`,
+            'absolute top-0 left-0',
+            'pointer-events-none opacity-0',
+            'text-base whitespace-pre-wrap',
           )}
           ref={ghostElementRef}
         >

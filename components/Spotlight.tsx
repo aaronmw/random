@@ -1,5 +1,5 @@
+import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
-import { StyledText } from '@/components/StyledText'
 import { useEffect, useState } from 'react'
 import { twJoin } from 'tailwind-merge'
 import { useLocalStorage } from 'usehooks-ts'
@@ -103,7 +103,7 @@ export function Spotlight({
       >
         <span>{message}</span>
 
-        <StyledText
+        <Atom
           variant="button.icon"
           as="button"
           aria-label="Dismiss message"
@@ -111,7 +111,7 @@ export function Spotlight({
         >
           <Icon name="xmark" />
           <span className="sr-only">Dismiss message</span>
-        </StyledText>
+        </Atom>
       </div>
     </div>
   )

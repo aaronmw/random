@@ -1,6 +1,6 @@
 'use client'
 
-import { StyledText } from '@/components/StyledText'
+import { Atom } from '@/components/Atom'
 import { useEffect, useState } from 'react'
 
 const initialButtonLabel = 'Copy Old Settings to Clipboard'
@@ -40,22 +40,22 @@ export function CrashScreen() {
 
       <div className="flex gap-5">
         {settingsInLocalStorage && (
-          <StyledText
+          <Atom
             as="button"
             variant="button.primary"
             onClick={handleClickCopyOldSettingsButton}
           >
             {buttonLabel}
-          </StyledText>
+          </Atom>
         )}
 
-        <StyledText
+        <Atom
           as="button"
           variant="button.primary"
           onClick={resetToDefaultSettings}
         >
           Reset &amp; Reload
-        </StyledText>
+        </Atom>
       </div>
     </div>
   )

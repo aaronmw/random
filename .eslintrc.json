@@ -1,16 +1,8 @@
 {
   "extends": "next/core-web-vitals",
+  "plugins": ["react-hooks"],
   "rules": {
-    "no-restricted-imports": [
-      "error",
-      {
-        "patterns": [
-          {
-            "group": ["lodash"],
-            "message": "Import specific lodash methods instead. Example: import pickBy from 'lodash/pickBy'"
-          }
-        ]
-      }
-    ]
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn"
   }
 }

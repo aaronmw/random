@@ -1,52 +1,43 @@
 'use client'
 
-import { AppContext, AppReducer, initialState } from '@/app/reducer'
-import { AppHeader } from '@/components/AppHeader'
+import { selectedNodePluginDataAtom } from '@/app/atoms/selectedNodePluginDataAtom'
 import { CrashScreen } from '@/components/CrashSreen'
 import { ResizeHandle } from '@/components/ResizeHandle'
-import { AppAction } from '@/lib/types'
-import { useReducerWithPersistedStateKeys } from '@/lib/useReducerWithPersistedStateKeys'
-import { ReactNode, Suspense, useEffect } from 'react'
+import { PluginToAppMessage } from '@/lib/types'
+import { useSetAtom } from 'jotai'
+import { ReactNode, StrictMode, Suspense, useEffect } from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
-import { twJoin } from 'tailwind-merge'
 
 export function AppWrapper({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducerWithPersistedStateKeys({
-    initialState,
-    localStorageKeyName: 'plugin-state',
-    persistedKeys: ['propertySettings', 'savedPropertySettings'],
-    reducer: AppReducer,
-  })
+  const setSelectedNodePluginData = useSetAtom(selectedNodePluginDataAtom)
 
   useEffect(() => {
     window.onmessage = (event: {
       data: {
-        pluginMessage: AppAction
+        pluginMessage: PluginToAppMessage
       }
     }) => {
-      dispatch(event.data.pluginMessage)
+      switch (event.data?.pluginMessage?.type) {
+        case 'setSelectedNodePluginData': {
+          setSelectedNodePluginData(event.data.pluginMessage.payload)
+          break
+        }
+      }
     }
-  }, [dispatch])
+  }, [setSelectedNodePluginData])
 
   return (
-    <AppContext
-      value={{
-        dispatch,
-        state,
-      }}
-    >
+    <StrictMode>
       <div
         id="ui-container"
-        className={twJoin('fixed inset-0 grid grid-rows-[min-content_auto]')}
+        className="fixed inset-0 grid"
       >
-        <AppHeader />
-
         <ErrorBoundary fallback={<CrashScreen />}>
           <Suspense fallback={null}>{children}</Suspense>
         </ErrorBoundary>
       </div>
 
       <ResizeHandle />
-    </AppContext>
+    </StrictMode>
   )
 }

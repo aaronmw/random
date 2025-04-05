@@ -20,13 +20,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Script
           crossOrigin="anonymous"
           src="https://kit.fontawesome.com/401fb1e734.js"
+          strategy="lazyOnload"
         />
       </head>
       <body
         className={twJoin(
           inter.className,
-          `text-text bg-bg font-[Inter,sans-serif] text-[11px]`,
-          `overflow-hidden select-none`,
+          'text-text bg-bg font-[Inter,sans-serif] text-[11px]',
+          'overflow-hidden select-none',
+          '**:scrollbar-thin',
+          '**:scrollbar-thumb-icon-tertiary',
+          '**:scrollbar-track-transparent',
+          '**:dark:scrollbar-thumb-white/25',
         )}
       >
         <AppWrapper>{children}</AppWrapper>

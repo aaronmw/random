@@ -8,6 +8,7 @@ export interface IconProps extends Omit<ComponentProps<'i'>, 'name'> {
 }
 
 export type IconString =
+  | 'blank'
   | RegularIconName
   | `brands:${BrandIconName}`
   | `${Exclude<IconVariant, 'brands'>}:${RegularIconName}`

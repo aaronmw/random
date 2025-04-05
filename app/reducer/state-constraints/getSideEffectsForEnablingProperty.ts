@@ -1,17 +1,17 @@
-import { AppState, PropertyName } from '@/lib/types'
+import { AppState, PropertyName, SideEffect } from '@/lib/types'
 import { mutualExclusivityMap } from './mutualExclusivityMap'
 
-export function getSideEffectsForEnablingRandomization({
+export function getSideEffectsForEnablingProperty({
   propertyName,
   state,
 }: {
   propertyName: PropertyName
   state: AppState
-}) {
-  const sideEffects = []
+}): SideEffect[] {
+  const sideEffects: SideEffect[] = []
 
   mutualExclusivityMap[propertyName]?.forEach((propName) => {
-    sideEffects.push([`${propName}.disabled`, true])
+    sideEffects.push([`propertySettings.${propName}.isEnabled`, false])
   })
 
   if (propertyName === 'height' || propertyName === 'width') {
@@ -21,10 +21,13 @@ export function getSideEffectsForEnablingRandomization({
       state.propertySettings[oppositePropertyName]
 
     if (
-      oppositePropertySettings.disabled === false &&
+      oppositePropertySettings.isEnabled === true &&
       oppositePropertySettings.preserveAspectRatio === true
     ) {
-      sideEffects.push([`${oppositePropertyName}.preserveAspectRatio`, false])
+      sideEffects.push([
+        `propertySettings.${oppositePropertyName}.preserveAspectRatio`,
+        false,
+      ])
     }
   }
 
