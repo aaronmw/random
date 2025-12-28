@@ -96,6 +96,11 @@ export const tooltips = {
       <p>Turns off all property randomization so you can start&nbsp;fresh.</p>
     </>
   ),
+  enableAll: (
+    <>
+      <p>Turns on all property randomization.</p>
+    </>
+  ),
   stopRandomizing: (propertyName: string) => (
     <>
       <p>
@@ -109,6 +114,33 @@ export const tooltips = {
         Save this configuration as a preset. You can load it later to apply the
         same settings to&nbsp;other&nbsp;nodes.
       </p>
+    </>
+  ),
+  loadPreset: (
+    <>
+      <p>
+        Load a saved preset to apply its configuration to the current selection.
+      </p>
+    </>
+  ),
+  groupByStatus: (
+    <>
+      <p>Group properties by enabled/disabled status.</p>
+    </>
+  ),
+  groupByType: (
+    <>
+      <p>Group properties by their type (layout, fill, stroke, etc.).</p>
+    </>
+  ),
+  autoScroll: (
+    <>
+      <p>Automatically scroll to newly enabled properties.</p>
+    </>
+  ),
+  execute: (
+    <>
+      <p>Apply the current randomization settings to selected nodes.</p>
     </>
   ),
   chatgpt: (propertyName: string) => (

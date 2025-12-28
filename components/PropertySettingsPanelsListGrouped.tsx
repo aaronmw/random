@@ -1,12 +1,11 @@
-import { isGroupedByStatusAtom } from '@/app/atoms/isGroupedByStatusAtom'
 import { groupedPropertyNames } from '@/app/properties/groupedPropertyNames'
+import { useAppContext } from '@/app/state/AppWrapper'
 import { Atom } from '@/components/Atom'
 import { PropertySettingsPanel } from '@/components/PropertySettingsPanel'
-import { useAtomValue } from 'jotai'
 import { Fragment } from 'react'
 
 export function PropertySettingsPanelsListGrouped() {
-  const isGroupedByStatus = useAtomValue(isGroupedByStatusAtom)
+  const { propertySettings } = useAppContext()
 
   return (
     <div className="flex flex-col">
@@ -20,12 +19,17 @@ export function PropertySettingsPanelsListGrouped() {
           </Atom>
 
           <div className="flex flex-col">
-            {propertyNamesInGroup.map((propertyName) => (
-              <PropertySettingsPanel
-                key={propertyName}
-                propertyName={propertyName}
-              />
-            ))}
+            {propertyNamesInGroup.map((propertyName) => {
+              if (!propertySettings[propertyName]) {
+                return null
+              }
+              return (
+                <PropertySettingsPanel
+                  key={propertyName}
+                  propertyName={propertyName}
+                />
+              )
+            })}
           </div>
         </Fragment>
       ))}

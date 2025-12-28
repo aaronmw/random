@@ -1,5 +1,5 @@
 import '@/app/globals.css'
-import { AppWrapper } from '@/components/AppWrapper'
+import { AppWrapper } from '@/app/state/AppWrapper'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
@@ -32,6 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           '**:scrollbar-thumb-icon-tertiary',
           '**:scrollbar-track-transparent',
           '**:dark:scrollbar-thumb-white/25',
+          '**:touch-manipulation',
         )}
       >
         <AppWrapper>{children}</AppWrapper>

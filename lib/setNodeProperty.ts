@@ -1,14 +1,14 @@
+import type {
+  AnchorPosition,
+  PropertyName,
+  PropertySettings,
+  PropertySettingsRow,
+} from '@/app/types'
 import { hasProperty } from '@/lib/hasProperty'
 import { rotateOriginXY } from '@/lib/rotateOriginXY'
 import { setCharacters } from '@/lib/setCharacters'
 import { toDegrees } from '@/lib/toDegrees'
 import { toPercentage } from '@/lib/toPercentage'
-import type {
-  AnchorPosition,
-  PropertyName,
-  PropertySettings,
-  PropertySettingsObject,
-} from '@/lib/types'
 import { colord, extend } from 'colord'
 import a11yPlugin from 'colord/plugins/a11y'
 import namesPlugin from 'colord/plugins/names'
@@ -23,7 +23,7 @@ export async function setNodeProperty({
   propertyName,
   value,
 }: {
-  enabledPropertySettings: Partial<PropertySettingsObject>
+  enabledPropertySettings: Partial<PropertySettingsRow>
   node: SceneNode
   propertySettings: PropertySettings
   propertyName: PropertyName

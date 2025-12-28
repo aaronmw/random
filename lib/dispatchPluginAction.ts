@@ -1,4 +1,4 @@
-import { PluginAction } from "@/lib/types"
+import { PluginAction } from "@/app/types"
 
 export function dispatchPluginAction(pluginAction: PluginAction) {
   // For Cypress tests

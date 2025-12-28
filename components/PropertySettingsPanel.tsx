@@ -1,9 +1,8 @@
 'use client'
 
-import { isGroupedByStatusAtom } from '@/app/atoms/isGroupedByStatusAtom'
-import { initialPropertySettings } from '@/app/atoms/propertySettingsAtom'
-import { singlePropertySettingsAtom } from '@/app/atoms/singlePropertySettingsAtom'
+import { useAppContext } from '@/app/state/AppWrapper'
 import { tooltips } from '@/app/tooltips'
+import { PropertyName, RandomizationMode } from '@/app/types'
 import { Atom } from '@/components/Atom'
 import { CollapsibleBox } from '@/components/CollapsibleBox'
 import { AnchorPositionField } from '@/components/Fields/AnchorPositionField'
@@ -14,14 +13,17 @@ import { Icon, IconString } from '@/components/Icon'
 import { dataTypes } from '@/lib/dataTypes'
 import { dataTypesByPropertyName } from '@/lib/dataTypesByPropertyName'
 import { hasProperty } from '@/lib/hasProperty'
-import { PropertyName, RandomizationType } from '@/lib/types'
-import { useAtom, useAtomValue } from 'jotai'
+import {
+  updateDimensionPropertySettings,
+  updateNumericPropertySettings,
+  updatePropertySettingEnabled,
+  updatePropertySettingMode,
+  updatePropertySettingSortOrder,
+  updateTextPropertySettings,
+} from '@/lib/services/propertySettingsService'
 import get from 'lodash/get'
-import merge from 'lodash/merge'
-import set from 'lodash/set'
 import { ChangeEvent, memo, ReactNode, useCallback, useMemo } from 'react'
 import { twJoin, twMerge } from 'tailwind-merge'
-import invariant from 'tiny-invariant'
 
 const EMPTY_INPUT_PLACEHOLDER_TEXT = '(none)'
 
@@ -32,33 +34,22 @@ function PreMemoPropertySettingsPanel({
   className?: string
   propertyName: PropertyName
 }) {
-  const panelId = `${propertyName}-config-panel`
+  const { propertySettings, dispatch } = useAppContext()
+  const propertySetting = propertySettings[propertyName]
 
-  const propertyAtom = useMemo(
-    () => singlePropertySettingsAtom(propertyName),
-    [propertyName],
-  )
-
-  const [singlePropertySettings, setSinglePropertySettings] =
-    useAtom(propertyAtom)
-
-  const isGroupedByStatus = useAtomValue(isGroupedByStatusAtom)
-
-  const initialSinglePropertySettings = initialPropertySettings[propertyName]
+  if (!propertySetting) {
+    return null
+  }
 
   const {
-    anchorPosition = initialSinglePropertySettings.anchorPosition,
-    decimalPlaces = initialSinglePropertySettings.decimalPlaces,
-    decimalCharacter = initialSinglePropertySettings.decimalCharacter,
-    isEnabled = initialSinglePropertySettings.isEnabled,
-    mode = initialSinglePropertySettings.mode,
-    modeOptions = initialSinglePropertySettings.modeOptions,
-    prefix = initialSinglePropertySettings.prefix,
-    preserveAspectRatio = initialSinglePropertySettings.preserveAspectRatio,
-    sortOrder = initialSinglePropertySettings.sortOrder,
-    suffix = initialSinglePropertySettings.suffix,
-    thousandsSeparator = initialSinglePropertySettings.thousandsSeparator,
-  } = singlePropertySettings
+    id: propertySettingId,
+    is_enabled: isEnabled = false,
+    randomization_mode: mode = 'range',
+    post_randomization_sort_order: sortOrder = 'none',
+    text_property_settings: textSettings,
+    dimension_property_settings: dimensionSettings,
+    numeric_property_settings: numericSettings,
+  } = propertySetting
 
   const dataType = dataTypesByPropertyName[propertyName]
   const dataTypeConfig = dataTypes[dataType]
@@ -66,66 +57,94 @@ function PreMemoPropertySettingsPanel({
   const dataTypeHasMinimumValue = hasProperty(dataTypeConfig, 'min')
   const dataTypeHasMaximumValue = hasProperty(dataTypeConfig, 'max')
 
-  const modeButtons = useMemo<[RandomizationType, ReactNode, IconString][]>(
+  const modeButtons = useMemo<[RandomizationMode, ReactNode, IconString][]>(
     () => [
       ['range', tooltips.range(propertyName), 'arrows-left-right-to-line'],
       ['list', tooltips.list(propertyName), 'bars'],
-      ['calc', tooltips.calc(propertyName), 'calculator-simple'],
+      ['addition', tooltips.calc(propertyName), 'calculator-simple'],
     ],
     [propertyName],
   )
 
   const handleChange = useCallback(
-    (path: string, event: ChangeEvent<HTMLInputElement>) => {
+    async (path: string, event: ChangeEvent<HTMLInputElement>) => {
       const { value } = event.target
-      const currentValue = get(singlePropertySettings, path)
+      const currentValue = get(propertySetting, path)
 
       if (currentValue === value) return
 
-      const newSinglePropertySettings = merge({}, singlePropertySettings)
-      set(newSinglePropertySettings, path, value)
-      setSinglePropertySettings(newSinglePropertySettings)
+      try {
+        if (path.startsWith('text_property_settings.')) {
+          const field = path.replace('text_property_settings.', '')
+          await updateTextPropertySettings(propertySettingId, {
+            [field]: value,
+          })
+        } else if (path.startsWith('dimension_property_settings.')) {
+          const field = path.replace('dimension_property_settings.', '')
+          await updateDimensionPropertySettings(propertySettingId, {
+            [field]: value,
+          })
+        } else if (path.startsWith('numeric_property_settings.')) {
+          const field = path.replace('numeric_property_settings.', '')
+          await updateNumericPropertySettings(propertySettingId, {
+            [field]: Number(value),
+          })
+        }
+      } catch (error) {
+        console.error('Error updating property setting:', error)
+      }
     },
-    [singlePropertySettings, setSinglePropertySettings],
+    [propertySetting, propertySettingId],
   )
 
   const handleSegmentedControlChange = useCallback(
-    (path: string, newValue: unknown) => {
-      const currentValue = get(singlePropertySettings, path)
+    async (path: string, newValue: unknown) => {
+      const currentValue = get(propertySetting, path)
       if (currentValue === newValue) return
-      const newSinglePropertySettings = merge({}, singlePropertySettings)
-      set(newSinglePropertySettings, path, newValue)
-      setSinglePropertySettings(newSinglePropertySettings)
+
+      try {
+        if (path === 'randomization_mode') {
+          await updatePropertySettingMode(
+            propertySettingId,
+            newValue as RandomizationMode,
+          )
+        } else if (path === 'post_randomization_sort_order') {
+          await updatePropertySettingSortOrder(
+            propertySettingId,
+            newValue as any,
+          )
+        }
+      } catch (error) {
+        console.error('Error updating property setting:', error)
+      }
     },
-    [singlePropertySettings, setSinglePropertySettings],
+    [propertySetting, propertySettingId],
   )
 
   const handleClickSetIsEnabled = useCallback(
-    (newIsEnabled: boolean) => {
-      setSinglePropertySettings(
-        merge({}, singlePropertySettings, {
-          isEnabled: newIsEnabled,
-        }),
-      )
+    async (newIsEnabled: boolean) => {
+      try {
+        await updatePropertySettingEnabled(propertySettingId, newIsEnabled)
+      } catch (error) {
+        console.error('Error updating property setting enabled state:', error)
+      }
     },
-    [singlePropertySettings, setSinglePropertySettings],
+    [propertySettingId],
   )
 
   return (
     <div
-      id={panelId}
+      id={`${propertyName}-config-panel`}
       className={twMerge(
         'relative transition-all duration-300 ease-out will-change-transform',
         'focus:ring-border-brand focus:z-10 focus:ring-2',
         isEnabled && 'm-2 overflow-hidden rounded-2xl',
-        isGroupedByStatus && isEnabled ? 'order-1' : 'order-99',
         className,
       )}
-      key={panelId}
       tabIndex={0}
     >
       <div
-        id={`${panelId}-header`}
+        id={`${propertyName}-config-panel-header`}
         className={twJoin(
           'group',
           'pr-3 pl-5',
@@ -169,7 +188,7 @@ function PreMemoPropertySettingsPanel({
       <CollapsibleBox
         isCollapsed={!isEnabled}
         className="duration-300 ease-out"
-        key={`${panelId}-content`}
+        key={`${propertyName}-config-panel-content`}
       >
         <div
           className={twJoin(
@@ -183,7 +202,10 @@ function PreMemoPropertySettingsPanel({
             label="mode"
             value={mode}
             variant="full"
-            onChange={handleSegmentedControlChange.bind(null, 'mode')}
+            onChange={handleSegmentedControlChange.bind(
+              null,
+              'randomization_mode',
+            )}
           >
             {modeButtons.map(([mode, tooltip, iconName]) => (
               <SegmentedControlInputField.OptionButton
@@ -197,70 +219,16 @@ function PreMemoPropertySettingsPanel({
             ))}
           </SegmentedControlInputField>
 
-          {mode === 'calc' && (
-            <SegmentedControlInputField
-              label="operator"
-              description={tooltips.operator(propertyName)}
-              value={modeOptions.calc?.operator}
-              variant="full"
-              variantForButton="button.icon.togglable.secondary"
-              onChange={handleSegmentedControlChange.bind(
-                null,
-                'modeOptions.calc.operator',
-              )}
-            >
-              {[
-                {
-                  iconName: 'plus',
-                  label: 'Add / Subtract',
-                  value: 'add',
-                },
-                {
-                  iconName: 'xmark',
-                  label: 'Multiply / Divide',
-                  value: 'multiply',
-                },
-              ].map(({ iconName, label, value, ...otherProps }) => (
-                <SegmentedControlInputField.OptionButton
-                  key={value}
-                  title={label}
-                  value={value}
-                  {...otherProps}
-                >
-                  <Icon name={iconName as IconString} />
-                </SegmentedControlInputField.OptionButton>
-              ))}
-            </SegmentedControlInputField>
-          )}
-
           {(() => {
-            if (!(mode === 'calc' || mode === 'range')) {
-              return null
-            }
-
-            invariant(
-              dataTypeHasMinimumValue,
-              `Numeric type ${dataType} is missing \`min\` property`,
-            )
-            invariant(
-              dataTypeHasMaximumValue,
-              `Numeric type ${dataType} is missing \`max\` property`,
-            )
-
-            const { min: dataTypeMin, max: dataTypeMax } = dataTypeConfig
-
-            const pathToCurrentValue = `modeOptions.${
-              mode === 'calc' ? `calc.${modeOptions.calc!.operator}` : 'range'
-            }`
-
-            const currentMin = get(
-              singlePropertySettings,
-              `${pathToCurrentValue}.min`,
-            )
-            const currentMax = get(
-              singlePropertySettings,
-              `${pathToCurrentValue}.max`,
-            )
+            const pathToCurrentValue = `numeric_property_settings`
+            const currentMin = numericSettings?.min
+            const currentMax = numericSettings?.max
+            const dataTypeMin = dataTypeConfig.min
+            const dataTypeMax = dataTypeConfig.max
+            const prefix = textSettings?.prefix
+            const suffix = textSettings?.suffix
+            const decimalPlaces = textSettings?.decimal_places
+            const thousandsSeparator = textSettings?.thousands_separator
 
             return (
               <>
@@ -293,54 +261,55 @@ function PreMemoPropertySettingsPanel({
                 {prefix !== undefined && suffix !== undefined && (
                   <>
                     <LabeledInputField
-                      defaultValue={prefix}
+                      defaultValue={prefix || ''}
                       label="prefix"
                       placeholder={EMPTY_INPUT_PLACEHOLDER_TEXT}
                       type="text"
                       variant="half"
-                      onChange={handleChange.bind(null, 'prefix')}
+                      onChange={handleChange.bind(
+                        null,
+                        'text_property_settings.prefix',
+                      )}
                     />
                     <LabeledInputField
-                      defaultValue={suffix}
+                      defaultValue={suffix || ''}
                       label="suffix"
                       placeholder={EMPTY_INPUT_PLACEHOLDER_TEXT}
                       type="text"
                       variant="half"
-                      onChange={handleChange.bind(null, 'suffix')}
+                      onChange={handleChange.bind(
+                        null,
+                        'text_property_settings.suffix',
+                      )}
                     />
                   </>
                 )}
                 {decimalPlaces !== undefined && (
                   <LabeledInputField
-                    defaultValue={decimalPlaces}
+                    defaultValue={decimalPlaces || 0}
                     label="decimal places"
                     placeholder={EMPTY_INPUT_PLACEHOLDER_TEXT}
                     type="number"
                     variant="full"
                     className="text-center"
-                    onChange={handleChange.bind(null, 'decimalPlaces')}
+                    onChange={handleChange.bind(
+                      null,
+                      'text_property_settings.decimal_places',
+                    )}
                   />
                 )}
                 {thousandsSeparator !== undefined && (
                   <LabeledInputField
-                    defaultValue={thousandsSeparator}
+                    defaultValue={thousandsSeparator || ''}
                     label="thousands separator"
                     placeholder={EMPTY_INPUT_PLACEHOLDER_TEXT}
                     type="text"
                     variant="full"
                     className="text-center"
-                    onChange={handleChange.bind(null, 'thousandsSeparator')}
-                  />
-                )}
-                {decimalCharacter !== undefined && (
-                  <LabeledInputField
-                    defaultValue={decimalCharacter}
-                    label="decimal character"
-                    placeholder={EMPTY_INPUT_PLACEHOLDER_TEXT}
-                    type="text"
-                    variant="full"
-                    className="text-center"
-                    onChange={handleChange.bind(null, 'decimalCharacter')}
+                    onChange={handleChange.bind(
+                      null,
+                      'text_property_settings.thousands_separator',
+                    )}
                   />
                 )}
               </>
@@ -349,15 +318,15 @@ function PreMemoPropertySettingsPanel({
 
           {mode === 'list' && <ListInputField propertyName={propertyName} />}
 
-          {preserveAspectRatio !== undefined && (
+          {dimensionSettings?.preserve_aspect_ratio !== undefined && (
             <SegmentedControlInputField
               label="lock aspect ratio"
-              value={preserveAspectRatio}
+              value={dimensionSettings.preserve_aspect_ratio || false}
               variant="full"
               variantForButton="button.icon.togglable.secondary"
               onChange={handleSegmentedControlChange.bind(
                 null,
-                'preserveAspectRatio',
+                'dimension_property_settings.preserve_aspect_ratio',
               )}
             >
               {[
@@ -382,7 +351,7 @@ function PreMemoPropertySettingsPanel({
             </SegmentedControlInputField>
           )}
 
-          {anchorPosition !== undefined && (
+          {dimensionSettings?.anchor_position !== undefined && (
             <AnchorPositionField
               label="transform origin"
               propertyName={propertyName}
@@ -394,29 +363,29 @@ function PreMemoPropertySettingsPanel({
             <SegmentedControlInputField
               label="sort order"
               description={tooltips.sortOrder(propertyName)}
-              value={sortOrder}
+              value={sortOrder || 'none'}
               variant="full"
               variantForButton="button.icon.togglable.secondary"
               onChange={handleSegmentedControlChange.bind(
                 null,
-                `modeOptions.${mode}.sortOrder`,
+                'post_randomization_sort_order',
               )}
             >
               {[
                 {
                   iconName: 'shuffle',
                   label: 'Random (default)',
-                  value: 'random',
+                  value: 'none',
                 },
                 {
                   iconName: 'arrow-down',
                   label: 'Largest to Smallest',
-                  value: 'desc',
+                  value: 'descending',
                 },
                 {
                   iconName: 'arrow-up',
                   label: 'Smallest to Largest',
-                  value: 'asc',
+                  value: 'ascending',
                 },
               ].map(({ iconName, label, value }) => (
                 <SegmentedControlInputField.OptionButton

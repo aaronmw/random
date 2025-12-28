@@ -5,14 +5,15 @@
   "main": "dist/code.js",
   "enableProposedApi": false,
   "editorType": ["figma", "figjam"],
-  "permissions": ["payments"],
+  "permissions": ["currentuser", "payments"],
   "networkAccess": {
     "allowedDomains": [
       "https://*.fontawesome.com",
       "https://fonts.googleapis.com",
       "https://fonts.gstatic.com",
       "https://api.openai.com",
-      "https://*.netlify.app"
+      "https://*.netlify.app",
+      "https://cdnjs.cloudflare.com"
     ],
     "devAllowedDomains": [
       "http://localhost:4000"

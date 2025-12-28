@@ -1,6 +1,6 @@
+import { DataTypeDescriptor } from '@/app/types'
 import { isColor } from '@/lib/isColor'
 import { isNumericAndInRange } from '@/lib/isNumericAndInRange'
-import { DataTypeDescriptor } from '@/lib/types'
 
 export const dataTypes = {
   int: {

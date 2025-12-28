@@ -1,7 +1,7 @@
-import { enabledPropertySettingsAtom } from '@/app/atoms/enabledPropertySettingsAtom'
+import { useAppContext } from '@/app/state/AppWrapper'
+import { PropertyName } from '@/app/types'
 import { PropertySettingsPanel } from '@/components/PropertySettingsPanel'
-import { PropertyName } from '@/lib/types'
-import { useAtomValue } from 'jotai'
+import pickBy from 'lodash/pickBy'
 
 export function PropertySettingsPanelsByStatus({
   propertyNames,
@@ -10,7 +10,9 @@ export function PropertySettingsPanelsByStatus({
   propertyNames: PropertyName[]
   status: 'enabled' | 'disabled'
 }) {
-  const enabledPropertySettings = useAtomValue(enabledPropertySettingsAtom)
+  const { propertySettings } = useAppContext()
+
+  const enabledPropertySettings = pickBy(propertySettings, 'isEnabled')
 
   const propertyNamesToRender = propertyNames.filter((propertyName) => {
     const isEnabled = propertyName in enabledPropertySettings

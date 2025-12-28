@@ -1,4 +1,4 @@
-import { PropertyName, PropertySettings } from '@/lib/types'
+import { PropertyName, PropertySettings } from '@/app/types'
 import get from 'lodash/get'
 import random from 'lodash/random'
 import sample from 'lodash/sample'

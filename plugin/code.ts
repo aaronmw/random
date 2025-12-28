@@ -1,11 +1,10 @@
+import type {
+    PluginAction,
+    PropertyName,
+    PropertySettingsRow,
+} from '@/app/types'
 import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
 import { setNodeProperty } from '@/lib/setNodeProperty'
-import type {
-  PluginAction,
-  PropertyName,
-  PropertySettings,
-  PropertySettingsObject,
-} from '@/lib/types'
 import pickBy from 'lodash/pickBy'
 import naturalSort from 'natural-compare-lite'
 
@@ -20,6 +19,19 @@ const PLUGIN_WIDTH = 300
   code just waits until it sees either class and then redirects to the actual
   plugin, with the resulting display mode as a query parameter
 */
+
+const initQueryParams = {
+  figmaUserId: figma.currentUser?.id,
+  isLightMode: `' + isLightMode + '`,
+  selectionCount: figma.currentPage.selection.length,
+}
+
+const initQueryString = Object.entries(initQueryParams)
+  .map(([key, value]) => `${key}=${value}`)
+  .join('&')
+
+const redirectionUrl = `${SITE_URL}?${initQueryString}`
+
 figma.showUI(
   `
     <html>
@@ -30,7 +42,7 @@ figma.showUI(
             const isLightMode = classList.contains('figma-light')
             const isDarkMode = classList.contains('figma-dark')
             if (isLightMode || isDarkMode) {
-              window.location.href = '${SITE_URL}?isLightMode=' + isLightMode + '&selectionCount=' + ${figma.currentPage.selection.length};
+              window.location.href = '${redirectionUrl}';
               return
             }
             setTimeout(redirectWhenLightOrDarkModeDetected, 10)
@@ -46,6 +58,14 @@ figma.showUI(
     themeColors: true,
   },
 )
+
+// Send initial data to UI
+figma.ui.postMessage({
+  type: 'init',
+  payload: {
+    figmaUserId: figma.currentUser?.id || null,
+  },
+})
 
 figma.ui.onmessage = async (action: PluginAction, props) => {
   if (props.origin !== SITE_URL) {
@@ -70,10 +90,10 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
       ;(
         Object.entries(enabledPropertySettings) as [
           propertyName: PropertyName,
-          PropertySettings,
+          PropertySettingsRow,
         ][]
       ).forEach(async ([propertyName, propertySettings]) => {
-        const { sortOrder } = propertySettings
+        const { post_randomization_sort_order } = propertySettings
 
         const randomValues = selection.map((node) =>
           getRandomPropertyValue({
@@ -83,10 +103,10 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
           }),
         )
 
-        if (sortOrder !== 'random') {
+        if (post_randomization_sort_order !== 'none') {
           randomValues.sort(naturalSort)
 
-          if (sortOrder === 'desc') {
+          if (post_randomization_sort_order === 'descending') {
             randomValues.reverse()
           }
         }
@@ -142,7 +162,7 @@ figma.on('selectionchange', () => {
   const selectedNodePluginData = figma.currentPage.selection.map(
     (selectedNode) => {
       const pluginData = selectedNode.getPluginData('propertySettings')
-      return JSON.parse(pluginData || '{}') as Partial<PropertySettingsObject>
+      return JSON.parse(pluginData || '{}') as Partial<PropertySettingsRow>
     },
   )
 

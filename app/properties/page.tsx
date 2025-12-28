@@ -1,16 +1,15 @@
 'use client'
 
-import { isGroupedByTypeAtom } from '@/app/atoms/isGroupedByTypeAtom'
+import { useAppContext } from '@/app/state/AppWrapper'
 import { AutoScroller } from '@/components/AutoScroller'
 import { ExecuteButton } from '@/components/ExecuteButton'
 import { PropertySettingsPanelsList } from '@/components/PropertySettingsPanelsList'
 import { PropertySettingsPanelsListGrouped } from '@/components/PropertySettingsPanelsListGrouped'
 import { Toolbar } from '@/components/Toolbar'
-import { useAtomValue } from 'jotai'
 import { twJoin } from 'tailwind-merge'
 
 export default function PropertiesPage() {
-  const isGroupedByType = useAtomValue(isGroupedByTypeAtom)
+  const { isGroupedByType } = useAppContext()
 
   return (
     <div

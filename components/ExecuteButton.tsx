@@ -1,17 +1,14 @@
 'use client'
 
-import { enabledPropertySettingsAtom } from '@/app/atoms/enabledPropertySettingsAtom'
-import { selectedNodePluginDataAtom } from '@/app/atoms/selectedNodePluginDataAtom'
+import { useAppContext } from '@/app/state/AppWrapper'
 import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
 import { pluralize } from '@/lib/pluralize'
-import { useAtomValue } from 'jotai'
 
 export function ExecuteButton() {
-  const enabledPropertySettings = useAtomValue(enabledPropertySettingsAtom)
+  const { enabledPropertySettings, selectedNodePluginData } = useAppContext()
   const enabledPropertyNames = Object.keys(enabledPropertySettings)
-  const selectedNodePluginData = useAtomValue(selectedNodePluginDataAtom)
   const hasNodesSelected = selectedNodePluginData.length > 0
   const hasPropertiesEnabled = enabledPropertyNames.length > 0
   const canExecute = hasNodesSelected && hasPropertiesEnabled

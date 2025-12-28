@@ -1,4 +1,5 @@
-import { singlePropertySettingsAtom } from '@/app/atoms/singlePropertySettingsAtom'
+import { useAppContext } from '@/app/state/AppWrapper'
+import { PropertyName } from '@/app/types'
 import { Atom } from '@/components/Atom'
 import { ConditionalWrapper } from '@/components/ConditionalWrapper'
 import { Icon } from '@/components/Icon'
@@ -7,18 +8,13 @@ import { Tooltip } from '@/components/Tooltip'
 import { dataTypes } from '@/lib/dataTypes'
 import { dataTypesByPropertyName } from '@/lib/dataTypesByPropertyName'
 import { pluralize } from '@/lib/pluralize'
-import { PropertyName } from '@/lib/types'
-import { useAtom } from 'jotai'
 import get from 'lodash/get'
-import merge from 'lodash/merge'
-import set from 'lodash/set'
 import {
   ChangeEvent,
   MouseEvent,
   RefObject,
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -38,12 +34,12 @@ interface LineContext {
 }
 
 export function ListInputField({ propertyName }: ListInputFieldProps) {
-  const propertyAtom = useMemo(
-    () => singlePropertySettingsAtom(propertyName),
-    [propertyName],
-  )
-  const [singlePropertySettings, setSinglePropertySettings] =
-    useAtom(propertyAtom)
+  const { propertySettings, dispatch } = useAppContext()
+  const singlePropertySettings = propertySettings[propertyName]
+
+  if (!singlePropertySettings || !dispatch) {
+    return null
+  }
 
   const colorPickerElementRef = useRef<HTMLInputElement>(null)
   const scrollingElementRef = useRef<HTMLElement>(null)
@@ -57,7 +53,8 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
   const [isClient, setIsClient] = useState(false)
 
   const pathToValue = 'modeOptions.list.options'
-  const values = get(singlePropertySettings, pathToValue) as string[]
+  const rawValues = get(singlePropertySettings, pathToValue)
+  const values: string[] = Array.isArray(rawValues) ? rawValues : []
   const dataType = dataTypesByPropertyName[propertyName]
   const dataTypeConfig = dataTypes[dataType]
   const { label, min, max, validator } = dataTypeConfig
@@ -129,11 +126,15 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
 
   const setValues = useCallback(
     (values: string[]) => {
-      const newSinglePropertySettings = merge({}, singlePropertySettings)
-      set(newSinglePropertySettings, pathToValue, values)
-      setSinglePropertySettings(newSinglePropertySettings)
+      dispatch({
+        type: 'setStateByPath',
+        payload: {
+          path: `propertySettings.${propertyName}.${pathToValue}`,
+          value: values,
+        },
+      })
     },
-    [pathToValue, singlePropertySettings, setSinglePropertySettings],
+    [dispatch, propertyName, pathToValue],
   )
 
   const handleChange = useCallback(
@@ -339,9 +340,13 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
           isOpen={isShowingRandy}
           onClose={() => setIsShowingRandy(false)}
           onResponse={(response) => {
-            const newSinglePropertySettings = merge({}, singlePropertySettings)
-            set(newSinglePropertySettings, `modeOptions.list.options`, response)
-            setSinglePropertySettings(newSinglePropertySettings)
+            dispatch({
+              type: 'setStateByPath',
+              payload: {
+                path: `propertySettings.${propertyName}.${pathToValue}`,
+                value: response,
+              },
+            })
           }}
         />
       )}

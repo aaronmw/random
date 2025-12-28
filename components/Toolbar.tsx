@@ -1,51 +1,36 @@
-import { enabledPropertySettingsAtom } from '@/app/atoms/enabledPropertySettingsAtom'
-import { isAutoScrollEnabledAtom } from '@/app/atoms/isAutoScrollEnabledAtom'
-import { isGroupedByStatusAtom } from '@/app/atoms/isGroupedByStatusAtom'
-import { isGroupedByTypeAtom } from '@/app/atoms/isGroupedByTypeAtom'
-import { loadPartialPropertySettingsAtom } from '@/app/atoms/loadPartialPropertySettingsAtom'
-import { presetsAtom } from '@/app/atoms/presetsAtom'
+import { useAppContext } from '@/app/state/AppWrapper'
 import { tooltips } from '@/app/tooltips'
+import { PropertySettingsRow } from '@/app/types'
 import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
 import { MenuButton } from '@/components/MenuButton'
 import { MenuItemProps } from '@/components/MenuItem'
 import { ModalWindow } from '@/components/ModalWindow'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
-import { PropertySettingsObject } from '@/lib/types'
-import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { createPreset } from '@/lib/services/propertySettingsService'
 import kebabCase from 'lodash/kebabCase'
-import omit from 'lodash/omit'
-import {
-  FocusEvent,
-  FormEvent,
-  MouseEvent,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import pickBy from 'lodash/pickBy'
+import { FormEvent, MouseEvent, useEffect, useRef, useState } from 'react'
 import { twJoin } from 'tailwind-merge'
 
 export function Toolbar() {
-  const loadPartialPropertySettings = useSetAtom(
-    loadPartialPropertySettingsAtom,
-  )
-  const [isGroupedByType, setisGroupedByType] = useAtom(isGroupedByTypeAtom)
-  const [isGroupedByStatus, setisGroupedByStatus] = useAtom(
-    isGroupedByStatusAtom,
-  )
-  const [isAutoScrollEnabled, setIsAutoScrollEnabled] = useAtom(
-    isAutoScrollEnabledAtom,
-  )
-  const [presets, setPresets] = useAtom(presetsAtom)
-  const enabledPropertySettings = useAtomValue(enabledPropertySettingsAtom)
+  const {
+    dispatch,
+    propertySettings,
+    presets,
+    isGroupedByStatus,
+    isGroupedByType,
+    isAutoScrollEnabled,
+    currentUserId,
+  } = useAppContext()
   const [isPresetConfigModalOpen, setIsPresetConfigModalOpen] = useState(false)
   const [nameOfPresetBeingEdited, setNameOfPresetBeingEdited] = useState<
     string | null
   >(null)
   const presetNameInputRef = useRef<HTMLInputElement>(null)
-  const presetsAsEntries = Object.entries(presets)
+  const enabledPropertySettings = pickBy(propertySettings, 'is_enabled')
   const hasEnabledProperties = Object.keys(enabledPropertySettings).length > 0
-  const hasSavedPresets = presetsAsEntries.length > 0
+  const hasSavedPresets = presets.length > 0
 
   const savePresetMenuItems: MenuItemProps<'button'>[] = [
     {
@@ -54,7 +39,7 @@ export function Toolbar() {
       label: 'Create New',
       onClick: handleClickCreateNew,
     },
-    ...(presetsAsEntries.map(([presetName]) => ({
+    ...(presets.map(([presetName]) => ({
       onClick: handleClickResavePreset.bind(null, presetName),
       icon: 'file',
       id: `save-preset-button-${kebabCase(presetName)}`,
@@ -62,7 +47,7 @@ export function Toolbar() {
     })) as MenuItemProps<'button'>[]),
   ]
 
-  const presetMenuItems: MenuItemProps<'button'>[] = presetsAsEntries.map(
+  const presetMenuItems: MenuItemProps<'button'>[] = presets.map(
     ([presetName, partialPropertySettings]) => ({
       onClick: handleClickLoadPreset.bind(null, partialPropertySettings),
       icon: 'file',
@@ -115,7 +100,7 @@ export function Toolbar() {
     }
   }, [isPresetConfigModalOpen])
 
-  function saveCurrentSettingsAsPreset({
+  async function saveCurrentSettingsAsPreset({
     presetName,
     newPresetName,
   }:
@@ -127,17 +112,19 @@ export function Toolbar() {
         presetName: string
         newPresetName?: never
       }) {
-    let newPresets = { ...presets }
+    if (!propertySettings || !currentUserId) return
 
-    if (newPresetName) {
-      newPresets[newPresetName] = enabledPropertySettings
-    } else if (presetName) {
-      newPresets[presetName] = enabledPropertySettings
+    try {
+      const propertySettingsArray = Object.values(propertySettings)
+      const presetLabel = newPresetName || presetName || 'Untitled'
+
+      await createPreset(currentUserId, presetLabel, propertySettingsArray)
+
+      setNameOfPresetBeingEdited(null)
+      setIsPresetConfigModalOpen(false)
+    } catch (error) {
+      console.error('Error saving preset:', error)
     }
-
-    setPresets(newPresets)
-    setNameOfPresetBeingEdited(null)
-    setIsPresetConfigModalOpen(false)
   }
 
   function handleClickCreateNew(event: MouseEvent) {
@@ -169,10 +156,11 @@ export function Toolbar() {
     event.currentTarget.reset()
   }
 
-  function handleClickLoadPreset(
-    partialPropertySettings: Partial<PropertySettingsObject>,
+  async function handleClickLoadPreset(
+    partialPropertySettings: Partial<PropertySettingsRow>,
   ) {
-    loadPartialPropertySettings(partialPropertySettings)
+    // TODO: Implement loading preset from database
+    console.log('Loading preset:', partialPropertySettings)
   }
 
   function handleClickResavePreset(
@@ -201,7 +189,7 @@ export function Toolbar() {
     presetNameInputRef.current.value = presetName
   }
 
-  function handleClickDeletePreset(
+  async function handleClickDeletePreset(
     presetName: string,
     event: MouseEvent<HTMLButtonElement>,
   ) {
@@ -211,153 +199,216 @@ export function Toolbar() {
       return
     }
 
-    const newPresets = omit(presets, presetName)
-
-    setPresets(newPresets)
+    try {
+      const preset = presets.find(([name]) => name === presetName)
+      if (preset) {
+        // TODO: Get preset ID and delete from database
+        console.log('Deleting preset:', presetName)
+      }
+    } catch (error) {
+      console.error('Error deleting preset:', error)
+    }
   }
 
   function handleClickDisableAll() {
-    loadPartialPropertySettings({})
+    // TODO: Implement disable all properties
+    console.log('Disabling all properties')
+  }
+
+  function handleClickEnableAll() {
+    // TODO: Implement enable all properties
+    console.log('Enabling all properties')
+  }
+
+  function handleClickExecute() {
+    if (!hasEnabledProperties) {
+      return
+    }
+
+    dispatchPluginAction({
+      type: 'execute',
+      payload: {
+        propertySettings: enabledPropertySettings,
+      },
+    })
   }
 
   return (
-    <>
-      <div
-        className={twJoin(
-          'h-15 px-3',
-          'flex items-center justify-between',
-          'border-border bg-bg border-b',
-        )}
-      >
-        <div className="flex items-center gap-1">
-          <MenuButton
-            id="save-preset-menu-button"
-            items={savePresetMenuItems}
-            disabled={!hasEnabledProperties}
-            variant="button.icon"
-            tooltip={
-              !hasEnabledProperties
-                ? tooltips.savePresetMenuDisabled
-                : tooltips.savePresetMenu
-            }
-          >
-            <Icon
-              name="floppy-disk"
-              variant="solid"
-            />
-            <span>Save</span>
-          </MenuButton>
-
-          <MenuButton
-            id="load-preset-menu-button"
-            disabled={!hasSavedPresets}
-            items={presetMenuItems}
-            tooltip={
-              !hasSavedPresets
-                ? tooltips.presetsMenuEmpty
-                : tooltips.presetsMenu
-            }
-            variant="button.icon"
-          >
-            <Icon
-              name="folder-open"
-              variant="solid"
-            />
-            <span>Load</span>
-          </MenuButton>
-
-          <Atom
-            as="button"
-            id="disable-all-button"
-            disabled={!hasEnabledProperties}
-            variant="button.icon"
-            onClick={handleClickDisableAll}
-            tooltip={tooltips.disableAll}
-          >
-            <Icon
-              name="toggle-large-off"
-              variant="solid"
-            />
-            <span>Disable All</span>
-          </Atom>
-        </div>
+    <div
+      className={twJoin(
+        'bg-bg border-border flex items-center justify-between border-b px-3 py-2',
+        'sticky top-0 z-10',
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <MenuButton
+          items={savePresetMenuItems}
+          tooltip={tooltips.savePreset}
+        >
+          <Icon name="floppy-disk" />
+          <span>Save</span>
+        </MenuButton>
 
         <MenuButton
-          tooltip="Options"
-          variant="button.icon"
-          items={[
-            {
-              label: 'Group by status',
-              icon: isGroupedByStatus ? 'solid:check' : 'blank',
-              onClick: () => setisGroupedByStatus((v) => !v),
-            },
-            {
-              label: 'Group by type',
-              icon: isGroupedByType ? 'solid:check' : 'blank',
-              onClick: () => setisGroupedByType((v) => !v),
-            },
-            {
-              label: 'Auto scroll',
-              icon: isAutoScrollEnabled ? 'solid:check' : 'blank',
-              onClick: () => setIsAutoScrollEnabled((v) => !v),
-            },
-            {
-              label: 'Upgrade',
-              icon: 'solid:crown',
-              onClick: async () => {
-                dispatchPluginAction({ type: 'upgrade' })
-              },
-            },
-          ]}
+          items={presetMenuItems}
+          tooltip={tooltips.loadPreset}
         >
-          <Icon name="solid:gear" />
-          <span className="sr-only">Options</span>
+          <Icon name="folder-open" />
+          <span>Load</span>
         </MenuButton>
+
+        <div className="border-border h-4 w-px border-r" />
+
+        <Atom
+          variant="button.icon"
+          tooltip={tooltips.disableAll}
+          onClick={handleClickDisableAll}
+        >
+          <Icon name="eye-slash" />
+          <span className="sr-only">Disable All</span>
+        </Atom>
+
+        <Atom
+          variant="button.icon"
+          tooltip={tooltips.enableAll}
+          onClick={handleClickEnableAll}
+        >
+          <Icon name="eye" />
+          <span className="sr-only">Enable All</span>
+        </Atom>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Atom
+          variant="button.icon"
+          tooltip={tooltips.groupByStatus}
+          onClick={() => {
+            if (dispatch) {
+              dispatch({
+                type: 'setStateByPath',
+                payload: {
+                  path: 'isGroupedByStatus',
+                  value: !isGroupedByStatus,
+                },
+              })
+            }
+          }}
+        >
+          <Icon name={isGroupedByStatus ? 'solid:list' : 'regular:list'} />
+          <span className="sr-only">Group by Status</span>
+        </Atom>
+
+        <Atom
+          variant="button.icon"
+          tooltip={tooltips.groupByType}
+          onClick={() => {
+            if (dispatch) {
+              dispatch({
+                type: 'setStateByPath',
+                payload: {
+                  path: 'isGroupedByType',
+                  value: !isGroupedByType,
+                },
+              })
+            }
+          }}
+        >
+          <Icon name={isGroupedByType ? 'solid:folder' : 'regular:folder'} />
+          <span className="sr-only">Group by Type</span>
+        </Atom>
+
+        <Atom
+          variant="button.icon"
+          tooltip={tooltips.autoScroll}
+          onClick={() => {
+            if (dispatch) {
+              dispatch({
+                type: 'setStateByPath',
+                payload: {
+                  path: 'isAutoScrollEnabled',
+                  value: !isAutoScrollEnabled,
+                },
+              })
+            }
+          }}
+        >
+          <Icon
+            name={
+              isAutoScrollEnabled
+                ? 'solid:arrow-down-to-line'
+                : 'regular:arrow-down-to-line'
+            }
+          />
+          <span className="sr-only">Auto Scroll</span>
+        </Atom>
+
+        <div className="border-border h-4 w-px border-r" />
+
+        <Atom
+          variant="button.primary"
+          disabled={!hasEnabledProperties}
+          tooltip={tooltips.execute}
+          onClick={handleClickExecute}
+        >
+          <Icon name="play" />
+          <span>Execute</span>
+        </Atom>
       </div>
 
       <ModalWindow
-        classNamesForCloseButton="hidden"
         isOpen={isPresetConfigModalOpen}
-        onClose={() => setIsPresetConfigModalOpen(false)}
+        onClose={() => {
+          setIsPresetConfigModalOpen(false)
+          setNameOfPresetBeingEdited(null)
+        }}
+        title={
+          nameOfPresetBeingEdited === null
+            ? 'Create New Preset'
+            : 'Rename Preset'
+        }
       >
-        <form
-          className="flex flex-col gap-3"
-          onSubmit={handleSubmit}
-        >
-          <Atom
-            as="input"
-            id="preset-name-input"
-            name="presetName"
-            placeholder="Enter a name for the preset..."
-            ref={presetNameInputRef}
-            type="text"
-            variant="input"
-            onFocus={(event: FocusEvent<HTMLInputElement>) =>
-              event.target.select()
-            }
-          />
+        <form onSubmit={handleSubmit}>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <Atom
+                as="label"
+                variant="label"
+                htmlFor="presetName"
+              >
+                Preset Name
+              </Atom>
+              <Atom
+                as="input"
+                variant="input"
+                id="presetName"
+                name="presetName"
+                ref={presetNameInputRef}
+                required
+                type="text"
+              />
+            </div>
 
-          <div className="flex flex-row-reverse items-center gap-3">
-            <Atom
-              as="button"
-              id="save-preset-button"
-              type="submit"
-              variant="button.primary"
-            >
-              Save
-            </Atom>
-
-            <Atom
-              as="button"
-              type="button"
-              variant="button.secondary"
-              onClick={() => setIsPresetConfigModalOpen(false)}
-            >
-              Cancel
-            </Atom>
+            <div className="flex justify-end gap-2">
+              <Atom
+                variant="button.secondary"
+                onClick={() => {
+                  setIsPresetConfigModalOpen(false)
+                  setNameOfPresetBeingEdited(null)
+                }}
+              >
+                Cancel
+              </Atom>
+              <Atom
+                as="button"
+                variant="button.primary"
+                type="submit"
+              >
+                {nameOfPresetBeingEdited === null ? 'Create' : 'Rename'}
+              </Atom>
+            </div>
           </div>
         </form>
       </ModalWindow>
-    </>
+    </div>
   )
 }

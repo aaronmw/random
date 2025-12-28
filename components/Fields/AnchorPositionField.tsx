@@ -1,10 +1,7 @@
-import { singlePropertySettingsAtom } from '@/app/atoms/singlePropertySettingsAtom'
+import { useAppContext } from '@/app/state/AppWrapper'
 import { tooltips } from '@/app/tooltips'
-import { AnchorPosition, PropertyName } from '@/lib/types'
-import { useAtom } from 'jotai'
-import merge from 'lodash/merge'
-import set from 'lodash/set'
-import { MouseEvent, useMemo } from 'react'
+import { AnchorPosition, PropertyName } from '@/app/types'
+import { MouseEvent } from 'react'
 import { twJoin, twMerge } from 'tailwind-merge'
 import { FieldContainer, FieldContainerProps } from './FieldContainer'
 export { AnchorPositionField }
@@ -23,14 +20,16 @@ const AnchorPositionField = ({
   propertyName,
   variant,
 }: AnchorPositionFieldProps) => {
-  const propertyAtom = useMemo(
-    () => singlePropertySettingsAtom(propertyName),
-    [propertyName],
-  )
-  const [singlePropertySettings, setSinglePropertySettings] =
-    useAtom(propertyAtom)
+  const { propertySettings, dispatch } = useAppContext()
+  const singlePropertySettings = propertySettings[propertyName]
 
-  const { anchorPosition, preserveAspectRatio } = singlePropertySettings
+  if (!singlePropertySettings || !dispatch) {
+    return null
+  }
+
+  const { dimension_property_settings } = singlePropertySettings
+  const anchorPosition = dimension_property_settings?.anchor_position
+  const preserveAspectRatio = dimension_property_settings?.preserve_aspect_ratio
 
   const axis =
     propertyName === 'width' && !preserveAspectRatio
@@ -44,9 +43,14 @@ const AnchorPositionField = ({
     event: MouseEvent<HTMLButtonElement>,
   ) => {
     event.preventDefault()
-    const newSinglePropertySettings = merge({}, singlePropertySettings)
-    set(newSinglePropertySettings, 'anchorPosition', newValue)
-    setSinglePropertySettings(newSinglePropertySettings)
+
+    dispatch({
+      type: 'setStateByPath',
+      payload: {
+        path: `propertySettings.${propertyName}.dimension_property_settings.anchor_position`,
+        value: newValue,
+      },
+    })
   }
 
   return (

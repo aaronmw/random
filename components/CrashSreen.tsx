@@ -1,6 +1,7 @@
 'use client'
 
 import { Atom } from '@/components/Atom'
+import { copyToClipboard } from '@/lib/copyToClipboard'
 import { useEffect, useState } from 'react'
 
 const initialButtonLabel = 'Copy Old Settings to Clipboard'
@@ -9,11 +10,17 @@ export function CrashScreen() {
   const [buttonLabel, setButtonLabel] = useState(initialButtonLabel)
   const settingsInLocalStorage = window.localStorage.getItem('plugin-state')
 
-  function handleClickCopyOldSettingsButton() {
-    navigator.clipboard.writeText(
-      JSON.stringify(settingsInLocalStorage, null, 2),
-    )
-    setButtonLabel('Copied!')
+  async function handleClickCopyOldSettingsButton() {
+    const textToCopy = JSON.stringify(settingsInLocalStorage, null, 2)
+
+    const success = await copyToClipboard(textToCopy)
+
+    if (success) {
+      setButtonLabel('Copied!')
+    } else {
+      setButtonLabel('Copy Failed - Manual Copy')
+      alert(`Please manually copy this text:\n\n${textToCopy}`)
+    }
   }
 
   function resetToDefaultSettings() {
@@ -24,7 +31,7 @@ export function CrashScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setButtonLabel(initialButtonLabel)
-    }, 1000)
+    }, 2000)
 
     return () => {
       clearTimeout(timer)

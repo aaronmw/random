@@ -1,19 +1,18 @@
 'use client'
 
-import { enabledPropertySettingsAtom } from '@/app/atoms/enabledPropertySettingsAtom'
-import { isAutoScrollEnabledAtom } from '@/app/atoms/isAutoScrollEnabledAtom'
-import { useAtomValue } from 'jotai'
+import { useAppContext } from '@/app/state/AppWrapper'
+import pickBy from 'lodash/pickBy'
 import xor from 'lodash/xor'
 import { useEffect, useRef } from 'react'
 
 export function AutoScroller() {
-  const isAutoScrollEnabled = useAtomValue(isAutoScrollEnabledAtom)
-  const enabledPropertySettings = useAtomValue(enabledPropertySettingsAtom)
+  const { propertySettings, isAutoScrollEnabled } = useAppContext()
   const previouslyEnabledPropertyNamesRef = useRef<string[]>([])
 
-  useEffect(() => {
-    const enabledPropertyNames = Object.keys(enabledPropertySettings)
+  const enabledPropertySettings = pickBy(propertySettings, 'is_enabled')
+  const enabledPropertyNames = Object.keys(enabledPropertySettings)
 
+  useEffect(() => {
     const previouslyEnabledPropertyNames =
       previouslyEnabledPropertyNamesRef.current
 

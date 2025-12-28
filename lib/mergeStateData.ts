@@ -1,5 +1,5 @@
+import { AppState } from '@/app/types'
 import { removeNullProperties } from '@/lib/removeNullProperties'
-import { AppState } from '@/lib/types'
 import cloneDeep from 'lodash/cloneDeep'
 import mergeWith from 'lodash/mergeWith'
 

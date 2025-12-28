@@ -1,4 +1,4 @@
-import { DataType } from '@/lib/types'
+import { DataType } from '@/app/types'
 
 export const dataTypesByPropertyName = {
   arcEndingAngle: 'degree',
