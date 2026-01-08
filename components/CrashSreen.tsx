@@ -1,6 +1,5 @@
 'use client'
 
-import { Atom } from '@/components/Atom'
 import { copyToClipboard } from '@/lib/copyToClipboard'
 import { useEffect, useState } from 'react'
 
@@ -47,22 +46,20 @@ export function CrashScreen() {
 
       <div className="flex gap-5">
         {settingsInLocalStorage && (
-          <Atom
-            as="button"
-            variant="button.primary"
+          <button
+            className="button-primary"
             onClick={handleClickCopyOldSettingsButton}
           >
             {buttonLabel}
-          </Atom>
+          </button>
         )}
 
-        <Atom
-          as="button"
-          variant="button.primary"
+        <button
+          className="button-primary"
           onClick={resetToDefaultSettings}
         >
           Reset &amp; Reload
-        </Atom>
+        </button>
       </div>
     </div>
   )

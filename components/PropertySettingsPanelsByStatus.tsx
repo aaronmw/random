@@ -12,10 +12,10 @@ export function PropertySettingsPanelsByStatus({
 }) {
   const { propertySettings } = useAppContext()
 
-  const enabledPropertySettings = pickBy(propertySettings, 'isEnabled')
-
   const propertyNamesToRender = propertyNames.filter((propertyName) => {
-    const isEnabled = propertyName in enabledPropertySettings
+    const propertySetting = propertySettings[propertyName]
+    if (!propertySetting) return false
+    const isEnabled = propertySetting.is_enabled === true
     return status === 'enabled' ? isEnabled : !isEnabled
   })
 

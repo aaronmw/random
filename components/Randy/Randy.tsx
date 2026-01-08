@@ -1,6 +1,5 @@
 'use client'
 
-import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
 import { ModalWindow, ModalWindowProps } from '@/components/ModalWindow'
 import sample from 'lodash/sample'
@@ -103,16 +102,15 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
           onChange={(event) => setUserPrompt(event.target.value)}
         />
 
-        <Atom
-          as="button"
+        <button
+          className="button-primary"
           type="submit"
-          variant="button.primary"
         >
           <Icon
             name="robot"
             variant="solid"
           />
-        </Atom>
+        </button>
       </form>
     </ModalWindow>
   )

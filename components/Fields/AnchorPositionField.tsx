@@ -1,7 +1,8 @@
 import { useAppContext } from '@/app/state/AppWrapper'
 import { tooltips } from '@/app/tooltips'
 import { AnchorPosition, PropertyName } from '@/app/types'
-import { MouseEvent } from 'react'
+import { updateDimensionPropertySettings } from '@/lib/services/propertySettingsService'
+import { MouseEvent, useCallback } from 'react'
 import { twJoin, twMerge } from 'tailwind-merge'
 import { FieldContainer, FieldContainerProps } from './FieldContainer'
 export { AnchorPositionField }
@@ -27,7 +28,8 @@ const AnchorPositionField = ({
     return null
   }
 
-  const { dimension_property_settings } = singlePropertySettings
+  const { id: propertySettingId, dimension_property_settings } =
+    singlePropertySettings
   const anchorPosition = dimension_property_settings?.anchor_position
   const preserveAspectRatio = dimension_property_settings?.preserve_aspect_ratio
 
@@ -38,20 +40,46 @@ const AnchorPositionField = ({
         ? 'y'
         : 'all'
 
-  const handleClickAnchor = (
-    newValue: AnchorPosition,
-    event: MouseEvent<HTMLButtonElement>,
-  ) => {
-    event.preventDefault()
+  const handleClickAnchor = useCallback(
+    async (
+      newValue: AnchorPosition,
+      event: MouseEvent<HTMLButtonElement>,
+    ) => {
+      event.preventDefault()
 
-    dispatch({
-      type: 'setStateByPath',
-      payload: {
-        path: `propertySettings.${propertyName}.dimension_property_settings.anchor_position`,
-        value: newValue,
-      },
-    })
-  }
+      const currentValue = anchorPosition
+
+      // Optimistically update local state immediately
+      if (dispatch) {
+        dispatch({
+          type: 'setStateByPath',
+          payload: {
+            path: `propertySettings.${propertyName}.dimension_property_settings.anchor_position`,
+            value: newValue,
+          },
+        })
+      }
+
+      try {
+        await updateDimensionPropertySettings(propertySettingId, {
+          anchor_position: newValue,
+        })
+      } catch (error) {
+        console.error('Error updating anchor position:', error)
+        // Revert on error
+        if (dispatch) {
+          dispatch({
+            type: 'setStateByPath',
+            payload: {
+              path: `propertySettings.${propertyName}.dimension_property_settings.anchor_position`,
+              value: currentValue,
+            },
+          })
+        }
+      }
+    },
+    [propertySettingId, propertyName, anchorPosition, dispatch],
+  )
 
   return (
     <FieldContainer

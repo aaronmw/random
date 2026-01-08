@@ -1,6 +1,5 @@
 import { useAppContext } from '@/app/state/AppWrapper'
 import { PropertyName } from '@/app/types'
-import { Atom } from '@/components/Atom'
 import { ConditionalWrapper } from '@/components/ConditionalWrapper'
 import { Icon } from '@/components/Icon'
 import { Randy } from '@/components/Randy'
@@ -8,6 +7,7 @@ import { Tooltip } from '@/components/Tooltip'
 import { dataTypes } from '@/lib/dataTypes'
 import { dataTypesByPropertyName } from '@/lib/dataTypesByPropertyName'
 import { pluralize } from '@/lib/pluralize'
+import { updateListPropertySettings } from '@/lib/services/propertySettingsService'
 import get from 'lodash/get'
 import {
   ChangeEvent,
@@ -41,6 +41,8 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
     return null
   }
 
+  const { id: propertySettingId } = singlePropertySettings
+
   const colorPickerElementRef = useRef<HTMLInputElement>(null)
   const scrollingElementRef = useRef<HTMLElement>(null)
   const textareaElementRef = useRef<HTMLTextAreaElement>(null)
@@ -52,9 +54,14 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
   const [scrollTop, setScrollTop] = useState<number | null>(null)
   const [isClient, setIsClient] = useState(false)
 
-  const pathToValue = 'modeOptions.list.options'
-  const rawValues = get(singlePropertySettings, pathToValue)
-  const values: string[] = Array.isArray(rawValues) ? rawValues : []
+  const pathToValue = 'list_property_settings.options'
+  const rawOptionsString = get(singlePropertySettings, pathToValue)
+  const optionsString =
+    typeof rawOptionsString === 'string' ? rawOptionsString : ''
+  // Filter out empty lines to avoid validation errors on empty strings
+  const values: string[] = optionsString
+    .split('\n')
+    .filter((line) => line.trim() !== '')
   const dataType = dataTypesByPropertyName[propertyName]
   const dataTypeConfig = dataTypes[dataType]
   const { label, min, max, validator } = dataTypeConfig
@@ -120,21 +127,61 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
     [],
   )
 
-  const stopEditing = useCallback(() => {
+  const stopEditing = useCallback(async () => {
     setIsEditing(false)
-  }, [])
+    // Persist to database when editing stops
+    const currentValues = get(singlePropertySettings, pathToValue)
+    const optionsString =
+      typeof currentValues === 'string' ? currentValues : values.join('\n')
+    try {
+      await updateListPropertySettings(propertySettingId, {
+        options: optionsString,
+      })
+    } catch (error) {
+      console.error('Error updating list property settings:', error)
+    }
+  }, [propertySettingId, singlePropertySettings, pathToValue, values])
 
   const setValues = useCallback(
-    (values: string[]) => {
+    async (newValues: string[]) => {
+      const currentValues = get(singlePropertySettings, pathToValue)
+      const currentString =
+        typeof currentValues === 'string' ? currentValues : ''
+      const newString = newValues.join('\n')
+
+      // Optimistically update local state immediately
       dispatch({
         type: 'setStateByPath',
         payload: {
           path: `propertySettings.${propertyName}.${pathToValue}`,
-          value: values,
+          value: newString,
         },
       })
+
+      // Persist to database (debounced by onBlur for textarea, immediate for other changes)
+      try {
+        await updateListPropertySettings(propertySettingId, {
+          options: newString,
+        })
+      } catch (error) {
+        console.error('Error updating list property settings:', error)
+        // Revert on error
+        dispatch({
+          type: 'setStateByPath',
+          payload: {
+            path: `propertySettings.${propertyName}.${pathToValue}`,
+            value: currentString,
+          },
+        })
+      }
     },
-    [dispatch, propertyName, pathToValue],
+    [
+      dispatch,
+      propertyName,
+      pathToValue,
+      propertySettingId,
+      singlePropertySettings,
+    ],
   )
 
   const handleChange = useCallback(
@@ -180,10 +227,8 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
           {isClient && (
             <>
               {process.env.NODE_ENV === 'development' && (
-                <Atom
-                  variant="link"
-                  as="button"
-                  className="flex items-center gap-1"
+                <button
+                  className="link flex items-center gap-1"
                   onClick={() => setIsShowingRandy(true)}
                 >
                   <Icon
@@ -191,35 +236,34 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
                     variant="solid"
                   />
                   Randy
-                </Atom>
+                </button>
               )}
 
               {errorMessages.length >= 1 && (
-                <Atom
-                  className="cursor-help"
-                  tooltip="Number of invalid values omitted"
-                  variant="pill.danger"
-                >
-                  <Icon
-                    name="triangle-exclamation"
-                    variant="solid"
-                  />{' '}
-                  {errorMessages.length}
-                </Atom>
+                <Tooltip tipContents="Number of invalid values omitted">
+                  <span className="pill-danger cursor-help">
+                    <Icon
+                      name="triangle-exclamation"
+                      variant="solid"
+                    />{' '}
+                    {errorMessages.length}
+                  </span>
+                </Tooltip>
               )}
 
               {numDisabledValues >= 1 && (
-                <Atom
-                  tooltip={`${pluralize(
+                <Tooltip
+                  tipContents={`${pluralize(
                     numDisabledValues,
                     'value is',
                     'values are',
                   )} commented out`}
-                  variant="pill.neutral"
                 >
-                  {'// '}
-                  {numDisabledValues}
-                </Atom>
+                  <span className="pill-neutral">
+                    {'// '}
+                    {numDisabledValues}
+                  </span>
+                </Tooltip>
               )}
             </>
           )}
@@ -239,11 +283,9 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
               ref={scrollingElementRef}
             >
               {isEditing ? (
-                <Atom
-                  variant="input"
-                  as="textarea"
+                <textarea
                   className={twJoin(
-                    'w-full resize-none px-0 outline-hidden',
+                    'input w-full resize-none px-0 outline-hidden',
                     'border-0 bg-transparent text-left',
                     'text-text font-mono',
                   )}
@@ -273,15 +315,15 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
                             </Tooltip>
                           )}
                         >
-                          <Atom
-                            variant="badge.propertyValue"
-                            role="button"
+                          <span
                             className={twJoin(
+                              'badge-property-value',
                               !isValid && [
                                 'bg-bg-danger text-text-ondanger border-transparent',
                                 'hover:bg-bg-danger-hover',
                               ],
                             )}
+                            role="button"
                             onClick={startEditingLineIndex.bind(null, {
                               lineIndex,
                             })}
@@ -314,7 +356,7 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
                             )}
 
                             {value}
-                          </Atom>
+                          </span>
                         </ConditionalWrapper>
                       )
                     })}
@@ -339,14 +381,39 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
         <Randy
           isOpen={isShowingRandy}
           onClose={() => setIsShowingRandy(false)}
-          onResponse={(response) => {
+          onResponse={async (response) => {
+            const currentValues = get(singlePropertySettings, pathToValue)
+            const currentString =
+              typeof currentValues === 'string' ? currentValues : ''
+            const responseString = Array.isArray(response)
+              ? response.join('\n')
+              : String(response)
+
+            // Optimistically update local state immediately
             dispatch({
               type: 'setStateByPath',
               payload: {
                 path: `propertySettings.${propertyName}.${pathToValue}`,
-                value: response,
+                value: responseString,
               },
             })
+
+            // Persist to database
+            try {
+              await updateListPropertySettings(propertySettingId, {
+                options: responseString,
+              })
+            } catch (error) {
+              console.error('Error updating list property settings:', error)
+              // Revert on error
+              dispatch({
+                type: 'setStateByPath',
+                payload: {
+                  path: `propertySettings.${propertyName}.${pathToValue}`,
+                  value: currentString,
+                },
+              })
+            }
           }}
         />
       )}

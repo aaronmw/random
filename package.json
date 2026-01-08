@@ -46,11 +46,13 @@
   "devDependencies": {
     "@types/lodash": "^4.17.16",
     "@types/natural-compare-lite": "^1.4.2",
+    "@types/pg": "^8.16.0",
     "babel-plugin-react-compiler": "^19.1.0-rc.2",
     "concurrently": "^9.1.2",
     "cypress": "^14.3.3",
     "eslint-plugin-react-compiler": "^19.1.0-rc.2",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "pg": "^8.16.3",
     "prettier-plugin-tailwindcss": "^0.6.11"
   },
   "config": {

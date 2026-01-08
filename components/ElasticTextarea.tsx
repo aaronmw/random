@@ -1,4 +1,3 @@
-import { Atom } from '@/components/Atom'
 import { useMultipleRefs } from '@/lib/useMultipleRefs'
 import {
   ChangeEvent,
@@ -41,10 +40,8 @@ const ElasticTextarea = forwardRef<HTMLTextAreaElement, ElasticTextareaProps>(
 
     return (
       <div className="relative w-full [font-size:0]">
-        <Atom
-          variant="input"
-          as="textarea"
-          className={className}
+        <textarea
+          className={twMerge('input', className)}
           ref={refs}
           rows={1}
           value={value}

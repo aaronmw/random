@@ -1,19 +1,17 @@
-import { Atom } from '@/components/Atom'
-import { ReactNode } from 'react'
+import { ComponentProps, ReactNode } from 'react'
 
 export function PropertyNameTag({
   children,
   ...otherProps
-}: {
+}: ComponentProps<'code'> & {
   children: ReactNode
 }) {
   return (
-    <Atom
-      as="code"
-      variant="badge.propertyName"
+    <code
+      className="badge-property-name"
       {...otherProps}
     >
       {children}
-    </Atom>
+    </code>
   )
 }

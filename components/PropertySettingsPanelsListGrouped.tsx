@@ -1,6 +1,5 @@
 import { groupedPropertyNames } from '@/app/properties/groupedPropertyNames'
 import { useAppContext } from '@/app/state/AppWrapper'
-import { Atom } from '@/components/Atom'
 import { PropertySettingsPanel } from '@/components/PropertySettingsPanel'
 import { Fragment } from 'react'
 
@@ -11,12 +10,9 @@ export function PropertySettingsPanelsListGrouped() {
     <div className="flex flex-col">
       {groupedPropertyNames.map(([groupName, propertyNamesInGroup]) => (
         <Fragment key={groupName}>
-          <Atom
-            as="div"
-            variant="label.group"
-          >
+          <div className="label-group">
             {groupName}
-          </Atom>
+          </div>
 
           <div className="flex flex-col">
             {propertyNamesInGroup.map((propertyName) => {

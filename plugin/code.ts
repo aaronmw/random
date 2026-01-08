@@ -3,10 +3,106 @@ import type {
     PropertyName,
     PropertySettingsRow,
 } from '@/app/types'
+import { PropertySettingsWithDetails } from '@/lib/services/propertySettingsService'
 import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
 import { setNodeProperty } from '@/lib/setNodeProperty'
 import pickBy from 'lodash/pickBy'
 import naturalSort from 'natural-compare-lite'
+
+function transformPropertySettingsForRandomization(
+  propertySettings: PropertySettingsWithDetails,
+): any {
+  const { randomization_mode, min, max, operator } = propertySettings
+
+  console.log('Transforming property settings for randomization:', {
+    label: propertySettings.label,
+    randomization_mode,
+    min,
+    max,
+    operator,
+    hasMin: 'min' in propertySettings,
+    hasMax: 'max' in propertySettings,
+    numericSettings: propertySettings.numeric_property_settings,
+  })
+
+  let mode: 'range' | 'calc' | 'list'
+  let modeOptions: any
+
+  switch (randomization_mode) {
+    case 'range':
+      mode = 'range'
+      // Only use fallback if min/max are actually null/undefined
+      // Don't use fallback if they're 0 (which is a valid value)
+      const rangeMin = min != null ? min : 0
+      const rangeMax = max != null ? max : 100
+      modeOptions = {
+        range: {
+          min: rangeMin,
+          max: rangeMax,
+        },
+      }
+      break
+
+    case 'addition':
+      mode = 'calc'
+      const addMin = min != null ? min : 0
+      const addMax = max != null ? max : 100
+      modeOptions = {
+        calc: {
+          operator: 'add',
+          add: {
+            min: addMin,
+            max: addMax,
+          },
+        },
+      }
+      break
+
+    case 'multiplication':
+      mode = 'calc'
+      const multMin = min != null ? min : 0
+      const multMax = max != null ? max : 100
+      modeOptions = {
+        calc: {
+          operator: 'multiply',
+          multiply: {
+            min: multMin,
+            max: multMax,
+          },
+        },
+      }
+      break
+
+    case 'list':
+      mode = 'list'
+      // Read list options from modeOptions.list.options (populated from database)
+      const listOptions =
+        propertySettings.modeOptions?.list?.options || []
+      modeOptions = {
+        list: {
+          options: listOptions,
+        },
+      }
+      break
+
+    default:
+      mode = 'range'
+      const defaultMin = min != null ? min : 0
+      const defaultMax = max != null ? max : 100
+      modeOptions = {
+        range: {
+          min: defaultMin,
+          max: defaultMax,
+        },
+      }
+  }
+
+  return {
+    ...propertySettings,
+    mode,
+    modeOptions,
+  }
+}
 
 declare const SITE_URL: string
 
@@ -59,6 +155,25 @@ figma.showUI(
   },
 )
 
+// Helper function to get and send current selection
+function sendCurrentSelection() {
+  const selection = figma.currentPage.selection
+  console.log('Sending current selection:', selection.length, 'nodes')
+
+  const selectedNodePluginData = selection.map(
+    (selectedNode) => {
+      const pluginData = selectedNode.getPluginData('propertySettings')
+      return JSON.parse(pluginData || '{}') as Partial<PropertySettingsRow>
+    },
+  )
+
+  console.log('Sending selectedNodePluginData:', selectedNodePluginData.length, 'items')
+  figma.ui.postMessage({
+    type: 'setSelectedNodePluginData',
+    payload: selectedNodePluginData,
+  })
+}
+
 // Send initial data to UI
 figma.ui.postMessage({
   type: 'init',
@@ -66,6 +181,13 @@ figma.ui.postMessage({
     figmaUserId: figma.currentUser?.id || null,
   },
 })
+
+// Send initial selection after a short delay to allow the app to set up message handlers
+// The app will also request it when ready, so this is a backup
+setTimeout(() => {
+  console.log('Sending initial selection after delay')
+  sendCurrentSelection()
+}, 500)
 
 figma.ui.onmessage = async (action: PluginAction, props) => {
   if (props.origin !== SITE_URL) {
@@ -78,7 +200,7 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
     case 'execute': {
       const { propertySettings } = action.payload
 
-      const enabledPropertySettings = pickBy(propertySettings, 'isEnabled')
+      const enabledPropertySettings = pickBy(propertySettings, 'is_enabled')
 
       const { selection } = figma.currentPage
 
@@ -90,15 +212,19 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
       ;(
         Object.entries(enabledPropertySettings) as [
           propertyName: PropertyName,
-          PropertySettingsRow,
+          PropertySettingsWithDetails,
         ][]
       ).forEach(async ([propertyName, propertySettings]) => {
         const { post_randomization_sort_order } = propertySettings
 
+        const transformedPropertySettings = transformPropertySettingsForRandomization(
+          propertySettings,
+        )
+
         const randomValues = selection.map((node) =>
           getRandomPropertyValue({
             node,
-            propertySettings,
+            propertySettings: transformedPropertySettings,
             propertyName,
           }),
         )
@@ -151,6 +277,12 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
       break
     }
 
+    case 'getCurrentSelection': {
+      console.log('Received getCurrentSelection request')
+      sendCurrentSelection()
+      break
+    }
+
     default:
       break
   }
@@ -159,15 +291,5 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
 }
 
 figma.on('selectionchange', () => {
-  const selectedNodePluginData = figma.currentPage.selection.map(
-    (selectedNode) => {
-      const pluginData = selectedNode.getPluginData('propertySettings')
-      return JSON.parse(pluginData || '{}') as Partial<PropertySettingsRow>
-    },
-  )
-
-  figma.ui.postMessage({
-    type: 'setSelectedNodePluginData',
-    payload: selectedNodePluginData,
-  })
+  sendCurrentSelection()
 })

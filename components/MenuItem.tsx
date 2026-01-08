@@ -1,12 +1,11 @@
-import { Atom, AtomProps } from '@/components/Atom'
 import { Icon, IconString } from '@/components/Icon'
 import Link from 'next/link'
-import { ElementType, MouseEvent, ReactNode } from 'react'
+import { ComponentProps, ElementType, MouseEvent, ReactNode } from 'react'
 import { twJoin, twMerge } from 'tailwind-merge'
 
 export type MenuItemProps<T extends 'button' | 'a' | typeof Link> = Omit<
-  AtomProps<T>,
-  'as' | 'children'
+  ComponentProps<T>,
+  'children'
 > & {
   as?: T
   label: ReactNode
@@ -42,8 +41,7 @@ export function MenuItem<T extends 'button' | 'a' | typeof Link>({
   }
 
   return (
-    <Atom
-      as={Component}
+    <Component
       className={twMerge(
         'group flex w-full items-center gap-2',
         'px-2 py-0.5',
@@ -81,6 +79,6 @@ export function MenuItem<T extends 'button' | 'a' | typeof Link>({
           </span>
         )}
       </span>
-    </Atom>
+    </Component>
   )
 }

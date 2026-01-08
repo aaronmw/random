@@ -3,13 +3,26 @@
 import { useAppContext } from '@/app/state/AppWrapper'
 import { AutoScroller } from '@/components/AutoScroller'
 import { ExecuteButton } from '@/components/ExecuteButton'
+import { PropertySettingsLoadingPlaceholder } from '@/components/PropertySettingsLoadingPlaceholder'
 import { PropertySettingsPanelsList } from '@/components/PropertySettingsPanelsList'
 import { PropertySettingsPanelsListGrouped } from '@/components/PropertySettingsPanelsListGrouped'
+import { PropertySettingsPanelsListGroupedByStatus } from '@/components/PropertySettingsPanelsListGroupedByStatus'
 import { Toolbar } from '@/components/Toolbar'
+import { Suspense } from 'react'
 import { twJoin } from 'tailwind-merge'
 
 export default function PropertiesPage() {
-  const { isGroupedByType } = useAppContext()
+  const { isGroupedByType, isGroupedByStatus, isFactoryResetting, isUserSettingsChanging, isPresetLoading } = useAppContext()
+
+  const renderPropertyList = () => {
+    if (isGroupedByStatus) {
+      return <PropertySettingsPanelsListGroupedByStatus />
+    }
+    if (isGroupedByType) {
+      return <PropertySettingsPanelsListGrouped />
+    }
+    return <PropertySettingsPanelsList />
+  }
 
   return (
     <div
@@ -24,10 +37,12 @@ export default function PropertiesPage() {
       <Toolbar />
 
       <div className="scroll-pt-12 overflow-auto">
-        {isGroupedByType ? (
-          <PropertySettingsPanelsListGrouped />
+        {isFactoryResetting || isUserSettingsChanging || isPresetLoading ? (
+          <PropertySettingsLoadingPlaceholder />
         ) : (
-          <PropertySettingsPanelsList />
+          <Suspense fallback={<PropertySettingsLoadingPlaceholder />}>
+            {renderPropertyList()}
+          </Suspense>
         )}
       </div>
 

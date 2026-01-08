@@ -1,6 +1,5 @@
 'use client'
 
-import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
 import { ComponentPropsWithoutRef, MouseEvent, useEffect, useId } from 'react'
 import { createPortal } from 'react-dom'
@@ -100,20 +99,16 @@ const ModalWindow = ({
               windowClassNamesByVariant[variant as ModalWindowVariant],
             )}
           >
-            <Atom
-              as="button"
+            <button
               id={`modal-window-close-button-${modalWindowContainerId}`}
-              variant="button.icon"
               className={twMerge(
-                'absolute top-3 right-3',
+                'button-icon absolute top-3 right-3',
                 classNamesForCloseButton,
               )}
+              onClick={handleClickClose}
             >
-              <Icon
-                name="xmark"
-                onClick={handleClickClose}
-              />
-            </Atom>
+              <Icon name="xmark" />
+            </button>
 
             {children}
           </div>

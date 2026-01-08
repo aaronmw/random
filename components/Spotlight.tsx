@@ -1,4 +1,3 @@
-import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
 import { useEffect, useState } from 'react'
 import { twJoin } from 'tailwind-merge'
@@ -103,15 +102,14 @@ export function Spotlight({
       >
         <span>{message}</span>
 
-        <Atom
-          variant="button.icon"
-          as="button"
+        <button
+          className="button-icon"
           aria-label="Dismiss message"
           onClick={() => setIsDismissed(true)}
         >
           <Icon name="xmark" />
           <span className="sr-only">Dismiss message</span>
-        </Atom>
+        </button>
       </div>
     </div>
   )

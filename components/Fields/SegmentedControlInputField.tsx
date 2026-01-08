@@ -1,4 +1,3 @@
-import { Atom, AtomProps } from '@/components/Atom'
 import {
   ComponentProps,
   MouseEvent,
@@ -13,10 +12,14 @@ import { FieldContainer, FieldContainerProps } from './FieldContainer'
 export { SegmentedControlInputField }
 export type { SegmentedControlInputFieldProps }
 
+type ButtonVariant =
+  | 'button.icon.togglable'
+  | 'button.icon.togglable.secondary'
+
 interface SegmentedControlInputFieldProps<V extends string | number | boolean>
   extends Omit<ComponentProps<'div'>, 'onChange'>,
     Pick<FieldContainerProps<'label'>, 'label' | 'description' | 'variant'> {
-  variantForButton?: AtomProps['variant']
+  variantForButton?: ButtonVariant
   onChange?: (newValue: V, event: MouseEvent<HTMLButtonElement>) => void
   value?: V
 }
@@ -25,7 +28,7 @@ interface SegmentedControlInputContextObject<
   V extends string | number | boolean,
 > {
   currentValue?: V
-  variantForButton?: AtomProps['variant']
+  variantForButton?: ButtonVariant
   handleClickButton: (newValue: V, event: MouseEvent<HTMLButtonElement>) => void
 }
 
@@ -93,8 +96,9 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   children,
   value,
   onClick,
+  className,
   ...otherProps
-}: Omit<AtomProps<'button'>, 'value'> & {
+}: Omit<ComponentProps<'button'>, 'value'> & {
   value: string | number | boolean
 }) {
   const { currentValue, handleClickButton, variantForButton } = useContext(
@@ -108,15 +112,19 @@ SegmentedControlInputField.OptionButton = function OptionButton({
     onClick?.(event)
   }
 
+  const variantClass =
+    variantForButton === 'button.icon.togglable.secondary'
+      ? 'button-icon-togglable-secondary'
+      : 'button-icon-togglable'
+
   return (
-    <Atom
-      variant={variantForButton}
-      as="button"
+    <button
+      className={twMerge(variantClass, className)}
       data-active={isSelected ? 'true' : undefined}
       onClick={innerHandleClickButton}
       {...otherProps}
     >
       {children}
-    </Atom>
+    </button>
   )
 }

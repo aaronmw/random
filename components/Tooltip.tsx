@@ -1,6 +1,5 @@
 'use client'
 
-import { Atom } from '@/components/Atom'
 import { Tooltip as BaseUITooltip } from '@base-ui-components/react/tooltip'
 import { twMerge } from 'tailwind-merge'
 
@@ -21,12 +20,11 @@ export function Tooltip({
       <BaseUITooltip.Portal>
         <BaseUITooltip.Positioner sideOffset={10}>
           <BaseUITooltip.Popup>
-            <Atom
-              variant="popover"
-              className={twMerge('max-w-72 px-5', classNamesForTooltip)}
+            <div
+              className={twMerge('popover max-w-72 px-5', classNamesForTooltip)}
             >
               {tipContents}
-            </Atom>
+            </div>
           </BaseUITooltip.Popup>
         </BaseUITooltip.Positioner>
       </BaseUITooltip.Portal>

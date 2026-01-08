@@ -1,6 +1,5 @@
 'use client'
 
-import { Atom } from '@/components/Atom'
 import { Icon } from '@/components/Icon'
 import Image from 'next/image'
 
@@ -40,15 +39,14 @@ export default function AboutPage() {
             ['Tip Jar', 'solid:dollar-sign', 'https://ko-fi.com/aaronwright'],
           ] as const
         ).map(([label, icon, href]) => (
-          <Atom
+          <a
             key={href}
+            className="button-icon"
             href={href}
-            as="a"
-            variant="button.icon"
           >
             <Icon name={icon} />
             <span className="sr-only">{label}</span>
-          </Atom>
+          </a>
         ))}
       </div>
 

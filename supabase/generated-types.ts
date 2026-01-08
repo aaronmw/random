@@ -7,44 +7,38 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
       dimension_property_settings: {
         Row: {
           anchor_position: Database["public"]["Enums"]["anchor_position"] | null
-          date_created: string
-          date_modified: string
           dimension: string | null
-          id: number
+          id: string
           preserve_aspect_ratio: boolean | null
-          property_setting_id: number
+          property_setting_id: string
         }
         Insert: {
           anchor_position?:
             | Database["public"]["Enums"]["anchor_position"]
             | null
-          date_created?: string
-          date_modified?: string
           dimension?: string | null
-          id?: number
+          id?: string
           preserve_aspect_ratio?: boolean | null
-          property_setting_id: number
+          property_setting_id: string
         }
         Update: {
           anchor_position?:
             | Database["public"]["Enums"]["anchor_position"]
             | null
-          date_created?: string
-          date_modified?: string
           dimension?: string | null
-          id?: number
+          id?: string
           preserve_aspect_ratio?: boolean | null
-          property_setting_id?: number
+          property_setting_id?: string
         }
         Relationships: [
           {
@@ -56,33 +50,53 @@ export type Database = {
           },
         ]
       }
+      list_property_settings: {
+        Row: {
+          id: string
+          options: string
+          property_setting_id: string
+        }
+        Insert: {
+          id?: string
+          options?: string
+          property_setting_id: string
+        }
+        Update: {
+          id?: string
+          options?: string
+          property_setting_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "list_property_settings_property_setting_id_fkey"
+            columns: ["property_setting_id"]
+            isOneToOne: true
+            referencedRelation: "property_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       numeric_property_settings: {
         Row: {
-          date_created: string
-          date_modified: string
-          id: number
+          id: string
           max: number | null
           min: number | null
           operator: string | null
-          property_setting_id: number
+          property_setting_id: string
         }
         Insert: {
-          date_created?: string
-          date_modified?: string
-          id?: number
+          id?: string
           max?: number | null
           min?: number | null
           operator?: string | null
-          property_setting_id: number
+          property_setting_id: string
         }
         Update: {
-          date_created?: string
-          date_modified?: string
-          id?: number
+          id?: string
           max?: number | null
           min?: number | null
           operator?: string | null
-          property_setting_id?: number
+          property_setting_id?: string
         }
         Relationships: [
           {
@@ -99,66 +113,66 @@ export type Database = {
           date_created: string
           date_modified: string
           figma_user_id: string
-          id: number
+          id: string
           label: string
         }
         Insert: {
           date_created?: string
           date_modified?: string
-          figma_user_id?: string
-          id?: number
-          label?: string
+          figma_user_id: string
+          id?: string
+          label: string
         }
         Update: {
           date_created?: string
           date_modified?: string
           figma_user_id?: string
-          id?: number
+          id?: string
           label?: string
         }
         Relationships: []
       }
       property_settings: {
         Row: {
-          collection_id: number | null
           date_created: string
           date_modified: string
-          id: number
+          id: string
           is_enabled: boolean
           label: string
           post_randomization_sort_order:
             | Database["public"]["Enums"]["post_randomization_sort_order"]
             | null
+          preset_id: string | null
           randomization_mode: Database["public"]["Enums"]["randomization_mode"]
         }
         Insert: {
-          collection_id?: number | null
           date_created?: string
           date_modified?: string
-          id?: number
+          id?: string
           is_enabled?: boolean
           label: string
           post_randomization_sort_order?:
             | Database["public"]["Enums"]["post_randomization_sort_order"]
             | null
+          preset_id?: string | null
           randomization_mode?: Database["public"]["Enums"]["randomization_mode"]
         }
         Update: {
-          collection_id?: number | null
           date_created?: string
           date_modified?: string
-          id?: number
+          id?: string
           is_enabled?: boolean
           label?: string
           post_randomization_sort_order?:
             | Database["public"]["Enums"]["post_randomization_sort_order"]
             | null
+          preset_id?: string | null
           randomization_mode?: Database["public"]["Enums"]["randomization_mode"]
         }
         Relationships: [
           {
-            foreignKeyName: "property_settings_collection_id_fkey"
-            columns: ["collection_id"]
+            foreignKeyName: "property_settings_preset_id_fkey"
+            columns: ["preset_id"]
             isOneToOne: false
             referencedRelation: "presets"
             referencedColumns: ["id"]
@@ -167,32 +181,26 @@ export type Database = {
       }
       text_property_settings: {
         Row: {
-          date_created: string
-          date_modified: string
           decimal_places: number | null
-          id: number
+          id: string
           prefix: string | null
-          property_setting_id: number
+          property_setting_id: string
           suffix: string | null
           thousands_separator: string | null
         }
         Insert: {
-          date_created?: string
-          date_modified?: string
           decimal_places?: number | null
-          id?: number
+          id?: string
           prefix?: string | null
-          property_setting_id: number
+          property_setting_id: string
           suffix?: string | null
           thousands_separator?: string | null
         }
         Update: {
-          date_created?: string
-          date_modified?: string
           decimal_places?: number | null
-          id?: number
+          id?: string
           prefix?: string | null
-          property_setting_id?: number
+          property_setting_id?: string
           suffix?: string | null
           thousands_separator?: string | null
         }
@@ -224,7 +232,6 @@ export type Database = {
         | "bottom-left"
         | "bottom-center"
         | "bottom-right"
-      corner: "top-left" | "top-right" | "bottom-left" | "bottom-right"
       post_randomization_sort_order: "ascending" | "descending" | "none"
       randomization_mode:
         | "addition"
@@ -370,7 +377,6 @@ export const Constants = {
         "bottom-center",
         "bottom-right",
       ],
-      corner: ["top-left", "top-right", "bottom-left", "bottom-right"],
       post_randomization_sort_order: ["ascending", "descending", "none"],
       randomization_mode: [
         "addition",

@@ -25,12 +25,16 @@ export interface AppState {
   currentUserId: string | null
   dispatch: Dispatch<AppAction> | null
   isAutoScrollEnabled: boolean
+  isFactoryResetting: boolean
+  isUserSettingsChanging: boolean
+  isPresetLoading: boolean
   isGroupedByStatus: boolean
   isGroupedByType: boolean
   isLightMode: boolean
-  presets: [label: string, Partial<PropertySettingsRow>][]
+  presets: Array<{ id: string; label: string; figma_user_id: string; visibility?: 'private' | 'public' }>
   propertySettings: Record<string, PropertySettingsWithDetails>
   selectedNodePluginData: Partial<PropertySettingsRow>[]
+  ignoreRealtimeUntil?: number // Timestamp - ignore realtime events until this time
 }
 
 export type DataType = keyof typeof dataTypes
@@ -54,7 +58,7 @@ export type PluginAction =
   | {
       type: 'execute'
       payload: {
-        propertySettings: Partial<PropertySettingsRow>[]
+        propertySettings: Partial<Record<PropertyName, PropertySettingsWithDetails>>
       }
     }
   | {
@@ -65,6 +69,9 @@ export type PluginAction =
     }
   | {
       type: 'upgrade'
+    }
+  | {
+      type: 'getCurrentSelection'
     }
 
 export type PropertyName = keyof typeof dataTypesByPropertyName
