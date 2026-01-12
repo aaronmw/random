@@ -12,12 +12,16 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const body = await request.json()
 
-  const { label, properties } = body
+  const { label, figma_user_id } = body
+
+  if (!figma_user_id) {
+    return NextResponse.json({ error: 'figma_user_id is required' }, { status: 400 })
+  }
 
   const { data, error } = await supabaseClient.from('presets').upsert(
     {
       label,
-      properties,
+      figma_user_id,
     },
     {
       onConflict: 'id',
