@@ -384,116 +384,365 @@
 }
 
 @utility link {
-  @apply text-text-brand inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-normal transition-all;
-  @apply data-disabled:text-text-disabled data-disabled:pointer-events-none;
+  @apply text-text-brand;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-normal;
+  @apply transition-all;
+  @apply data-disabled:text-text-disabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility button-primary {
-  @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-nowrap transition-all;
-  @apply bg-bg-brand text-text-onbrand px-4 py-3;
-  @apply hover:bg-bg-brand-hover hover:text-text-oninverse;
-  @apply data-disabled:bg-bg-disabled data-disabled:text-text-ondisabled data-disabled:pointer-events-none;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-nowrap;
+  @apply transition-all;
+  @apply bg-bg-brand;
+  @apply text-text-onbrand;
+  @apply px-4;
+  @apply py-3;
+  @apply hover:bg-bg-brand-hover;
+  @apply hover:text-text-oninverse;
+  @apply disabled:cursor-default;
+  @apply disabled:opacity-60;
+  @apply data-disabled:cursor-default;
+  @apply data-disabled:opacity-60;
+  @apply data-disabled:bg-bg-disabled;
+  @apply data-disabled:text-text-ondisabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility button-secondary {
-  @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-nowrap transition-all;
-  @apply text-text-secondary px-4 py-3;
-  @apply hover:bg-bg-hover hover:text-text-hover;
-  @apply data-disabled:text-text-disabled data-disabled:pointer-events-none;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-nowrap;
+  @apply transition-all;
+  @apply text-text-secondary;
+  @apply px-4;
+  @apply py-3;
+  @apply hover:bg-bg-hover;
+  @apply hover:text-text-hover;
+  @apply disabled:cursor-default;
+  @apply disabled:opacity-60;
+  @apply data-disabled:cursor-default;
+  @apply data-disabled:opacity-60;
+  @apply data-disabled:text-text-disabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility button-ghost {
-  @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-nowrap transition-all;
-  @apply text-text-brand border-border-brand bg-bg-brand/5 border-2 border-dashed px-4 py-3;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-nowrap;
+  @apply transition-all;
+  @apply text-text-brand;
+  @apply border-border-brand;
+  @apply bg-bg-brand/5;
+  @apply border-2;
+  @apply border-dashed;
+  @apply px-4;
+  @apply py-3;
   @apply hover:bg-bg-brand/10;
-  @apply data-disabled:text-text-disabled data-disabled:pointer-events-none;
+  @apply disabled:cursor-default;
+  @apply disabled:opacity-60;
+  @apply data-disabled:cursor-default;
+  @apply data-disabled:opacity-60;
+  @apply data-disabled:text-text-disabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility button-togglable {
-  @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-nowrap transition-all;
-  @apply text-text-secondary px-4 py-3;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-nowrap;
+  @apply transition-all;
+  @apply text-text-secondary;
+  @apply px-4;
+  @apply py-3;
   @apply hover:bg-bg-hover;
-  @apply data-[active]:bg-bg-hover data-[active]:text-text;
-  @apply data-disabled:text-text-disabled data-disabled:pointer-events-none;
+  @apply data-active:bg-bg-hover;
+  @apply data-active:text-text;
+  @apply disabled:cursor-default;
+  @apply disabled:opacity-60;
+  @apply data-disabled:cursor-default;
+  @apply data-disabled:opacity-60;
+  @apply data-disabled:text-text-disabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility button-icon {
-  @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-nowrap transition-all;
-  @apply flex h-9 min-w-9 items-center justify-center px-2;
-  @apply hover:bg-bg-hover hover:text-text-hover;
-  @apply data-disabled:text-text-disabled data-disabled:pointer-events-none;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-nowrap;
+  @apply transition-all;
+  @apply flex;
+  @apply h-9;
+  @apply min-w-9;
+  @apply items-center;
+  @apply justify-center;
+  @apply px-2;
+  @apply hover:bg-bg-hover;
+  @apply hover:text-text-hover;
+  @apply disabled:cursor-default;
+  @apply disabled:opacity-60;
+  @apply data-disabled:cursor-default;
+  @apply data-disabled:opacity-60;
+  @apply data-disabled:text-text-disabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility button-icon-togglable {
-  @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-nowrap transition-all;
-  @apply flex h-9 min-w-9 items-center justify-center px-2;
-  @apply text-text-secondary bg-transparent;
-  @apply hover:bg-bg-hover hover:text-text-hover;
-  @apply data-[active]:bg-bg-selected data-[active]:text-text-selected;
-  @apply data-[active]:hover:bg-bg-selected-hover;
-  @apply data-disabled:text-text-disabled data-disabled:pointer-events-none;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-nowrap;
+  @apply transition-all;
+  @apply flex;
+  @apply h-9;
+  @apply min-w-9;
+  @apply items-center;
+  @apply justify-center;
+  @apply px-2;
+  @apply text-text-secondary;
+  @apply bg-transparent;
+  @apply hover:bg-bg-hover;
+  @apply hover:text-text-hover;
+  @apply data-active:bg-bg-selected;
+  @apply data-active:text-text-selected;
+  @apply data-active:hover:bg-bg-selected-hover;
+  @apply disabled:cursor-default;
+  @apply disabled:opacity-60;
+  @apply data-disabled:cursor-default;
+  @apply data-disabled:opacity-60;
+  @apply data-disabled:text-text-disabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility button-icon-togglable-secondary {
-  @apply inline-flex cursor-default items-center justify-center gap-1.5 rounded-lg whitespace-nowrap transition-all;
-  @apply flex h-9 min-w-9 items-center justify-center px-2;
-  @apply text-text-secondary border border-transparent;
-  @apply hover:bg-bg-hover hover:text-text-hover;
-  @apply data-[active]:bg-bg data-[active]:text-text data-[active]:border-border;
-  @apply data-disabled:text-text-disabled data-disabled:pointer-events-none;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply justify-center;
+  @apply gap-1.5;
+  @apply rounded-lg;
+  @apply whitespace-nowrap;
+  @apply transition-all;
+  @apply flex;
+  @apply h-9;
+  @apply min-w-9;
+  @apply items-center;
+  @apply justify-center;
+  @apply px-2;
+  @apply text-text-secondary;
+  @apply border;
+  @apply border-transparent;
+  @apply hover:bg-bg-hover;
+  @apply hover:text-text-hover;
+  @apply data-active:bg-bg;
+  @apply data-active:text-text;
+  @apply data-active:border-border;
+  @apply disabled:cursor-default;
+  @apply disabled:opacity-60;
+  @apply data-disabled:cursor-default;
+  @apply data-disabled:opacity-60;
+  @apply data-disabled:text-text-disabled;
+  @apply data-disabled:pointer-events-none;
 }
 
 @utility input {
-  @apply text-text w-full cursor-default border-0 bg-transparent text-center outline-0;
-  @apply bg-bg-secondary rounded-lg px-2 py-1;
+  @apply text-text;
+  @apply w-full;
+  @apply cursor-default;
+  @apply border-0;
+  @apply bg-transparent;
+  @apply text-center;
+  @apply outline-0;
+  @apply bg-bg-secondary;
+  @apply rounded-lg;
+  @apply px-2;
+  @apply py-1;
   @apply placeholder:text-text-tertiary;
-  @apply hover:outline-border hover:outline;
-  @apply focus:outline-border-selected focus:outline;
-  @apply data-disabled:bg-bg-disabled data-disabled:text-text-ondisabled;
+  @apply hover:outline-border;
+  @apply hover:outline;
+  @apply focus:outline-border-selected;
+  @apply focus:outline;
+  @apply data-disabled:bg-bg-disabled;
+  @apply data-disabled:text-text-ondisabled;
   font-size: inherit;
 }
 
 @utility input-without-border {
-  @apply text-text w-full cursor-default border-0 bg-transparent text-center outline-0;
+  @apply text-text;
+  @apply w-full;
+  @apply cursor-default;
+  @apply border-0;
+  @apply bg-transparent;
+  @apply text-center;
+  @apply outline-0;
   @apply placeholder:text-text-tertiary;
-  @apply data-disabled:bg-bg-disabled data-disabled:text-text-ondisabled;
+  @apply data-disabled:bg-bg-disabled;
+  @apply data-disabled:text-text-ondisabled;
   font-size: inherit;
 }
 
 @utility label {
-  @apply text-text-secondary text-sm;
+  @apply text-text-secondary;
+  @apply text-sm;
+  @apply font-semibold;
+  @apply tracking-widest;
+  @apply uppercase;
 }
 
 @utility label-group {
-  @apply text-text-secondary bg-bg-tertiary sticky top-0 right-0 left-0 z-40 px-5 py-2 text-sm uppercase;
+  @apply text-text-secondary;
+  @apply bg-bg-tertiary;
+  @apply sticky;
+  @apply top-0;
+  @apply right-0;
+  @apply left-0;
+  @apply z-40;
+  @apply px-5;
+  @apply py-2;
+  @apply text-sm;
+  @apply uppercase;
 }
 
 @utility badge-property-name {
-  @apply inline-flex cursor-default items-center gap-1 rounded-full px-2 pt-1 pb-[0.2em] leading-none whitespace-nowrap not-italic;
-  @apply text-text-component border-border-component rounded-lg border-2 font-mono;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply gap-1;
+  @apply rounded-full;
+  @apply px-2;
+  @apply pt-1;
+  @apply pb-[0.2em];
+  @apply leading-none;
+  @apply whitespace-nowrap;
+  @apply not-italic;
+  @apply text-text-component;
+  @apply border-border-component;
+  @apply rounded-lg;
+  @apply border-2;
+  @apply font-mono;
 }
 
 @utility badge-property-value {
-  @apply inline-flex cursor-default items-center gap-1 rounded-full px-2 pt-1 pb-[0.2em] leading-none whitespace-nowrap not-italic;
-  @apply text-text border-border hover:bg-bg-hover rounded-lg border font-mono;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply gap-1;
+  @apply rounded-full;
+  @apply px-2;
+  @apply pt-1;
+  @apply pb-[0.2em];
+  @apply leading-none;
+  @apply whitespace-nowrap;
+  @apply not-italic;
+  @apply text-text;
+  @apply border-border;
+  @apply hover:bg-bg-hover;
+  @apply rounded-lg;
+  @apply border;
+  @apply font-mono;
 }
 
 @utility pill-danger {
-  @apply inline-flex cursor-default items-center gap-1 rounded-full px-2 pt-1 pb-[0.2em] leading-none whitespace-nowrap not-italic;
-  @apply bg-bg-danger text-text-ondanger;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply gap-1;
+  @apply rounded-full;
+  @apply px-2;
+  @apply pt-1;
+  @apply pb-[0.2em];
+  @apply leading-none;
+  @apply whitespace-nowrap;
+  @apply not-italic;
+  @apply bg-bg-danger;
+  @apply text-text-ondanger;
 }
 
 @utility pill-neutral {
-  @apply inline-flex cursor-default items-center gap-1 rounded-full px-2 pt-1 pb-[0.2em] leading-none whitespace-nowrap not-italic;
-  @apply bg-bg-hover text-text-hover;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply gap-1;
+  @apply rounded-full;
+  @apply px-2;
+  @apply pt-1;
+  @apply pb-[0.2em];
+  @apply leading-none;
+  @apply whitespace-nowrap;
+  @apply not-italic;
+  @apply bg-bg-hover;
+  @apply text-text-hover;
 }
 
 @utility pill-interactive {
-  @apply inline-flex cursor-default items-center gap-1 rounded-full px-2 pt-1 pb-[0.2em] leading-none whitespace-nowrap not-italic;
-  @apply bg-bg text-text border border-transparent;
-  @apply hover:text-text-brand hover:bg-bg-hover hover:border-border-brand;
+  @apply inline-flex;
+  @apply cursor-default;
+  @apply items-center;
+  @apply gap-1;
+  @apply rounded-full;
+  @apply px-2;
+  @apply pt-1;
+  @apply pb-[0.2em];
+  @apply leading-none;
+  @apply whitespace-nowrap;
+  @apply not-italic;
+  @apply bg-bg;
+  @apply text-text;
+  @apply border;
+  @apply border-transparent;
+  @apply hover:text-text-brand;
+  @apply hover:bg-bg-hover;
+  @apply hover:border-border-brand;
 }
 
 @utility popover {
-  @apply bg-bg-inverse/90 text-text-oninverse block rounded-2xl py-2;
+  @apply bg-bg-inverse/90;
+  @apply text-text-oninverse;
+  @apply block;
+  @apply rounded-2xl;
+  @apply py-2;
+  @apply max-w-[calc(100vw-3rem)];
+
+  .label {
+    @apply text-text-oninverse;
+  }
+}
+
+@utility horizontal-rule {
+  @apply border-text-oninverse/20;
+  @apply my-1;
+  @apply w-full;
+  @apply border-t;
 }

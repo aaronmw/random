@@ -1,6 +1,6 @@
 import { MenuItem, MenuItemProps } from '@/components/MenuItem'
 import { Menu as BaseUIMenu } from '@base-ui-components/react'
-import { ComponentProps, ElementType, MouseEvent } from 'react'
+import { ComponentProps, MouseEvent, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
 
 export type MenuButtonProps = Omit<ComponentProps<'span'>, 'children'> & {
@@ -15,38 +15,24 @@ export function MenuButton({
   items,
   ...otherProps
 }: MenuButtonProps) {
-  const itemsModifiedToBlurOnClick = items.map((item) => ({
+  const [isOpen, setIsOpen] = useState(false)
+
+  const itemsModifiedToCloseMenu = items.map((item) => ({
     ...item,
     onClick: (event: MouseEvent<any>) => {
-      // Close menu immediately by blurring all potential trigger elements
-      // Use requestAnimationFrame to ensure blur happens before any blocking operations
-      requestAnimationFrame(() => {
-        // Find all button-icon elements that might be menu triggers
-        const triggers = document.querySelectorAll('.button-icon[aria-expanded="true"]')
-        triggers.forEach((trigger) => {
-          if (trigger instanceof HTMLElement) {
-            trigger.blur()
-          }
-        })
-
-        // Also blur activeElement
-        if (document.activeElement instanceof HTMLElement) {
-          document.activeElement.blur()
-        }
-      })
-
-      // Also blur synchronously as immediate fallback
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur()
-      }
-
-      // Call the original onClick handler
+      // Close menu immediately when any item is clicked
+      setIsOpen(false)
+      // Call the original onClick handler (may be async)
       item.onClick?.(event)
     },
   }))
 
   return (
-    <BaseUIMenu.Root disabled={disabled}>
+    <BaseUIMenu.Root
+      disabled={disabled}
+      open={isOpen}
+      onOpenChange={setIsOpen}
+    >
       <BaseUIMenu.Trigger
         render={<span />}
         nativeButton={false}
@@ -60,16 +46,39 @@ export function MenuButton({
         </span>
       </BaseUIMenu.Trigger>
       <BaseUIMenu.Portal>
-        <BaseUIMenu.Positioner sideOffset={8}>
+        <BaseUIMenu.Positioner sideOffset={8} collisionPadding={16}>
           <BaseUIMenu.Popup className="popover">
-            {itemsModifiedToBlurOnClick.map((item, index) => (
-              <BaseUIMenu.Item key={index}>
-                <MenuItem
-                  key={index}
-                  {...item}
-                />
-              </BaseUIMenu.Item>
-            ))}
+            {itemsModifiedToCloseMenu.map((item, index) => {
+              const { id, 'aria-checked': ariaChecked, 'data-enabled': dataEnabled, ...itemPropsWithoutId } = item
+              // Ensure attributes are always strings (default to 'false' if undefined)
+              const ariaCheckedValue = ariaChecked ?? 'false'
+              const dataEnabledValue = dataEnabled ?? 'false'
+              const wrapperProps = id
+                ? {
+                    render: (props: any) => (
+                      <div 
+                        {...props} 
+                        data-testid={id}
+                        aria-checked={ariaCheckedValue}
+                        data-enabled={dataEnabledValue}
+                      />
+                    ),
+                  }
+                : {}
+              return (
+                <BaseUIMenu.Item
+                  key={id || index}
+                  {...wrapperProps}
+                >
+                  <MenuItem
+                    key={id || index}
+                    {...itemPropsWithoutId}
+                    ariaChecked={ariaCheckedValue as any}
+                    dataEnabled={dataEnabledValue as any}
+                  />
+                </BaseUIMenu.Item>
+              )
+            })}
           </BaseUIMenu.Popup>
         </BaseUIMenu.Positioner>
       </BaseUIMenu.Portal>

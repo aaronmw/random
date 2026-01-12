@@ -21,6 +21,7 @@ import {
   updateTextPropertySettings,
 } from '@/lib/services/propertySettingsService'
 import { Database } from '@/supabase/generated-types'
+import { dispatchTestSignal } from '@/lib/utils/testSignals'
 import get from 'lodash/get'
 import {
   ChangeEvent,
@@ -68,11 +69,25 @@ function PreMemoPropertySettingsPanel({
     id: propertySettingId,
     is_enabled: isEnabled = false,
     randomization_mode: mode = 'range',
-    post_randomization_sort_order: sortOrder = 'none',
     text_property_settings: textSettings,
     dimension_property_settings: dimensionSettings,
     numeric_property_settings: numericSettings,
   } = propertySetting
+
+  const sortOrderMap: Partial<
+    Record<
+      RandomizationMode,
+      Database['public']['Enums']['post_randomization_sort_order'] | undefined
+    >
+  > = {
+    range: (propertySetting as any).post_range_randomization_sort_order,
+    list: (propertySetting as any).post_list_randomization_sort_order,
+    addition: (propertySetting as any).post_addition_randomization_sort_order,
+    multiplication: (propertySetting as any)
+      .post_multiplication_randomization_sort_order,
+  }
+  const sortOrder = (sortOrderMap[mode as keyof typeof sortOrderMap] ??
+    'none') as Database['public']['Enums']['post_randomization_sort_order']
 
   const operator = numericSettings?.operator || 'add'
   const showMinMax =
@@ -209,7 +224,7 @@ function PreMemoPropertySettingsPanel({
         throw error
       }
     },
-    [propertySettingId],
+    [propertySettingId, propertySetting],
   )
 
   const revertStateOnError = useCallback(
@@ -243,7 +258,13 @@ function PreMemoPropertySettingsPanel({
   // Helper function for optimistic updates with error handling
   const updateWithOptimisticState = useCallback(
     async (path: string, newValue: unknown, updateFn: () => Promise<void>) => {
-      const currentValue = get(propertySetting, path)
+      // For sort order, update the correct mode-specific column
+      const actualPath =
+        path === 'post_randomization_sort_order'
+          ? `post_${mode}_randomization_sort_order`
+          : path
+
+      const currentValue = get(propertySetting, actualPath)
       if (currentValue === newValue) return
 
       // Optimistically update local state immediately
@@ -251,7 +272,7 @@ function PreMemoPropertySettingsPanel({
         dispatch({
           type: 'setStateByPath',
           payload: {
-            path: `propertySettings.${propertyName}.${path}`,
+            path: `propertySettings.${propertyName}.${actualPath}`,
             value: newValue,
           },
         })
@@ -259,6 +280,21 @@ function PreMemoPropertySettingsPanel({
 
       try {
         await updateFn()
+        // Dispatch test signal after successful DB update
+        dispatchTestSignal({
+          type: 'property-setting-updated',
+          propertyName,
+          path: actualPath,
+          value: newValue,
+        })
+        // Also dispatch specific signal for enabled state changes
+        if (actualPath === 'is_enabled') {
+          dispatchTestSignal({
+            type: 'property-setting-enabled',
+            propertyName,
+            isEnabled: newValue as boolean,
+          })
+        }
       } catch (error) {
         console.error('Error updating property setting:', error)
         // Revert on error
@@ -266,14 +302,14 @@ function PreMemoPropertySettingsPanel({
           dispatch({
             type: 'setStateByPath',
             payload: {
-              path: `propertySettings.${propertyName}.${path}`,
+              path: `propertySettings.${propertyName}.${actualPath}`,
               value: currentValue,
             },
           })
         }
       }
     },
-    [dispatch, propertyName, propertySetting],
+    [dispatch, propertyName, propertySetting, mode],
   )
 
   const handleChange = useCallback(
@@ -331,6 +367,7 @@ function PreMemoPropertySettingsPanel({
         await updateWithOptimisticState(path, newValue, async () => {
           await updatePropertySettingSortOrder(
             propertySettingId,
+            mode,
             newValue as Database['public']['Enums']['post_randomization_sort_order'],
           )
         })
@@ -380,6 +417,8 @@ function PreMemoPropertySettingsPanel({
   return (
     <div
       id={`${propertyName}-config-panel`}
+      aria-expanded={isEnabled}
+      data-testid={`property-panel-${propertyName}`}
       className={twMerge(
         'relative transition-all duration-300 ease-out will-change-transform',
         'focus:ring-border-brand focus:z-10 focus:ring-2',
@@ -397,7 +436,12 @@ function PreMemoPropertySettingsPanel({
           'transition-all duration-300 ease-out',
           isEnabled
             ? ['h-15', 'bg-bg']
-            : ['h-11', 'text-text-secondary', 'hover:text-text'],
+            : [
+                'h-11',
+                'text-text-secondary',
+                'hover:text-text',
+                'hover:bg-bg-brand-tertiary',
+              ],
         )}
         onClick={
           !isEnabled ? handleClickSetIsEnabled.bind(null, true) : undefined
@@ -418,6 +462,13 @@ function PreMemoPropertySettingsPanel({
           }
         >
           <button
+            aria-pressed={isEnabled}
+            aria-label={
+              isEnabled
+                ? `Disable ${propertyName} randomization`
+                : `Enable ${propertyName} randomization`
+            }
+            data-testid={`property-toggle-${propertyName}`}
             className={twJoin(
               'button-icon relative z-50',
               isEnabled
@@ -453,6 +504,7 @@ function PreMemoPropertySettingsPanel({
             label="mode"
             value={mode}
             variant="full"
+            propertyName={propertyName}
             onChange={handleSegmentedControlChange.bind(
               null,
               'randomization_mode',
@@ -462,6 +514,7 @@ function PreMemoPropertySettingsPanel({
               <SegmentedControlInputField.OptionButton
                 key={mode}
                 value={mode}
+                ariaLabel={`${mode} mode`}
               >
                 <Tooltip tipContents={tooltip}>
                   <Icon name={iconName as IconString} />
@@ -487,6 +540,8 @@ function PreMemoPropertySettingsPanel({
                     placeholder={String(dataTypeMin)}
                     type="number"
                     variant="half"
+                    propertyName={propertyName}
+                    fieldName="min"
                     onChange={handleChange.bind(
                       null,
                       `${pathToCurrentValue}.min`,
@@ -500,6 +555,8 @@ function PreMemoPropertySettingsPanel({
                     placeholder={String(dataTypeMax)}
                     type="number"
                     variant="half"
+                    propertyName={propertyName}
+                    fieldName="max"
                     onChange={handleChange.bind(
                       null,
                       `${pathToCurrentValue}.max`,
@@ -516,6 +573,8 @@ function PreMemoPropertySettingsPanel({
                           placeholder={EMPTY_INPUT_PLACEHOLDER_TEXT}
                           type="text"
                           variant="half"
+                          propertyName={propertyName}
+                          fieldName="prefix"
                           onChange={handleChange.bind(
                             null,
                             'text_property_settings.prefix',
@@ -527,6 +586,8 @@ function PreMemoPropertySettingsPanel({
                           placeholder={EMPTY_INPUT_PLACEHOLDER_TEXT}
                           type="text"
                           variant="half"
+                          propertyName={propertyName}
+                          fieldName="suffix"
                           onChange={handleChange.bind(
                             null,
                             'text_property_settings.suffix',
@@ -543,6 +604,8 @@ function PreMemoPropertySettingsPanel({
                         type="number"
                         variant="full"
                         className="text-center"
+                        propertyName={propertyName}
+                        fieldName="decimal-places"
                         onChange={handleChange.bind(
                           null,
                           'text_property_settings.decimal_places',
@@ -558,6 +621,8 @@ function PreMemoPropertySettingsPanel({
                         type="text"
                         variant="full"
                         className="text-center"
+                        propertyName={propertyName}
+                        fieldName="thousands-separator"
                         onChange={handleChange.bind(
                           null,
                           'text_property_settings.thousands_separator',
@@ -575,6 +640,7 @@ function PreMemoPropertySettingsPanel({
               value={operator}
               variant="full"
               variantForButton="button.icon.togglable.secondary"
+              propertyName={propertyName}
               onChange={handleSegmentedControlChange.bind(
                 null,
                 'numeric_property_settings.operator',
@@ -595,6 +661,7 @@ function PreMemoPropertySettingsPanel({
                 <SegmentedControlInputField.OptionButton
                   key={value}
                   value={value}
+                  ariaLabel={label}
                 >
                   <Tooltip tipContents={label}>
                     <Icon name={iconName as IconString} />
@@ -609,7 +676,11 @@ function PreMemoPropertySettingsPanel({
 
           {dimensionSettings?.preserve_aspect_ratio !== undefined && (
             <SegmentedControlInputField
-              label="lock aspect ratio"
+              label={
+                propertyName === 'width'
+                  ? 'auto-scale height'
+                  : 'auto-scale width'
+              }
               value={dimensionSettings.preserve_aspect_ratio || false}
               variant="full"
               variantForButton="button.icon.togglable.secondary"
@@ -621,12 +692,12 @@ function PreMemoPropertySettingsPanel({
               {[
                 {
                   id: `${propertyName}-preserve-aspect-ratio-off`,
-                  label: 'OFF',
+                  label: 'no',
                   value: false,
                 },
                 {
                   id: `${propertyName}-preserve-aspect-ratio-on`,
-                  label: 'ON',
+                  label: 'yes',
                   value: true,
                 },
               ].map(({ id, label, value }) => (

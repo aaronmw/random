@@ -24,12 +24,6 @@ export function ResizeHandle() {
     setIsResizing(true)
   }
 
-  function handleMouseUp() {
-    setStartingWindowHeight(null)
-    setStartingClientY(null)
-    setIsResizing(false)
-  }
-
   useEffect(() => {
     if (!hasRestoredPluginHeight && storedPluginHeight) {
       dispatchPluginAction({
@@ -56,6 +50,12 @@ export function ResizeHandle() {
       })
 
       setStoredPluginHeight(newHeight)
+    }
+
+    function handleMouseUp() {
+      setStartingWindowHeight(null)
+      setStartingClientY(null)
+      setIsResizing(false)
     }
 
     if (isResizing) {

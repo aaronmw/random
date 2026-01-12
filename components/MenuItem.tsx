@@ -40,35 +40,45 @@ export function MenuItem<T extends 'button' | 'a' | typeof Link>({
     onClick?.(event)
   }
 
+  // Extract id, ariaChecked, and dataEnabled from props
+  const propsWithId = props as any
+  const { id, ariaChecked, dataEnabled, ...restProps } = propsWithId
+
   return (
     <Component
       className={twMerge(
-        'group flex w-full items-center gap-2',
+        'group/menuItem flex w-full items-center gap-2',
         'px-2 py-0.5',
         className,
       )}
       onClick={handleClick}
-      {...props}
+      disabled={disabled}
+      {...(id ? { 'data-testid': id } : {})}
+      aria-checked={ariaChecked ?? 'false'}
+      data-enabled={dataEnabled ?? 'false'}
+      {...restProps}
     >
       <span
         className={twJoin(
           'flex w-full items-center justify-between gap-2 px-2',
           'rounded-lg',
-          'group-hover:bg-bg-brand group-hover:text-text-onbrand',
+          !disabled &&
+            'group-hover/menuItem:bg-bg-brand group-hover/menuItem:text-text-onbrand',
+          disabled && 'pointer-events-none cursor-default opacity-50',
           selected && [
             'bg-bg-selected text-text-onselected',
             'hover:bg-bg-selected-hover hover:text-text-onselected',
           ],
         )}
       >
-        <span className="flex w-full items-center gap-2">
+        <span className="flex w-full items-baseline gap-2">
           {(icon || iconLeft) && (
             <span className="flex size-8 shrink-0 items-center justify-center">
               <Icon name={icon ?? iconLeft ?? 'solid:circle-small'} />
             </span>
           )}
 
-          <span className="flex w-full items-center justify-between">
+          <span className="flex w-full items-baseline justify-between">
             {label}
           </span>
         </span>

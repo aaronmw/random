@@ -18,7 +18,7 @@ export function Tooltip({
         {children}
       </BaseUITooltip.Trigger>
       <BaseUITooltip.Portal>
-        <BaseUITooltip.Positioner sideOffset={10}>
+        <BaseUITooltip.Positioner sideOffset={10} collisionPadding={16}>
           <BaseUITooltip.Popup>
             <div
               className={twMerge('popover max-w-72 px-5', classNamesForTooltip)}

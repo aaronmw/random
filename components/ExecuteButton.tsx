@@ -6,10 +6,20 @@ import { Icon } from '@/components/Icon'
 import { Tooltip } from '@/components/Tooltip'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
 import { pluralize } from '@/lib/pluralize'
+import {
+  duplicatePreset,
+  getLocalPresetId,
+  updatePreset,
+} from '@/lib/services/propertySettingsService'
 import pickBy from 'lodash/pickBy'
 
 export function ExecuteButton() {
-  const { propertySettings, selectedNodePluginData } = useAppContext()
+  const {
+    propertySettings,
+    selectedNodePluginData,
+    currentUserId,
+    activePresetId,
+  } = useAppContext()
   const enabledPropertySettings = pickBy(propertySettings, 'is_enabled')
   const hasNodesSelected = selectedNodePluginData.length > 0
   const hasPropertiesEnabled = Object.keys(enabledPropertySettings).length > 0
@@ -28,23 +38,83 @@ export function ExecuteButton() {
   async function handleClickExecute() {
     // Log the property settings being sent for debugging
     Object.entries(enabledPropertySettings).forEach(([key, value]) => {
-      if (key === 'opacity') {
-        const numericValue = value as any
-        console.log('Opacity property settings being sent:', {
-          min: numericValue.min,
-          max: numericValue.max,
-          randomization_mode: numericValue.randomization_mode,
-          numeric_property_settings: numericValue.numeric_property_settings,
+      const settings = value as any
+      if (settings.randomization_mode === 'list') {
+        console.log('List property settings being sent:', {
+          propertyName: key,
+          randomization_mode: settings.randomization_mode,
+          hasModeOptions: !!settings.modeOptions,
+          modeOptionsListOptions:
+            settings.modeOptions?.list?.options?.length || 0,
+          hasListPropertySettings: !!settings.list_property_settings,
+          listPropertySettingsOptions:
+            settings.list_property_settings?.options?.substring(0, 100) ||
+            'none',
         })
       }
     })
 
+    // Execute the randomization
     dispatchPluginAction({
       type: 'execute',
       payload: {
         propertySettings: enabledPropertySettings,
       },
     })
+
+    // Update or create preset and write preset ID to nodes
+    if (currentUserId && hasNodesSelected) {
+      try {
+        const localPresetId = await getLocalPresetId(currentUserId)
+        if (!localPresetId) {
+          console.error('Local preset ID not found')
+          return
+        }
+
+        // If there's an active preset (not local), update it instead of creating a new one
+        if (activePresetId && activePresetId !== localPresetId) {
+          console.log('Updating active preset:', activePresetId)
+
+          // Convert property settings to array format for updatePreset
+          const propertySettingsArray = Object.values(enabledPropertySettings)
+
+          // Update the active preset with current property settings
+          await updatePreset(
+            activePresetId,
+            currentUserId,
+            propertySettingsArray,
+          )
+
+          // Write the active preset ID to all selected nodes
+          dispatchPluginAction({
+            type: 'setPresetIdOnNodes',
+            payload: {
+              presetId: activePresetId,
+            },
+          })
+        } else {
+          // No active preset or active preset is local - duplicate local preset as before
+          const newPreset = await duplicatePreset(
+            localPresetId,
+            currentUserId,
+            'hidden',
+          )
+
+          // Write the preset ID to all selected nodes
+          dispatchPluginAction({
+            type: 'setPresetIdOnNodes',
+            payload: {
+              presetId: newPreset.id,
+            },
+          })
+        }
+      } catch (error) {
+        console.error(
+          'Error updating/duplicating preset and setting preset ID on nodes:',
+          error,
+        )
+      }
+    }
   }
 
   return (

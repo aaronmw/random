@@ -41,7 +41,7 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
     return null
   }
 
-  const { id: propertySettingId } = singlePropertySettings
+  const { id: propertySettingId, randomization_mode } = singlePropertySettings
 
   const colorPickerElementRef = useRef<HTMLInputElement>(null)
   const scrollingElementRef = useRef<HTMLElement>(null)
@@ -226,7 +226,7 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
         <span className="absolute top-0 right-0 z-10 flex gap-3">
           {isClient && (
             <>
-              {process.env.NODE_ENV === 'development' && (
+              {randomization_mode === 'list' && (
                 <button
                   className="link flex items-center gap-1"
                   onClick={() => setIsShowingRandy(true)}
@@ -381,6 +381,7 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
         <Randy
           isOpen={isShowingRandy}
           onClose={() => setIsShowingRandy(false)}
+          isColor={dataType === 'color'}
           onResponse={async (response) => {
             const currentValues = get(singlePropertySettings, pathToValue)
             const currentString =

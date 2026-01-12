@@ -3,6 +3,7 @@ import {
   MouseEvent,
   createContext,
   useContext,
+  useEffect,
   useRef,
   useState,
 } from 'react'
@@ -22,6 +23,7 @@ interface SegmentedControlInputFieldProps<V extends string | number | boolean>
   variantForButton?: ButtonVariant
   onChange?: (newValue: V, event: MouseEvent<HTMLButtonElement>) => void
   value?: V
+  propertyName?: string
 }
 
 interface SegmentedControlInputContextObject<
@@ -30,6 +32,7 @@ interface SegmentedControlInputContextObject<
   currentValue?: V
   variantForButton?: ButtonVariant
   handleClickButton: (newValue: V, event: MouseEvent<HTMLButtonElement>) => void
+  propertyName?: string
 }
 
 const SegmentedControlInputContext = createContext<
@@ -49,9 +52,15 @@ const SegmentedControlInputField = <V extends string | number | boolean>({
   variant,
   variantForButton = 'button.icon.togglable',
   onChange,
+  propertyName,
   ...otherProps
 }: SegmentedControlInputFieldProps<V>) => {
   const [currentValue, setCurrentValue] = useState<V | undefined>(value)
+
+  // Sync local state when value prop changes (e.g., after reload)
+  useEffect(() => {
+    setCurrentValue(value)
+  }, [value])
 
   // Add key to force re-render on hot reload
   const instanceId = useRef(Math.random().toString(36).slice(2))
@@ -68,16 +77,19 @@ const SegmentedControlInputField = <V extends string | number | boolean>({
   return (
     <SegmentedControlInputContext
       key={instanceId.current}
-      value={{ currentValue, handleClickButton, variantForButton }}
+      value={{ currentValue, handleClickButton, variantForButton, propertyName }}
     >
       <FieldContainer
         label={label}
         description={description}
         variant={variant}
         className={twMerge('bg-transparent', className)}
+        id={propertyName ? `mode-label-${propertyName}` : undefined}
         {...otherProps}
       >
         <div
+          role="radiogroup"
+          aria-labelledby={propertyName ? `mode-label-${propertyName}` : undefined}
           className={twJoin(
             'group w-fit outline-0',
             'flex flex-row-reverse',
@@ -97,13 +109,14 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   value,
   onClick,
   className,
+  ariaLabel,
   ...otherProps
 }: Omit<ComponentProps<'button'>, 'value'> & {
   value: string | number | boolean
+  ariaLabel?: string
 }) {
-  const { currentValue, handleClickButton, variantForButton } = useContext(
-    SegmentedControlInputContext,
-  )
+  const { currentValue, handleClickButton, variantForButton, propertyName } =
+    useContext(SegmentedControlInputContext)
 
   const isSelected = value === currentValue
 
@@ -117,8 +130,17 @@ SegmentedControlInputField.OptionButton = function OptionButton({
       ? 'button-icon-togglable-secondary'
       : 'button-icon-togglable'
 
+  const testId =
+    propertyName && typeof value === 'string'
+      ? `mode-button-${propertyName}-${value}`
+      : undefined
+
   return (
     <button
+      role="radio"
+      aria-selected={isSelected}
+      aria-label={ariaLabel || (typeof value === 'string' ? value : String(value))}
+      data-testid={testId}
       className={twMerge(variantClass, className)}
       data-active={isSelected ? 'true' : undefined}
       onClick={innerHandleClickButton}
