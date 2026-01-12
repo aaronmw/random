@@ -6,10 +6,15 @@ import { useEffect } from 'react'
 export default function PropertiesIndexPage() {
   const router = useRouter()
   const params = useSearchParams()
-  const isLightMode = params.get('isLightMode') === 'true'
+  const isLightModeFromQuery = params.get('isLightMode')
+  const isLightMode = isLightModeFromQuery === 'true'
 
   useEffect(() => {
-    document.querySelector('body')?.classList.toggle('dark', !isLightMode)
+    // Set dark class based on query string if available
+    // Otherwise, the state will handle it via AppWrapper
+    if (isLightModeFromQuery !== null) {
+      document.querySelector('body')?.classList.toggle('dark', !isLightMode)
+    }
     router.push('/properties')
-  }, [isLightMode, router])
+  }, [isLightMode, isLightModeFromQuery, router])
 }

@@ -24,25 +24,46 @@ const promptSuggestions = [
   'types of dog',
 ]
 
+const colorPromptSuggestions = [
+  'autumn shades',
+  'apples',
+  'ocean colors',
+  'sunset colors',
+  'forest greens',
+  'berry colors',
+  'sky blues',
+  'earth tones',
+  'pastel colors',
+  'neon colors',
+  'warm colors',
+  'cool colors',
+  'jewel tones',
+  'desert colors',
+  'tropical colors',
+]
+
 interface RandyProps extends Pick<ModalWindowProps, 'isOpen' | 'onClose'> {
   onResponse: (response: string[]) => void
+  isColor?: boolean
 }
 
-export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
+export function Randy({ isOpen, onClose, onResponse, isColor = false }: RandyProps) {
   const [isFetchingResults, setIsFetchingResults] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const suggestions = isColor ? colorPromptSuggestions : promptSuggestions
+
   useEffect(() => {
     if (isOpen) {
-      setUserPrompt(sample(promptSuggestions))
+      setUserPrompt(sample(suggestions))
       requestAnimationFrame(() => {
         inputRef.current?.select()
       })
     }
-  }, [isOpen])
+  }, [isOpen, suggestions])
 
-  const [userPrompt, setUserPrompt] = useState(sample(promptSuggestions))
+  const [userPrompt, setUserPrompt] = useState(sample(suggestions))
 
   // TODO: Afford customization, or extract into config constant
   const [resultCount, setResultCount] = useState(20)
@@ -52,7 +73,10 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
     event.stopPropagation()
 
     // TODO: Actually make this safe
-    const safePrompt = `Give me ${resultCount} random ${userPrompt}`
+    const basePrompt = `Give me ${resultCount} random ${userPrompt}`
+    const safePrompt = isColor
+      ? `${basePrompt}. Return only hex color codes (format: #RRGGBB), one per line, with no additional text or descriptions.`
+      : basePrompt
 
     setIsFetchingResults(true)
 
@@ -60,7 +84,7 @@ export function Randy({ isOpen, onClose, onResponse }: RandyProps) {
       const response =
         (await fetch('/api/query-chatgpt', {
           method: 'POST',
-          body: JSON.stringify({ prompt: safePrompt }),
+          body: JSON.stringify({ prompt: safePrompt, isColor }),
         })) || []
 
       const data = await response.json()

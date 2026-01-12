@@ -1,11 +1,11 @@
 import type {
-  AnchorPosition,
-  PropertyName,
-  PropertySettings,
-  PropertySettingsRow,
+    AnchorPosition,
+    PropertyName,
+    PropertySettingsRow,
 } from '@/app/types'
 import { hasProperty } from '@/lib/hasProperty'
 import { rotateOriginXY } from '@/lib/rotateOriginXY'
+import type { PropertySettingsWithDetails } from '@/lib/services/propertySettingsService'
 import { setCharacters } from '@/lib/setCharacters'
 import { toDegrees } from '@/lib/toDegrees'
 import { toPercentage } from '@/lib/toPercentage'
@@ -25,7 +25,7 @@ export async function setNodeProperty({
 }: {
   enabledPropertySettings: Partial<PropertySettingsRow>
   node: SceneNode
-  propertySettings: PropertySettings
+  propertySettings: PropertySettingsWithDetails
   propertyName: PropertyName
   value: string | number
 }) {
@@ -36,13 +36,13 @@ export async function setNodeProperty({
       }
 
       const {
-        decimalPlaces = 0,
-        decimalCharacter = '.',
-        thousandsSeparator = '',
+        decimal_places: decimalPlaces = 0,
+        thousands_separator: thousandsSeparator = '',
         prefix = '',
         suffix = '',
       } = propertySettings
 
+      const decimalCharacter = '.'
       const formattedValue = String(value)
         .split('.')
         .map((part, index) => {
@@ -54,7 +54,7 @@ export async function setNodeProperty({
         .join(decimalCharacter)
 
       const decimalPart = formattedValue.split(decimalCharacter)[1] || ''
-      const roundedDecimalPart = decimalPart.slice(0, decimalPlaces)
+      const roundedDecimalPart = decimalPart.slice(0, decimalPlaces ?? 0)
 
       await setCharacters({
         node,
@@ -76,11 +76,11 @@ export async function setNodeProperty({
       const newValue = Number(value)
       const scaleFactor = newValue / currentValue
       const newOppositeValue =
-        propertySettings.preserveAspectRatio === true
+        propertySettings.preserve_aspect_ratio === true
           ? currentOppositeValue * scaleFactor
           : currentOppositeValue
       const [verticalOriginName, horizontalOriginName] =
-        propertySettings.anchorPosition!.split('-')
+        (propertySettings.anchor_position || 'center-center').split('-')
       const currentWidth = node.width
       const currentHeight = node.height
       const newWidth = propertyName === 'width' ? newValue : newOppositeValue
@@ -131,6 +131,16 @@ export async function setNodeProperty({
         .toLowerCase()
       const newfillsOrStrokes = cloneDeep(node[fillsOrStrokes])
 
+      // Initialize fills/strokes array if empty
+      if (newfillsOrStrokes.length === 0) {
+        newfillsOrStrokes.push({
+          type: 'SOLID',
+          color: { r: 0, g: 0, b: 0 },
+          opacity: 1,
+          visible: true,
+        })
+      }
+
       newfillsOrStrokes[0].color[channel] = Number(value) / 255
       node[fillsOrStrokes] = newfillsOrStrokes
 
@@ -152,6 +162,17 @@ export async function setNodeProperty({
       }
 
       const newFillsOrStrokes = cloneDeep(node[fillsOrStrokes])
+
+      // Initialize fills/strokes array if empty
+      if (newFillsOrStrokes.length === 0) {
+        newFillsOrStrokes.push({
+          type: 'SOLID',
+          color: { r: 0, g: 0, b: 0 },
+          opacity: 1,
+          visible: true,
+        })
+      }
+
       const currentColorObj = newFillsOrStrokes[0].color
       const hslProperty = propertyName
         .replace(/(fill|stroke)Color/, '')
@@ -195,9 +216,49 @@ export async function setNodeProperty({
 
       const newFillsOrStrokes = cloneDeep(node[fillsOrStrokesPropertyName])
 
+      // Initialize fills/strokes array if empty
+      if (newFillsOrStrokes.length === 0) {
+        if (isColorProperty) {
+          // Initialize with a solid color fill/stroke
+          newFillsOrStrokes.push({
+            type: 'SOLID',
+            color: { r: 0, g: 0, b: 0 },
+            opacity: 1,
+            visible: true,
+          })
+        } else {
+          // Initialize with a solid fill/stroke for opacity
+          newFillsOrStrokes.push({
+            type: 'SOLID',
+            color: { r: 0, g: 0, b: 0 },
+            opacity: 1,
+            visible: true,
+          })
+        }
+      }
+
       const colorOrOpacity = isColorProperty
         ? (() => {
-            const rgb = colord(String(value)).toRgb()
+            // Trim whitespace and normalize hex value
+            let colorValue = String(value).trim()
+
+            // Ensure hex values start with # if they don't already
+            if (colorValue.match(/^[0-9A-Fa-f]{6}$/)) {
+              colorValue = '#' + colorValue
+            }
+
+            console.log('Setting color:', { propertyName, colorValue, originalValue: value })
+
+            // Try to parse the color
+            const color = colord(colorValue)
+            if (!color.isValid()) {
+              console.error('Invalid color value:', colorValue, 'Original:', value)
+              // Fallback to black if invalid
+              return { r: 0, g: 0, b: 0 }
+            }
+
+            const rgb = color.toRgb()
+            console.log('Parsed RGB:', rgb, 'Normalized:', { r: rgb.r / 255, g: rgb.g / 255, b: rgb.b / 255 })
             return {
               r: rgb.r / 255,
               g: rgb.g / 255,
@@ -206,7 +267,24 @@ export async function setNodeProperty({
           })()
         : toPercentage(value)
 
+      // Set the color or opacity
       newFillsOrStrokes[0][colorOrOpacityPropertyName] = colorOrOpacity
+
+      // Ensure the fill/stroke is visible and of type SOLID
+      if (isColorProperty) {
+        newFillsOrStrokes[0].type = 'SOLID'
+        newFillsOrStrokes[0].visible = true
+        // Ensure opacity is set if not already set
+        if (newFillsOrStrokes[0].opacity === undefined) {
+          newFillsOrStrokes[0].opacity = 1
+        }
+      } else {
+        // For opacity, ensure it's between 0 and 1
+        newFillsOrStrokes[0].opacity = Math.max(0, Math.min(1, colorOrOpacity as number))
+        newFillsOrStrokes[0].visible = true
+      }
+
+      console.log('Final fill/stroke:', JSON.stringify(newFillsOrStrokes[0], null, 2))
       node[fillsOrStrokesPropertyName] = newFillsOrStrokes
       break
     }
@@ -258,7 +336,7 @@ export async function setNodeProperty({
     }
 
     case 'rotation': {
-      const { anchorPosition = 'center-center' } = propertySettings
+      const anchorPosition = (propertySettings.anchor_position || 'center-center') as AnchorPosition
 
       const [xOffset, yOffset] = (
         {

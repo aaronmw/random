@@ -6,6 +6,7 @@ export const groupedPropertyNames: [
 ][] = [
   ['special', ['text']],
   ['layout', ['width', 'height', 'x', 'y', 'rotation']],
+  ['effects', ['layerBlur']],
   [
     'fill',
     [

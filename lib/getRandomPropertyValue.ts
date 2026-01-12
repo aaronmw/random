@@ -1,4 +1,5 @@
-import { PropertyName, PropertySettings } from '@/app/types'
+import { PropertyName } from '@/app/types'
+import { PropertySettingsWithDetails } from '@/lib/services/propertySettingsService'
 import get from 'lodash/get'
 import random from 'lodash/random'
 import sample from 'lodash/sample'
@@ -20,10 +21,10 @@ const getRandomPropertyValue = ({
   propertyName,
 }: {
   node: SceneNode
-  propertySettings: PropertySettings
+  propertySettings: PropertySettingsWithDetails
   propertyName: PropertyName
 }) => {
-  const { mode, modeOptions } = propertySettings
+  const { randomization_mode: mode, modeOptions } = propertySettings
 
   let randomValue, newPropertyValue
 
@@ -38,11 +39,12 @@ const getRandomPropertyValue = ({
       break
     }
 
-    case 'calc': {
+    case 'addition':
+    case 'multiplication': {
       invariant(modeOptions.calc, `No calc options for "${propertyName}"`)
 
+      const operator = mode === 'addition' ? 'add' : 'multiply'
       const {
-        operator,
         [operator]: { min, max },
       } = modeOptions.calc
 
@@ -78,11 +80,25 @@ const getRandomPropertyValue = ({
       invariant(modeOptions.list, `No list options for "${propertyName}"`)
 
       const enabledItems = modeOptions.list.options.filter(
-        (listItem) => !String(listItem).startsWith('//'),
+        (listItem: string) => !String(listItem).startsWith('//'),
       )
+
+      console.log('List mode - options:', {
+        propertyName,
+        totalOptions: modeOptions.list.options.length,
+        enabledItemsCount: enabledItems.length,
+        enabledItems,
+      })
+
+      if (enabledItems.length === 0) {
+        console.error(`No enabled items in list for "${propertyName}"`)
+        return undefined
+      }
 
       randomValue = sample(enabledItems)
       newPropertyValue = randomValue
+
+      console.log('Selected random value:', { propertyName, randomValue, newPropertyValue })
       break
     }
   }

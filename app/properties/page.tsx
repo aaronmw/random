@@ -7,6 +7,7 @@ import { PropertySettingsLoadingPlaceholder } from '@/components/PropertySetting
 import { PropertySettingsPanelsList } from '@/components/PropertySettingsPanelsList'
 import { PropertySettingsPanelsListGrouped } from '@/components/PropertySettingsPanelsListGrouped'
 import { PropertySettingsPanelsListGroupedByStatus } from '@/components/PropertySettingsPanelsListGroupedByStatus'
+import { PropertySettingsPanelsListGroupedByTypeWithEnabledOnTop } from '@/components/PropertySettingsPanelsListGroupedByTypeWithEnabledOnTop'
 import { Toolbar } from '@/components/Toolbar'
 import { Suspense } from 'react'
 import { twJoin } from 'tailwind-merge'
@@ -15,6 +16,9 @@ export default function PropertiesPage() {
   const { isGroupedByType, isGroupedByStatus, isFactoryResetting, isUserSettingsChanging, isPresetLoading } = useAppContext()
 
   const renderPropertyList = () => {
+    if (isGroupedByType && isGroupedByStatus) {
+      return <PropertySettingsPanelsListGroupedByTypeWithEnabledOnTop />
+    }
     if (isGroupedByStatus) {
       return <PropertySettingsPanelsListGroupedByStatus />
     }

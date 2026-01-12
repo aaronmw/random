@@ -4,10 +4,14 @@ import invariant from 'tiny-invariant'
 const endpoint = 'https://api.openai.com/v1/chat/completions'
 
 export async function POST(request: NextRequest) {
-  const { prompt } = await request.json()
+  const { prompt, isColor } = await request.json()
 
   try {
     invariant(process.env.OPENAI_API_KEY, 'Missing OPENAI_API_KEY')
+
+    const systemMessage = isColor
+      ? "You always respond with a JSON object with a single key named 'results' and it contains an array of hex color codes (format: #RRGGBB). Each result must be a valid hex color code starting with # followed by 6 hexadecimal characters. Do not include any descriptions or additional text, only hex codes."
+      : "You always respond with a JSON object with a single key named 'results' and it contains an array of strings"
 
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -19,8 +23,7 @@ export async function POST(request: NextRequest) {
         messages: [
           {
             role: 'system',
-            content:
-              "You always respond with a JSON object with a single key named 'results' and it contains an array of strings",
+            content: systemMessage,
           },
           { role: 'user', content: prompt },
         ],
@@ -35,7 +38,19 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json()
 
-    const { results } = JSON.parse(data.choices[0].message.content.trim())
+    let { results } = JSON.parse(data.choices[0].message.content.trim())
+
+    if (isColor) {
+      results = results
+        .map((result: string) => {
+          const trimmed = String(result).trim()
+          if (trimmed.match(/^#[0-9A-Fa-f]{6}$/)) {
+            return trimmed.toUpperCase()
+          }
+          return null
+        })
+        .filter((result: string | null) => result !== null)
+    }
 
     return new Response(JSON.stringify(results))
   } catch (error) {
