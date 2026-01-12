@@ -1,12 +1,24 @@
+import { endNetworkActivity, startNetworkActivity } from '@/lib/utils/networkActivity'
 import { supabaseClient } from '@/supabase/client'
 import { Database } from '@/supabase/generated-types'
-import { startNetworkActivity, endNetworkActivity } from '@/lib/utils/networkActivity'
 
 export type PropertySettingsWithDetails = Database['public']['Tables']['property_settings']['Row'] & {
   text_property_settings?: Database['public']['Tables']['text_property_settings']['Row'] | null
   dimension_property_settings?: Database['public']['Tables']['dimension_property_settings']['Row'] | null
   numeric_property_settings?: Database['public']['Tables']['numeric_property_settings']['Row'] | null
   list_property_settings?: Database['public']['Tables']['list_property_settings']['Row'] | null
+  // Flattened properties for convenience
+  min?: number | null
+  max?: number | null
+  operator?: string | null
+  decimal_places?: number | null
+  prefix?: string | null
+  suffix?: string | null
+  thousands_separator?: string | null
+  anchor_position?: Database['public']['Enums']['anchor_position'] | null
+  dimension?: string | null
+  preserve_aspect_ratio?: boolean | null
+  modeOptions?: any
 }
 
 export async function getPropertySettingsByLabel(label: string): Promise<PropertySettingsWithDetails | null> {
@@ -79,6 +91,25 @@ export async function updatePropertySettingEnabled(
   }
 }
 
+export async function bulkDisableProperties(
+  propertySettingIds: string[]
+): Promise<void> {
+  if (propertySettingIds.length === 0) return
+
+  const { error } = await supabaseClient
+    .from('property_settings')
+    .update({
+      is_enabled: false,
+      date_modified: new Date().toISOString()
+    })
+    .in('id', propertySettingIds)
+
+  if (error) {
+    console.error('Error bulk disabling properties:', error)
+    throw error
+  }
+}
+
 export async function updatePropertySettingMode(
   propertySettingId: string,
   randomizationMode: Database['public']['Enums']['randomization_mode']
@@ -97,14 +128,57 @@ export async function updatePropertySettingMode(
   }
 }
 
+function getSortOrderForMode(
+  ps: PropertySettingsWithDetails,
+  mode: Database['public']['Enums']['randomization_mode']
+): Database['public']['Enums']['post_randomization_sort_order'] {
+  // Access mode-specific sort order properties that exist in the database but aren't in the type
+  const psAny = ps as any
+  switch (mode) {
+    case 'range':
+      return (psAny.post_range_randomization_sort_order as Database['public']['Enums']['post_randomization_sort_order']) ?? 'none'
+    case 'list':
+      return (psAny.post_list_randomization_sort_order as Database['public']['Enums']['post_randomization_sort_order']) ?? 'none'
+    case 'addition':
+      return (psAny.post_addition_randomization_sort_order as Database['public']['Enums']['post_randomization_sort_order']) ?? 'none'
+    case 'multiplication':
+      return (psAny.post_multiplication_randomization_sort_order as Database['public']['Enums']['post_randomization_sort_order']) ?? 'none'
+    default:
+      return 'none'
+  }
+}
+
+function propertySettingToDbFormat(ps: PropertySettingsWithDetails) {
+  return {
+    label: ps.label,
+    randomization_mode: ps.randomization_mode,
+    post_range_randomization_sort_order: getSortOrderForMode(ps, 'range'),
+    post_list_randomization_sort_order: getSortOrderForMode(ps, 'list'),
+    post_addition_randomization_sort_order: getSortOrderForMode(ps, 'addition'),
+    post_multiplication_randomization_sort_order: getSortOrderForMode(ps, 'multiplication'),
+    is_enabled: ps.is_enabled,
+  }
+}
+
 export async function updatePropertySettingSortOrder(
   propertySettingId: string,
+  randomizationMode: Database['public']['Enums']['randomization_mode'],
   sortOrder: Database['public']['Enums']['post_randomization_sort_order']
 ): Promise<void> {
+  const columnMap: Record<Database['public']['Enums']['randomization_mode'], string> = {
+    range: 'post_range_randomization_sort_order',
+    list: 'post_list_randomization_sort_order',
+    addition: 'post_addition_randomization_sort_order',
+    multiplication: 'post_multiplication_randomization_sort_order',
+    chatgpt: 'post_randomization_sort_order', // chatgpt mode uses the generic field
+  }
+
+  const columnName = columnMap[randomizationMode]
+
   const { error } = await supabaseClient
     .from('property_settings')
     .update({
-      post_randomization_sort_order: sortOrder,
+      [columnName]: sortOrder,
       date_modified: new Date().toISOString()
     })
     .eq('id', propertySettingId)
@@ -447,10 +521,24 @@ export async function getUserPresets(
       // Continue with just user's presets if public fetch fails
     }
 
-    // Combine: user's presets first, then public presets from others
+    // Admin users can see the default preset
+    let defaultPreset: Database['public']['Tables']['presets']['Row'] | null = null
+    if (isAdmin) {
+      const { data: defaultPresetData } = await supabaseClient
+        .from('presets')
+        .select('*')
+        .eq('figma_user_id', 'default')
+        .eq('label', '__default__')
+        .maybeSingle()
+
+      defaultPreset = defaultPresetData || null
+    }
+
+    // Combine: user's presets first, then default preset (if admin), then public presets from others
     // User's presets are already sorted by date_modified DESC
     const allPresets = [
       ...(userPresets || []),
+      ...(defaultPreset ? [defaultPreset] : []),
       ...(publicPresets || []),
     ]
 
@@ -464,7 +552,7 @@ export async function createPreset(
   figmaUserId: string,
   label: string,
   propertySettings: PropertySettingsWithDetails[],
-  visibility: 'private' | 'public' = 'private',
+  visibility: 'private' | 'public' | 'hidden' = 'private',
 ): Promise<Database['public']['Tables']['presets']['Row']> {
   startNetworkActivity()
   try {
@@ -488,10 +576,7 @@ export async function createPreset(
 
     // Then create copies of the property settings linked to this preset
     const propertySettingsToInsert = propertySettings.map(ps => ({
-      label: ps.label,
-      randomization_mode: ps.randomization_mode,
-      post_randomization_sort_order: ps.post_randomization_sort_order,
-      is_enabled: ps.is_enabled,
+      ...propertySettingToDbFormat(ps),
       preset_id: preset.id,
       date_created: new Date().toISOString(),
       date_modified: new Date().toISOString(),
@@ -507,72 +592,147 @@ export async function createPreset(
     throw propertySettingsError
   }
 
-  // Create the related settings (text, dimension, numeric)
-  for (let i = 0; i < propertySettings.length; i++) {
-    const originalPs = propertySettings[i]
-    const newPs = newPropertySettings[i]
+  // Create map for quick lookup
+  const propertySettingMap = new Map(
+    newPropertySettings.map((ps, i) => [propertySettings[i].label, ps])
+  )
+
+  // Prepare bulk inserts for detail settings
+  const textSettingsToInsert: any[] = []
+  const dimensionSettingsToInsert: any[] = []
+  const numericSettingsToInsert: any[] = []
+  const listSettingsToInsert: any[] = []
+
+  for (const originalPs of propertySettings) {
+    const newPs = propertySettingMap.get(originalPs.label)
+    if (!newPs) continue
 
     if (originalPs.text_property_settings) {
-      await supabaseClient
-        .from('text_property_settings')
-        .insert({
-          property_setting_id: newPs.id,
-          decimal_places: originalPs.text_property_settings.decimal_places,
-          thousands_separator: originalPs.text_property_settings.thousands_separator,
-          prefix: originalPs.text_property_settings.prefix,
-          suffix: originalPs.text_property_settings.suffix,
-          date_created: new Date().toISOString(),
-          date_modified: new Date().toISOString(),
-        })
+      textSettingsToInsert.push({
+        property_setting_id: newPs.id,
+        decimal_places: originalPs.text_property_settings.decimal_places,
+        thousands_separator: originalPs.text_property_settings.thousands_separator,
+        prefix: originalPs.text_property_settings.prefix,
+        suffix: originalPs.text_property_settings.suffix,
+        date_created: new Date().toISOString(),
+        date_modified: new Date().toISOString(),
+      })
     }
 
     if (originalPs.dimension_property_settings) {
-      await supabaseClient
-        .from('dimension_property_settings')
-        .insert({
-          property_setting_id: newPs.id,
-          dimension: originalPs.dimension_property_settings.dimension,
-          anchor_position: originalPs.dimension_property_settings.anchor_position,
-          preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
-          date_created: new Date().toISOString(),
-          date_modified: new Date().toISOString(),
-        })
+      dimensionSettingsToInsert.push({
+        property_setting_id: newPs.id,
+        dimension: originalPs.dimension_property_settings.dimension,
+        anchor_position: originalPs.dimension_property_settings.anchor_position,
+        preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+        date_created: new Date().toISOString(),
+        date_modified: new Date().toISOString(),
+      })
     }
 
-    // Check if this property has numeric settings (either nested or top-level)
-    // The state may have min/max at top level (merged from numeric_property_settings)
     const numericMin = originalPs.numeric_property_settings?.min ?? (originalPs as any).min
     const numericMax = originalPs.numeric_property_settings?.max ?? (originalPs as any).max
     const numericOperator = originalPs.numeric_property_settings?.operator ?? (originalPs as any).operator
 
     if (numericMin !== undefined || numericMax !== undefined || numericOperator !== undefined) {
-      // Note: numeric_property_settings table does NOT have date_created or date_modified columns
-      await supabaseClient
-        .from('numeric_property_settings')
-        .insert({
-          property_setting_id: newPs.id,
-          min: numericMin ?? 0,
-          max: numericMax ?? 100,
-          operator: numericOperator ?? 'add',
-        })
+      numericSettingsToInsert.push({
+        property_setting_id: newPs.id,
+        min: numericMin ?? 0,
+        max: numericMax ?? 100,
+        operator: numericOperator ?? 'add',
+      })
     }
 
     if (originalPs.list_property_settings) {
-      // Note: list_property_settings table does NOT have date_created or date_modified columns
       const optionsArray = originalPs.list_property_settings.options
       const optionsString = Array.isArray(optionsArray)
         ? optionsArray.join('\n')
         : String(optionsArray || '')
-      await supabaseClient
-        .from('list_property_settings')
-        .insert({
-          property_setting_id: newPs.id,
-          options: optionsString,
-        })
+      listSettingsToInsert.push({
+        property_setting_id: newPs.id,
+        options: optionsString,
+      })
     }
   }
 
+  // Bulk insert all detail settings in parallel
+  const detailOperations: Promise<any>[] = []
+
+  if (textSettingsToInsert.length > 0) {
+    detailOperations.push(
+      Promise.resolve(
+        supabaseClient
+          .from('text_property_settings')
+          .insert(textSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    )
+  }
+
+  if (dimensionSettingsToInsert.length > 0) {
+    detailOperations.push(
+      Promise.resolve(
+        supabaseClient
+          .from('dimension_property_settings')
+          .insert(dimensionSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    )
+  }
+
+  if (numericSettingsToInsert.length > 0) {
+    detailOperations.push(
+      Promise.resolve(
+        supabaseClient
+          .from('numeric_property_settings')
+          .insert(numericSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    )
+  }
+
+  if (listSettingsToInsert.length > 0) {
+    detailOperations.push(
+      Promise.resolve(
+        supabaseClient
+          .from('list_property_settings')
+          .insert(listSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    )
+  }
+
+  await Promise.all(detailOperations)
+
     return preset
+  } finally {
+    endNetworkActivity()
+  }
+}
+
+export async function duplicatePreset(
+  sourcePresetId: string,
+  figmaUserId: string,
+  visibility: 'private' | 'public' | 'hidden' = 'hidden',
+): Promise<Database['public']['Tables']['presets']['Row']> {
+  startNetworkActivity()
+  try {
+    // Load the source preset's property settings
+    const sourcePropertySettings = await loadPreset(sourcePresetId)
+
+    if (sourcePropertySettings.length === 0) {
+      throw new Error('Source preset has no property settings')
+    }
+
+    // Create a new preset with the same settings
+    const newPreset = await createPreset(
+      figmaUserId,
+      `__duplicate_${Date.now()}__`,
+      sourcePropertySettings,
+      visibility,
+    )
+
+    return newPreset
   } finally {
     endNetworkActivity()
   }
@@ -597,7 +757,6 @@ export async function loadPreset(presetId: string): Promise<PropertySettingsWith
       console.error('Error loading preset:', error)
       throw error
     }
-
     return data || []
   } finally {
     endNetworkActivity()
@@ -655,7 +814,7 @@ export async function getOrCreateLocalPreset(figmaUserId: string): Promise<Datab
       .select('*')
       .eq('figma_user_id', figmaUserId)
       .eq('label', '__local__')
-      .single()
+      .maybeSingle()
 
     if (existingPreset && !fetchError) {
       return existingPreset
@@ -678,8 +837,161 @@ export async function getOrCreateLocalPreset(figmaUserId: string): Promise<Datab
       console.error('Error creating local preset:', createError)
       throw createError || new Error('Failed to create local preset')
     }
-
     return newPreset
+  } finally {
+    endNetworkActivity()
+  }
+}
+
+export async function bulkPopulatePreset(
+  presetId: string,
+  figmaUserId: string,
+  propertySettings: PropertySettingsWithDetails[],
+): Promise<void> {
+  startNetworkActivity()
+  try {
+    // Verify preset belongs to user
+    const { data: preset, error: presetError } = await supabaseClient
+      .from('presets')
+      .select('*')
+      .eq('id', presetId)
+      .eq('figma_user_id', figmaUserId)
+      .single()
+
+    if (presetError || !preset) {
+      console.error('Error fetching preset for bulk populate:', presetError)
+      throw new Error('Preset not found or access denied')
+    }
+
+    // Update preset metadata (date_modified)
+    await supabaseClient
+      .from('presets')
+      .update({
+        date_modified: new Date().toISOString(),
+      })
+      .eq('id', presetId)
+
+    // Bulk insert all property settings at once
+    const propertySettingsToInsert = propertySettings.map(ps => ({
+      ...propertySettingToDbFormat(ps),
+      preset_id: presetId,
+      date_created: new Date().toISOString(),
+      date_modified: new Date().toISOString(),
+    }))
+
+    const { data: insertedPropertySettings, error: insertError } = await supabaseClient
+      .from('property_settings')
+      .insert(propertySettingsToInsert)
+      .select()
+
+    if (insertError) {
+      console.error('Error bulk inserting property settings:', insertError)
+      throw insertError
+    }
+
+    // Create map for quick lookup
+    const propertySettingMap = new Map(
+      insertedPropertySettings.map(ps => [ps.label, ps])
+    )
+
+    // Prepare bulk inserts for detail settings
+    const textSettingsToInsert: any[] = []
+    const dimensionSettingsToInsert: any[] = []
+    const numericSettingsToInsert: any[] = []
+    const listSettingsToInsert: any[] = []
+
+    for (const originalPs of propertySettings) {
+      const insertedPs = propertySettingMap.get(originalPs.label)
+      if (!insertedPs) continue
+
+      if (originalPs.text_property_settings) {
+        textSettingsToInsert.push({
+          property_setting_id: insertedPs.id,
+          decimal_places: originalPs.text_property_settings.decimal_places,
+          thousands_separator: originalPs.text_property_settings.thousands_separator,
+          prefix: originalPs.text_property_settings.prefix,
+          suffix: originalPs.text_property_settings.suffix,
+          date_created: new Date().toISOString(),
+          date_modified: new Date().toISOString(),
+        })
+      }
+
+      if (originalPs.dimension_property_settings) {
+        dimensionSettingsToInsert.push({
+          property_setting_id: insertedPs.id,
+          dimension: originalPs.dimension_property_settings.dimension,
+          anchor_position: originalPs.dimension_property_settings.anchor_position,
+          preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+          date_created: new Date().toISOString(),
+          date_modified: new Date().toISOString(),
+        })
+      }
+
+      const numericMin = originalPs.numeric_property_settings?.min ?? (originalPs as any).min
+      const numericMax = originalPs.numeric_property_settings?.max ?? (originalPs as any).max
+      const numericOperator = originalPs.numeric_property_settings?.operator ?? (originalPs as any).operator
+
+      if (numericMin !== undefined || numericMax !== undefined || numericOperator !== undefined) {
+        numericSettingsToInsert.push({
+          property_setting_id: insertedPs.id,
+          min: numericMin ?? 0,
+          max: numericMax ?? 100,
+          operator: numericOperator ?? 'add',
+        })
+      }
+
+      if (originalPs.list_property_settings) {
+        const optionsArray = originalPs.list_property_settings.options
+        const optionsString = Array.isArray(optionsArray)
+          ? optionsArray.join('\n')
+          : String(optionsArray || '')
+        listSettingsToInsert.push({
+          property_setting_id: insertedPs.id,
+          options: optionsString,
+        })
+      }
+    }
+
+    // Bulk insert all detail settings in parallel
+    const detailOperations: Promise<any>[] = []
+
+    if (textSettingsToInsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('text_property_settings')
+          .insert(textSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (dimensionSettingsToInsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('dimension_property_settings')
+          .insert(dimensionSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (numericSettingsToInsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('numeric_property_settings')
+          .insert(numericSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (listSettingsToInsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('list_property_settings')
+          .insert(listSettingsToInsert)
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    await Promise.all(detailOperations)
   } finally {
     endNetworkActivity()
   }
@@ -692,12 +1004,13 @@ export async function updatePreset(
 ): Promise<Database['public']['Tables']['presets']['Row']> {
   startNetworkActivity()
   try {
-    // Verify preset belongs to user
+    const isAdmin = figmaUserId === '321070720595916577'
+
+    // Fetch preset to verify access
     const { data: preset, error: presetError } = await supabaseClient
       .from('presets')
       .select('*')
       .eq('id', presetId)
-      .eq('figma_user_id', figmaUserId)
       .single()
 
     if (presetError || !preset) {
@@ -705,8 +1018,16 @@ export async function updatePreset(
       throw new Error('Preset not found or access denied')
     }
 
-    // Prevent modification of default preset
-    if (preset.label === '__default__') {
+    // Verify preset belongs to user (or is default preset for admin)
+    const isDefaultPreset = preset.label === '__default__' && preset.figma_user_id === 'default'
+    const belongsToUser = preset.figma_user_id === figmaUserId
+
+    if (!belongsToUser && !(isAdmin && isDefaultPreset)) {
+      throw new Error('Preset not found or access denied')
+    }
+
+    // Prevent modification of default preset by non-admin users
+    if (preset.label === '__default__' && !isAdmin) {
       throw new Error('Cannot update default preset property settings')
     }
 
@@ -725,110 +1046,418 @@ export async function updatePreset(
       throw new Error('Failed to update preset')
     }
 
-    // Delete existing property_settings (cascade will handle detail tables)
-    const { error: deleteError } = await supabaseClient
+    // Get existing property settings to determine what to delete
+    const { data: existingSettings } = await supabaseClient
       .from('property_settings')
-      .delete()
+      .select('id, label')
       .eq('preset_id', presetId)
 
-    if (deleteError) {
-      console.error('Error deleting existing property settings:', deleteError)
-      throw deleteError
+    const existingLabels = new Set(existingSettings?.map((ps) => ps.label) || [])
+    const newLabels = new Set(propertySettings.map((ps) => ps.label))
+
+    // Delete properties that are not in the new settings
+    const labelsToDelete = Array.from(existingLabels).filter(
+      (label) => !newLabels.has(label),
+    )
+    if (labelsToDelete.length > 0) {
+      const { error: deleteError } = await supabaseClient
+        .from('property_settings')
+        .delete()
+        .eq('preset_id', presetId)
+        .in('label', labelsToDelete)
+
+      if (deleteError) {
+        console.error('Error deleting removed property settings:', deleteError)
+        throw deleteError
+      }
     }
 
-    // Insert new property settings
-    const propertySettingsToInsert = propertySettings.map((ps) => ({
-      label: ps.label,
-      randomization_mode: ps.randomization_mode,
-      post_randomization_sort_order: ps.post_randomization_sort_order,
-      is_enabled: ps.is_enabled,
-      preset_id: presetId,
-      date_created: new Date().toISOString(),
-      date_modified: new Date().toISOString(),
-    }))
+    // Separate existing and new property settings for bulk operations
+    const existingMap = new Map(
+      existingSettings?.map((ps) => [ps.label, ps.id]) || []
+    )
+    const toUpdate: any[] = []
+    const toInsert: any[] = []
 
-    const { data: newPropertySettings, error: propertySettingsError } =
-      await supabaseClient
+    for (const ps of propertySettings) {
+      const propertySettingData = {
+        ...propertySettingToDbFormat(ps),
+        preset_id: presetId,
+        date_modified: new Date().toISOString(),
+      }
+
+      if (existingMap.has(ps.label)) {
+        toUpdate.push({
+          ...propertySettingData,
+          id: existingMap.get(ps.label),
+        })
+      } else {
+        toInsert.push({
+          ...propertySettingData,
+          date_created: new Date().toISOString(),
+        })
+      }
+    }
+
+    // Bulk update existing property settings
+    const updatePromises = toUpdate.map((ps) =>
+      supabaseClient
         .from('property_settings')
-        .insert(propertySettingsToInsert)
+        .update({
+          randomization_mode: ps.randomization_mode,
+          post_range_randomization_sort_order: ps.post_range_randomization_sort_order,
+          post_list_randomization_sort_order: ps.post_list_randomization_sort_order,
+          post_addition_randomization_sort_order: ps.post_addition_randomization_sort_order,
+          post_multiplication_randomization_sort_order: ps.post_multiplication_randomization_sort_order,
+          is_enabled: ps.is_enabled,
+          date_modified: ps.date_modified,
+        })
+        .eq('id', ps.id)
+        .select()
+        .single()
+    )
+
+    // Bulk insert new property settings
+    let insertedPropertySettings: any[] = []
+    if (toInsert.length > 0) {
+      const { data: inserted, error: insertError } = await supabaseClient
+        .from('property_settings')
+        .insert(toInsert)
         .select()
 
-    if (propertySettingsError) {
-      console.error(
-        'Error creating property settings for preset:',
-        propertySettingsError,
-      )
-      throw propertySettingsError
+      if (insertError) {
+        console.error('Error bulk inserting property settings:', insertError)
+        throw insertError
+      }
+      insertedPropertySettings = inserted || []
     }
 
-    // Create detail settings in parallel
-    const detailInserts: Promise<any>[] = []
+    // Wait for all updates to complete
+    const updateResults = await Promise.all(updatePromises)
+    const updatedPropertySettings = updateResults
+      .filter((result) => result.data)
+      .map((result) => result.data)
 
-    for (let i = 0; i < propertySettings.length; i++) {
-      const originalPs = propertySettings[i]
-      const newPs = newPropertySettings[i]
+    // Combine updated and inserted settings
+    const upsertedPropertySettings = [...updatedPropertySettings, ...insertedPropertySettings]
+
+    // Create map for quick lookup
+    const upsertedMap = new Map(
+      upsertedPropertySettings.map((ps) => [ps.label, ps])
+    )
+
+    // Prepare bulk inserts/updates for detail settings
+    const textSettingsToUpsert: any[] = []
+    const dimensionSettingsToUpsert: any[] = []
+    const numericSettingsToUpsert: any[] = []
+    const listSettingsToUpsert: any[] = []
+
+    for (const originalPs of propertySettings) {
+      const upsertedPs = upsertedMap.get(originalPs.label)
+      if (!upsertedPs) continue
 
       if (originalPs.text_property_settings) {
-        detailInserts.push(
-          supabaseClient.from('text_property_settings').insert({
-            property_setting_id: newPs.id,
-            decimal_places: originalPs.text_property_settings.decimal_places,
-            thousands_separator: originalPs.text_property_settings.thousands_separator,
-            prefix: originalPs.text_property_settings.prefix,
-            suffix: originalPs.text_property_settings.suffix,
-            date_created: new Date().toISOString(),
-            date_modified: new Date().toISOString(),
-          }),
-        )
+        textSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          decimal_places: originalPs.text_property_settings.decimal_places,
+          thousands_separator: originalPs.text_property_settings.thousands_separator,
+          prefix: originalPs.text_property_settings.prefix,
+          suffix: originalPs.text_property_settings.suffix,
+        })
       }
 
       if (originalPs.dimension_property_settings) {
-        detailInserts.push(
-          supabaseClient.from('dimension_property_settings').insert({
-            property_setting_id: newPs.id,
-            dimension: originalPs.dimension_property_settings.dimension,
-            anchor_position: originalPs.dimension_property_settings.anchor_position,
-            preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
-            date_created: new Date().toISOString(),
-            date_modified: new Date().toISOString(),
-          }),
-        )
+        dimensionSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          dimension: originalPs.dimension_property_settings.dimension,
+          anchor_position: originalPs.dimension_property_settings.anchor_position,
+          preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+        })
       }
 
-      // Check if this property has numeric settings (either nested or top-level)
-      // The state may have min/max at top level (merged from numeric_property_settings)
       const numericMin = originalPs.numeric_property_settings?.min ?? (originalPs as any).min
       const numericMax = originalPs.numeric_property_settings?.max ?? (originalPs as any).max
       const numericOperator = originalPs.numeric_property_settings?.operator ?? (originalPs as any).operator
 
       if (numericMin !== undefined || numericMax !== undefined || numericOperator !== undefined) {
-        // Note: numeric_property_settings table does NOT have date_created or date_modified columns
-        detailInserts.push(
-          supabaseClient.from('numeric_property_settings').insert({
-            property_setting_id: newPs.id,
-            min: numericMin ?? 0,
-            max: numericMax ?? 100,
-            operator: numericOperator ?? 'add',
-          }),
-        )
+        numericSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          min: numericMin ?? 0,
+          max: numericMax ?? 100,
+          operator: numericOperator ?? 'add',
+        })
       }
 
       if (originalPs.list_property_settings) {
-        // Note: list_property_settings table does NOT have date_created or date_modified columns
         const optionsArray = originalPs.list_property_settings.options
         const optionsString = Array.isArray(optionsArray)
           ? optionsArray.join('\n')
           : String(optionsArray || '')
-        detailInserts.push(
-          supabaseClient.from('list_property_settings').insert({
-            property_setting_id: newPs.id,
-            options: optionsString,
-          }),
-        )
+        listSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          options: optionsString,
+        })
       }
     }
 
-    await Promise.all(detailInserts)
+    // Bulk upsert all detail settings in parallel
+    const detailOperations: Promise<any>[] = []
+
+    if (textSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('text_property_settings')
+          .upsert(textSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (dimensionSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('dimension_property_settings')
+          .upsert(dimensionSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (numericSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('numeric_property_settings')
+          .upsert(numericSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (listSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('list_property_settings')
+          .upsert(listSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    await Promise.all(detailOperations)
+
+    return updatedPreset
+  } finally {
+    endNetworkActivity()
+  }
+}
+
+export async function updatePresetMerge(
+  presetId: string,
+  figmaUserId: string,
+  propertySettings: PropertySettingsWithDetails[],
+): Promise<Database['public']['Tables']['presets']['Row']> {
+  startNetworkActivity()
+  try {
+    // Verify preset belongs to user
+    const { data: preset, error: presetError } = await supabaseClient
+      .from('presets')
+      .select('*')
+      .eq('id', presetId)
+      .eq('figma_user_id', figmaUserId)
+      .single()
+
+    if (presetError || !preset) {
+      console.error('Error fetching preset for merge:', presetError)
+      throw new Error('Preset not found or access denied')
+    }
+
+    // Update preset metadata (date_modified)
+    const { data: updatedPreset, error: updatePresetError } = await supabaseClient
+      .from('presets')
+      .update({
+        date_modified: new Date().toISOString(),
+      })
+      .eq('id', presetId)
+      .select()
+      .single()
+
+    if (updatePresetError || !updatedPreset) {
+      console.error('Error updating preset metadata:', updatePresetError)
+      throw new Error('Failed to update preset')
+    }
+
+    // For local preset merge: only upsert properties from loaded preset
+    // Don't delete properties that aren't in loaded preset (they should remain disabled)
+
+    // Get existing property settings for this preset
+    const { data: existingSettings } = await supabaseClient
+      .from('property_settings')
+      .select('id, label')
+      .eq('preset_id', presetId)
+
+    const existingMap = new Map(
+      existingSettings?.map((ps) => [ps.label, ps.id]) || []
+    )
+    const toUpdate: any[] = []
+    const toInsert: any[] = []
+
+    for (const ps of propertySettings) {
+      const propertySettingData = {
+        ...propertySettingToDbFormat(ps),
+        preset_id: presetId,
+        date_modified: new Date().toISOString(),
+      }
+
+      if (existingMap.has(ps.label)) {
+        toUpdate.push({
+          ...propertySettingData,
+          id: existingMap.get(ps.label),
+        })
+      } else {
+        toInsert.push({
+          ...propertySettingData,
+          date_created: new Date().toISOString(),
+        })
+      }
+    }
+
+    // Bulk update existing property settings
+    const updatePromises = toUpdate.map((ps) =>
+      supabaseClient
+        .from('property_settings')
+        .update({
+          randomization_mode: ps.randomization_mode,
+          post_range_randomization_sort_order: ps.post_range_randomization_sort_order,
+          post_list_randomization_sort_order: ps.post_list_randomization_sort_order,
+          post_addition_randomization_sort_order: ps.post_addition_randomization_sort_order,
+          post_multiplication_randomization_sort_order: ps.post_multiplication_randomization_sort_order,
+          is_enabled: ps.is_enabled,
+          date_modified: ps.date_modified,
+        })
+        .eq('id', ps.id)
+        .select()
+        .single()
+    )
+
+    // Bulk insert new property settings
+    let insertedPropertySettings: any[] = []
+    if (toInsert.length > 0) {
+      const { data: inserted, error: insertError } = await supabaseClient
+        .from('property_settings')
+        .insert(toInsert)
+        .select()
+
+      if (insertError) {
+        console.error('Error bulk inserting property settings:', insertError)
+        throw insertError
+      }
+      insertedPropertySettings = inserted || []
+    }
+
+    // Wait for all updates to complete
+    const updateResults = await Promise.all(updatePromises)
+    const updatedPropertySettings = updateResults
+      .filter((result) => result.data)
+      .map((result) => result.data)
+
+    // Combine updated and inserted settings
+    const upsertedPropertySettings = [...updatedPropertySettings, ...insertedPropertySettings]
+
+    // Create map for quick lookup
+    const upsertedMap = new Map(
+      upsertedPropertySettings.map((ps) => [ps.label, ps])
+    )
+
+    // Prepare bulk inserts/updates for detail settings
+    const textSettingsToUpsert: any[] = []
+    const dimensionSettingsToUpsert: any[] = []
+    const numericSettingsToUpsert: any[] = []
+    const listSettingsToUpsert: any[] = []
+
+    for (const originalPs of propertySettings) {
+      const upsertedPs = upsertedMap.get(originalPs.label)
+      if (!upsertedPs) continue
+
+      if (originalPs.text_property_settings) {
+        textSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          decimal_places: originalPs.text_property_settings.decimal_places,
+          thousands_separator: originalPs.text_property_settings.thousands_separator,
+          prefix: originalPs.text_property_settings.prefix,
+          suffix: originalPs.text_property_settings.suffix,
+        })
+      }
+
+      if (originalPs.dimension_property_settings) {
+        dimensionSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          dimension: originalPs.dimension_property_settings.dimension,
+          anchor_position: originalPs.dimension_property_settings.anchor_position,
+          preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+        })
+      }
+
+      const numericMin = originalPs.numeric_property_settings?.min ?? (originalPs as any).min
+      const numericMax = originalPs.numeric_property_settings?.max ?? (originalPs as any).max
+      const numericOperator = originalPs.numeric_property_settings?.operator ?? (originalPs as any).operator
+
+      if (numericMin !== undefined || numericMax !== undefined || numericOperator !== undefined) {
+        numericSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          min: numericMin ?? 0,
+          max: numericMax ?? 100,
+          operator: numericOperator ?? 'add',
+        })
+      }
+
+      if (originalPs.list_property_settings) {
+        const optionsArray = originalPs.list_property_settings.options
+        const optionsString = Array.isArray(optionsArray)
+          ? optionsArray.join('\n')
+          : String(optionsArray || '')
+        listSettingsToUpsert.push({
+          property_setting_id: upsertedPs.id,
+          options: optionsString,
+        })
+      }
+    }
+
+    // Bulk upsert all detail settings in parallel
+    const detailOperations: Promise<any>[] = []
+
+    if (textSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('text_property_settings')
+          .upsert(textSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (dimensionSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('dimension_property_settings')
+          .upsert(dimensionSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (numericSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('numeric_property_settings')
+          .upsert(numericSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    if (listSettingsToUpsert.length > 0) {
+      detailOperations.push(
+        supabaseClient
+          .from('list_property_settings')
+          .upsert(listSettingsToUpsert, { onConflict: 'property_setting_id' })
+          .then(() => undefined) as Promise<void>
+      )
+    }
+
+    await Promise.all(detailOperations)
 
     return updatedPreset
   } finally {
@@ -839,7 +1468,7 @@ export async function updatePreset(
 export async function updatePresetVisibility(
   presetId: string,
   figmaUserId: string,
-  visibility: 'private' | 'public',
+  visibility: 'private' | 'public' | 'hidden',
 ): Promise<Database['public']['Tables']['presets']['Row']> {
   startNetworkActivity()
   try {
