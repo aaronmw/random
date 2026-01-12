@@ -39,13 +39,13 @@ CREATE TYPE public.randomization_mode AS ENUM (
   'addition',
   'multiplication',
   'list',
-  'range',
-  'chatgpt'
+  'range'
 );
 
 CREATE TYPE public.preset_visibility AS ENUM (
   'private',
-  'public'
+  'public',
+  'hidden'
 );
 
 -- Create the presets table first (no dependencies)
@@ -65,7 +65,10 @@ CREATE TABLE public.property_settings (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   label text NOT NULL,
   randomization_mode randomization_mode NOT NULL DEFAULT 'range',
-  post_randomization_sort_order post_randomization_sort_order DEFAULT 'none',
+  post_range_randomization_sort_order post_randomization_sort_order DEFAULT 'none',
+  post_list_randomization_sort_order post_randomization_sort_order DEFAULT 'none',
+  post_addition_randomization_sort_order post_randomization_sort_order DEFAULT 'none',
+  post_multiplication_randomization_sort_order post_randomization_sort_order DEFAULT 'none',
   is_enabled boolean NOT NULL DEFAULT false,
   preset_id uuid,
   date_created timestamp with time zone NOT NULL DEFAULT now(),
@@ -258,3 +261,9 @@ CREATE POLICY "Users can update their own options" ON public.user_options
 
 CREATE POLICY "Users can delete their own options" ON public.user_options
   FOR DELETE USING (true);
+
+-- Enable realtime for tables that need live updates
+-- Add tables to the supabase_realtime publication
+ALTER PUBLICATION supabase_realtime ADD TABLE public.presets;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.property_settings;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.user_options;

@@ -115,6 +115,7 @@ export type Database = {
           figma_user_id: string
           id: string
           label: string
+          visibility: Database["public"]["Enums"]["preset_visibility"]
         }
         Insert: {
           date_created?: string
@@ -122,6 +123,7 @@ export type Database = {
           figma_user_id: string
           id?: string
           label: string
+          visibility?: Database["public"]["Enums"]["preset_visibility"]
         }
         Update: {
           date_created?: string
@@ -129,6 +131,7 @@ export type Database = {
           figma_user_id?: string
           id?: string
           label?: string
+          visibility?: Database["public"]["Enums"]["preset_visibility"]
         }
         Relationships: []
       }
@@ -233,6 +236,7 @@ export type Database = {
         | "bottom-center"
         | "bottom-right"
       post_randomization_sort_order: "ascending" | "descending" | "none"
+      preset_visibility: "private" | "public" | "hidden"
       randomization_mode:
         | "addition"
         | "multiplication"
@@ -378,6 +382,7 @@ export const Constants = {
         "bottom-right",
       ],
       post_randomization_sort_order: ["ascending", "descending", "none"],
+      preset_visibility: ["private", "public", "hidden"],
       randomization_mode: [
         "addition",
         "multiplication",
