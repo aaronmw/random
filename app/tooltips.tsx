@@ -96,6 +96,11 @@ export const tooltips = {
       <p>Turns off all property randomization so you can start&nbsp;fresh.</p>
     </>
   ),
+  disableAllDisabled: (
+    <>
+      <p>All properties are already disabled.</p>
+    </>
+  ),
   enableAll: (
     <>
       <p>Turns on all property randomization.</p>
@@ -125,7 +130,7 @@ export const tooltips = {
   ),
   groupByStatus: (
     <>
-      <p>Group properties by enabled/disabled status.</p>
+      <p>Show enabled properties at the top of the list.</p>
     </>
   ),
   groupByType: (
@@ -141,13 +146,6 @@ export const tooltips = {
   execute: (
     <>
       <p>Apply the current randomization settings to selected nodes.</p>
-    </>
-  ),
-  chatgpt: (propertyName: string) => (
-    <>
-      <p>
-        For each selected node, generates a random value using&nbsp;ChatGPT.
-      </p>
     </>
   ),
 }

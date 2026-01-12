@@ -1,19 +1,19 @@
 import { AppState, PropertyName, PropertySettingsRow } from '@/app/types'
 import {
-  PropertySettingsWithDetails,
-  deletePreset,
+    PropertySettingsWithDetails,
+    deletePreset,
 } from '@/lib/services/propertySettingsService'
+import { getPropertiesToDisable } from '@/lib/utils/propertySettingsUtils'
 import { produce } from 'immer'
 import filter from 'lodash/filter'
 import findIndex from 'lodash/findIndex'
 import isEqual from 'lodash/isEqual'
 import mapValues from 'lodash/mapValues'
-import merge from 'lodash/merge'
 import omit from 'lodash/omit'
 import set from 'lodash/set'
 
 export const initialState: AppState = {
-  currentUserId: '321070720595916577',
+  currentUserId: null,
   dispatch: () => {},
   isAutoScrollEnabled: false,
   isFactoryResetting: false,
@@ -22,10 +22,14 @@ export const initialState: AppState = {
   isGroupedByStatus: false,
   isGroupedByType: false,
   isLightMode: false,
+  isAutoLoadFromSelectedNodes: false,
   presets: [],
   propertySettings: {},
   selectedNodePluginData: [],
+  activePresetId: null,
+  foundPresetId: null,
   ignoreRealtimeUntil: undefined,
+  pendingPublicPresetChanges: [],
 }
 
 export const TABLE_HANDLERS = {
@@ -35,6 +39,13 @@ export const TABLE_HANDLERS = {
       presets: filter(state.presets, (preset) => preset.id !== oldData.id),
     }),
     handleUpsert: (state: AppState, newData: any) => {
+      console.log('handleUpsert for presets:', {
+        presetId: newData.id,
+        newLabel: newData.label,
+        newVisibility: newData.visibility,
+        currentPresetsCount: state.presets.length,
+      })
+
       const existingIndex = findIndex(
         state.presets,
         (preset) => preset.id === newData.id,
@@ -42,6 +53,14 @@ export const TABLE_HANDLERS = {
 
       const newPresets = [...state.presets]
       if (existingIndex >= 0) {
+        const oldPreset = newPresets[existingIndex]
+        console.log('Updating existing preset:', {
+          index: existingIndex,
+          oldLabel: oldPreset.label,
+          newLabel: newData.label,
+          oldVisibility: oldPreset.visibility,
+          newVisibility: newData.visibility || 'private',
+        })
         newPresets[existingIndex] = {
           id: newData.id,
           label: newData.label,
@@ -49,6 +68,11 @@ export const TABLE_HANDLERS = {
           visibility: newData.visibility || 'private',
         }
       } else {
+        console.log('Adding new preset:', {
+          id: newData.id,
+          label: newData.label,
+          visibility: newData.visibility || 'private',
+        })
         newPresets.push({
           id: newData.id,
           label: newData.label,
@@ -65,7 +89,7 @@ export const TABLE_HANDLERS = {
     handleDelete: (state: AppState, oldData: any) => ({
       propertySettings: omit(state.propertySettings, [oldData.label]),
     }),
-    handleUpsert: (state: AppState, newData: any, event?: 'INSERT' | 'UPDATE') => {
+    handleUpsert: (state: AppState, newData: any, event?: 'INSERT' | 'UPDATE' | 'DELETE') => {
       // Property settings are stored by label in state, not by id
       // The real-time payload should include the label field
       if (newData.label && state.propertySettings[newData.label]) {
@@ -331,7 +355,7 @@ export const TABLE_HANDLERS = {
       if (newData.label && state.propertySettings[newData.label]) {
         const existing = state.propertySettings[newData.label]
         const optionsString = typeof newData.options === 'string' ? newData.options : ''
-        const optionsArray = optionsString.split('\n').filter(line => line.trim() !== '')
+        const optionsArray = optionsString.split('\n').filter((line: string) => line.trim() !== '')
         return {
           propertySettings: {
             ...state.propertySettings,
@@ -367,6 +391,7 @@ export const TABLE_HANDLERS = {
         isGroupedByStatus: false,
         isGroupedByType: false,
         isLightMode: false,
+        isAutoLoadFromSelectedNodes: false,
       }
     },
     handleUpsert: (state: AppState, newData: any) => {
@@ -375,6 +400,7 @@ export const TABLE_HANDLERS = {
         isGroupedByStatus: newData.is_grouped_by_status ?? state.isGroupedByStatus,
         isGroupedByType: newData.is_grouped_by_type ?? state.isGroupedByType,
         isLightMode: newData.is_light_mode ?? state.isLightMode,
+        isAutoLoadFromSelectedNodes: newData.is_auto_load_from_selected_nodes ?? state.isAutoLoadFromSelectedNodes,
       }
     },
   },
@@ -398,6 +424,7 @@ export type AppAction =
         isGroupedByStatus: boolean
         isGroupedByType: boolean
         isLightMode: boolean
+        isAutoLoadFromSelectedNodes: boolean
       }
     }
   }
@@ -471,7 +498,31 @@ export type AppAction =
   | {
     type: 'setPresets'
     payload: {
-      presets: Array<{ id: string; label: string; figma_user_id: string; visibility: 'private' | 'public' }>
+      presets: Array<{ id: string; label: string; figma_user_id: string; visibility: 'private' | 'public' | 'hidden' }>
+    }
+  }
+  | {
+    type: 'addPendingPublicPresetChange'
+    payload: {
+      table: 'presets'
+      event: 'INSERT' | 'UPDATE' | 'DELETE'
+      new: any
+      old: any
+    }
+  }
+  | {
+    type: 'applyPendingPublicPresetChanges'
+  }
+  | {
+    type: 'setActivePresetId'
+    payload: {
+      presetId: string | null
+    }
+  }
+  | {
+    type: 'setFoundPresetId'
+    payload: {
+      presetId: string | null
     }
   }
 
@@ -499,7 +550,12 @@ export const AppReducer = (state: AppState, action: AppAction) => {
           draft.isAutoScrollEnabled = userOptions.isAutoScrollEnabled
           draft.isGroupedByStatus = userOptions.isGroupedByStatus
           draft.isGroupedByType = userOptions.isGroupedByType
-          draft.isLightMode = userOptions.isLightMode
+          if ('isLightMode' in userOptions) {
+            draft.isLightMode = userOptions.isLightMode
+          }
+          if ('isAutoLoadFromSelectedNodes' in userOptions) {
+            draft.isAutoLoadFromSelectedNodes = userOptions.isAutoLoadFromSelectedNodes
+          }
         }
 
         const propertySettingsMap = propertySettings.reduce((acc, ps) => {
@@ -507,21 +563,16 @@ export const AppReducer = (state: AppState, action: AppAction) => {
           return acc
         }, {} as Record<string, PropertySettingsWithDetails>)
 
-        // Log the opacity setting before and after update
         const opacityBefore = draft.propertySettings['opacity']?.is_enabled
         const opacityAfter = propertySettingsMap['opacity']?.is_enabled
-        const opacityBeforeId = draft.propertySettings['opacity']?.id
-        const opacityAfterId = propertySettingsMap['opacity']?.id
-        const opacityBeforePresetId = draft.propertySettings['opacity']?.preset_id
-        const opacityAfterPresetId = propertySettingsMap['opacity']?.preset_id
         console.log('setInitialData - updating propertySettings:', {
           currentUserId,
           opacityBefore,
           opacityAfter,
-          opacityBeforeId,
-          opacityAfterId,
-          opacityBeforePresetId,
-          opacityAfterPresetId,
+          opacityBeforeId: draft.propertySettings['opacity']?.id,
+          opacityAfterId: propertySettingsMap['opacity']?.id,
+          opacityBeforePresetId: draft.propertySettings['opacity']?.preset_id,
+          opacityAfterPresetId: propertySettingsMap['opacity']?.preset_id,
           opacitySetting: propertySettingsMap['opacity'],
           totalSettings: Object.keys(propertySettingsMap).length,
           allPresetIds: Object.values(propertySettingsMap).map(ps => ({ label: ps.label, id: ps.id, preset_id: ps.preset_id })).slice(0, 5),
@@ -553,6 +604,7 @@ export const AppReducer = (state: AppState, action: AppAction) => {
         }
 
         const { table, event, new: newData, old: oldData } = action.payload
+
         const handler = TABLE_HANDLERS[table]
 
         if (!handler) {
@@ -617,8 +669,14 @@ export const AppReducer = (state: AppState, action: AppAction) => {
       case 'loadPreset': {
         const { presetPropertySettings } = action.payload
 
-        // 1. Disable all properties
-        Object.values(draft.propertySettings).forEach((ps) => {
+        // 1. Disable only currently enabled properties that are NOT in the loaded preset
+        // (optimization: only process enabled properties instead of all 41)
+        const loadedLabels = new Set(presetPropertySettings.map((ps) => ps.label))
+        const propertiesToDisable = getPropertiesToDisable(
+          draft.propertySettings,
+          loadedLabels,
+        )
+        propertiesToDisable.forEach((ps) => {
           ps.is_enabled = false
         })
 
@@ -657,8 +715,18 @@ export const AppReducer = (state: AppState, action: AppAction) => {
       // }
 
       case 'setStateByPath': {
-        const { path, value } = action.payload
-        set(draft, path, value)
+        console.log('[DEBUG] setStateByPath reducer entry', {
+          path: action.payload.path,
+          value: action.payload.value,
+        })
+        try {
+          const { path, value } = action.payload
+          set(draft, path, value)
+          console.log('[DEBUG] setStateByPath reducer exit', { path })
+        } catch (error) {
+          console.error('[DEBUG] Error in setStateByPath reducer:', error)
+          throw error
+        }
         break
       }
 
@@ -688,6 +756,46 @@ export const AppReducer = (state: AppState, action: AppAction) => {
 
       case 'setPresets': {
         draft.presets = action.payload.presets
+        break
+      }
+
+      case 'addPendingPublicPresetChange': {
+        draft.pendingPublicPresetChanges.push(action.payload)
+        break
+      }
+
+      case 'applyPendingPublicPresetChanges': {
+        const changes = [...draft.pendingPublicPresetChanges]
+        draft.pendingPublicPresetChanges = []
+
+        // Apply each change sequentially so later changes see earlier updates
+        changes.forEach((change) => {
+          const handler = TABLE_HANDLERS[change.table]
+          if (!handler) {
+            console.warn(`No handler found for table: ${change.table}`)
+            return
+          }
+
+          // Use draft as the state reference so handlers see previous changes
+          const updates =
+            change.event === 'DELETE'
+              ? handler.handleDelete(draft, change.old)
+              : (handler.handleUpsert as (state: AppState, newData: any, event?: string) => any)(draft, change.new, change.event)
+
+          mapValues(updates, (value, key) => {
+            set(draft, key, value)
+          })
+        })
+        break
+      }
+
+      case 'setActivePresetId': {
+        draft.activePresetId = action.payload.presetId
+        break
+      }
+
+      case 'setFoundPresetId': {
+        draft.foundPresetId = action.payload.presetId
         break
       }
     }

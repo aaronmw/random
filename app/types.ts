@@ -31,10 +31,19 @@ export interface AppState {
   isGroupedByStatus: boolean
   isGroupedByType: boolean
   isLightMode: boolean
-  presets: Array<{ id: string; label: string; figma_user_id: string; visibility?: 'private' | 'public' }>
+  isAutoLoadFromSelectedNodes: boolean
+  presets: Array<{ id: string; label: string; figma_user_id: string; visibility?: 'private' | 'public' | 'hidden' }>
   propertySettings: Record<string, PropertySettingsWithDetails>
   selectedNodePluginData: Partial<PropertySettingsRow>[]
+  activePresetId: string | null // ID of the preset currently being edited (null = local preset)
+  foundPresetId: string | null // ID of preset found on selected nodes (for manual loading)
   ignoreRealtimeUntil?: number // Timestamp - ignore realtime events until this time
+  pendingPublicPresetChanges: Array<{
+    table: 'presets'
+    event: 'INSERT' | 'UPDATE' | 'DELETE'
+    new: any
+    old: any
+  }>
 }
 
 export type DataType = keyof typeof dataTypes
@@ -72,6 +81,12 @@ export type PluginAction =
     }
   | {
       type: 'getCurrentSelection'
+    }
+  | {
+      type: 'setPresetIdOnNodes'
+      payload: {
+        presetId: string
+      }
     }
 
 export type PropertyName = keyof typeof dataTypesByPropertyName

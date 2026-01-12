@@ -21,11 +21,11 @@ export function getSideEffectsForEnablingProperty({
       state.propertySettings[oppositePropertyName]
 
     if (
-      oppositePropertySettings.isEnabled === true &&
-      oppositePropertySettings.preserveAspectRatio === true
+      oppositePropertySettings.is_enabled === true &&
+      oppositePropertySettings.preserve_aspect_ratio === true
     ) {
       sideEffects.push([
-        `propertySettings.${oppositePropertyName}.preserveAspectRatio`,
+        `propertySettings.${oppositePropertyName}.preserve_aspect_ratio`,
         false,
       ])
     }

@@ -1,4 +1,4 @@
-import { AppState, PropertyName } from '@/app/types'
+import { AppState, AnchorPosition, PropertyName } from '@/app/types'
 import get from 'lodash/get'
 import invariant from 'tiny-invariant'
 import { getConstrainedAnchorPosition } from './getConstrainedAnchorPosition'
@@ -22,63 +22,64 @@ export function getSideEffectsForPreservingAspectRatio({
     return []
   }
 
-  const { anchorPosition } = propertySettings
+  const { anchor_position } = propertySettings
   const oppositePropertyName = propertyName === 'height' ? 'width' : 'height'
   const oppositePropertySettings = get(state.propertySettings, oppositePropertyName)
 
   invariant(
-    anchorPosition,
-    `Property "${propertyName}" is missing "anchorPosition" property`,
+    anchor_position,
+    `Property "${propertyName}" is missing "anchor_position" property`,
   )
   invariant(
-    get(oppositePropertySettings, 'anchorPosition'),
-    `Property "${oppositePropertyName}" is missing "anchorPosition" property`,
+    get(oppositePropertySettings, 'anchor_position'),
+    `Property "${oppositePropertyName}" is missing "anchor_position" property`,
   )
   invariant(
-    typeof get(propertySettings, 'preserveAspectRatio') === 'boolean',
-    `Property "${propertyName}" is missing "preserveAspectRatio" property`,
+    typeof get(propertySettings, 'preserve_aspect_ratio') === 'boolean',
+    `Property "${propertyName}" is missing "preserve_aspect_ratio" property`,
   )
   invariant(
-    typeof get(oppositePropertySettings, 'preserveAspectRatio') === 'boolean',
-    `Property "${oppositePropertyName}" is missing "preserveAspectRatio" property`,
+    typeof get(oppositePropertySettings, 'preserve_aspect_ratio') === 'boolean',
+    `Property "${oppositePropertyName}" is missing "preserve_aspect_ratio" property`,
   )
 
   const sideEffects: [string, unknown][] = []
 
   sideEffects.push([
-    `propertySettings.${oppositePropertyName}.preserveAspectRatio`,
+    `propertySettings.${oppositePropertyName}.preserve_aspect_ratio`,
     false,
   ])
 
   if (preserveAspectRatio === true) {
     sideEffects.push([
-      `propertySettings.${oppositePropertyName}.isEnabled`,
+      `propertySettings.${oppositePropertyName}.is_enabled`,
       false,
     ])
   }
 
+  const oppositeAnchorPosition = get(oppositePropertySettings, 'anchor_position', 'center-center') as AnchorPosition
   const newOppositePropertyAnchorPosition = getConstrainedAnchorPosition({
-    anchorPosition: get(oppositePropertySettings, 'anchorPosition', 'center-center'),
+    anchorPosition: oppositeAnchorPosition,
     preserveAspectRatio: false,
     propertyName: oppositePropertyName,
   })
 
   sideEffects.push([
-    `propertySettings.${oppositePropertyName}.anchorPosition`,
+    `propertySettings.${oppositePropertyName}.anchor_position`,
     newOppositePropertyAnchorPosition,
   ])
 
   sideEffects.push([
-    `propertySettings.${propertyName}.anchorPosition`,
+    `propertySettings.${propertyName}.anchor_position`,
     getConstrainedAnchorPosition({
-      anchorPosition,
+      anchorPosition: anchor_position,
       preserveAspectRatio,
       propertyName,
     }),
   ])
 
   sideEffects.push([
-    `propertySettings.${propertyName}.preserveAspectRatio`,
+    `propertySettings.${propertyName}.preserve_aspect_ratio`,
     preserveAspectRatio,
   ])
 
