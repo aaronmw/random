@@ -11,7 +11,10 @@
     "build:next": "next build",
     "prettier:check": "prettier --check .",
     "prettier:write": "prettier --write .",
-    "supabase:build-types": "supabase gen types typescript --project-id cirrjwaknafiuaxaczrf > supabase/generated-types.ts"
+    "supabase:build-types": "supabase gen types typescript --project-id cirrjwaknafiuaxaczrf > supabase/generated-types.ts",
+    "test": "bash scripts/test-with-clipboard.sh",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed"
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-alpha.8",
@@ -44,6 +47,7 @@
     "usehooks-ts": "^3.1.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@types/lodash": "^4.17.16",
     "@types/natural-compare-lite": "^1.4.2",
     "@types/pg": "^8.16.0",

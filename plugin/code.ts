@@ -3,8 +3,8 @@ import type {
     PropertyName,
     PropertySettingsRow,
 } from '@/app/types'
-import { PropertySettingsWithDetails } from '@/lib/services/propertySettingsService'
 import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
+import { PropertySettingsWithDetails } from '@/lib/services/propertySettingsService'
 import { setNodeProperty } from '@/lib/setNodeProperty'
 import pickBy from 'lodash/pickBy'
 import naturalSort from 'natural-compare-lite'
@@ -76,8 +76,21 @@ function transformPropertySettingsForRandomization(
     case 'list':
       mode = 'list'
       // Read list options from modeOptions.list.options (populated from database)
+      // Also check list_property_settings.options as a fallback
       const listOptions =
-        propertySettings.modeOptions?.list?.options || []
+        propertySettings.modeOptions?.list?.options ||
+        (propertySettings.list_property_settings?.options
+          ? propertySettings.list_property_settings.options.split('\n').filter((line: string) => line.trim() !== '')
+          : [])
+
+      console.log('Transforming list property settings:', {
+        label: propertySettings.label,
+        hasModeOptions: !!propertySettings.modeOptions?.list?.options,
+        hasListPropertySettings: !!propertySettings.list_property_settings?.options,
+        listOptionsCount: listOptions.length,
+        listOptions: listOptions.slice(0, 5), // Log first 5 for debugging
+      })
+
       modeOptions = {
         list: {
           options: listOptions,
@@ -163,7 +176,11 @@ function sendCurrentSelection() {
   const selectedNodePluginData = selection.map(
     (selectedNode) => {
       const pluginData = selectedNode.getPluginData('propertySettings')
-      return JSON.parse(pluginData || '{}') as Partial<PropertySettingsRow>
+      const presetId = selectedNode.getPluginData('presetId') || undefined
+      return {
+        ...(JSON.parse(pluginData || '{}') as Partial<PropertySettingsRow>),
+        presetId,
+      } as Partial<PropertySettingsRow> & { presetId?: string }
     },
   )
 
@@ -215,7 +232,15 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
           PropertySettingsWithDetails,
         ][]
       ).forEach(async ([propertyName, propertySettings]) => {
-        const { post_randomization_sort_order } = propertySettings
+        const { randomization_mode, post_range_randomization_sort_order, post_list_randomization_sort_order, post_addition_randomization_sort_order, post_multiplication_randomization_sort_order } = propertySettings
+
+        const sortOrderMap: Record<string, typeof post_range_randomization_sort_order | undefined> = {
+          range: post_range_randomization_sort_order,
+          list: post_list_randomization_sort_order,
+          addition: post_addition_randomization_sort_order,
+          multiplication: post_multiplication_randomization_sort_order,
+        }
+        const post_randomization_sort_order = sortOrderMap[randomization_mode] ?? 'none'
 
         const transformedPropertySettings = transformPropertySettingsForRandomization(
           propertySettings,
@@ -280,6 +305,23 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
     case 'getCurrentSelection': {
       console.log('Received getCurrentSelection request')
       sendCurrentSelection()
+      break
+    }
+
+    case 'setPresetIdOnNodes': {
+      const { presetId } = action.payload
+      const { selection } = figma.currentPage
+
+      if (!selection.length) {
+        figma.notify('No nodes selected')
+        break
+      }
+
+      selection.forEach((node) => {
+        node.setPluginData('presetId', presetId)
+      })
+
+      figma.notify(`Preset ID written to ${selection.length} node(s)`)
       break
     }
 
