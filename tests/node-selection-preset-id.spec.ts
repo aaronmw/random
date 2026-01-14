@@ -1,5 +1,5 @@
 import { expect, Page, test } from '@playwright/test'
-import { setupNewUser } from './helpers'
+import { setupNewUser, ensureSettingOptionState, TEST_TIMEOUT } from './helpers'
 
 test.describe('Node Selection with Preset IDs', () => {
   test.beforeEach(async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe('Node Selection with Preset IDs', () => {
    * Gets the active preset ID from the app state (via console logs or DOM)
    * For now, we'll check the button visibility and console logs
    */
-  async function waitForPresetLoad(page: Page, timeout = 10000) {
+  async function waitForPresetLoad(page: Page, timeout = TEST_TIMEOUT) {
     // Wait for loading to complete by checking for network requests
     await page
       .waitForResponse(
@@ -101,83 +101,17 @@ test.describe('Node Selection with Preset IDs', () => {
   })
 
   async function ensureAutoLoadIsDisabled(page: Page) {
-    try {
-      const settingsButton = page.getByRole('button', { name: /settings/i })
-      await settingsButton.click({ timeout: 5000 })
-      
-      const menu = page.locator('.popover')
-      await expect(menu).toBeVisible({ timeout: 5000 })
-
-      const autoLoadOption = menu.getByTestId('auto-load-from-selected-nodes-setting')
-      await autoLoadOption.waitFor({ state: 'visible', timeout: 5000 })
-      
-      // Find the button and check if check icon is visible (enabled) or hidden (disabled)
-      const button = autoLoadOption.locator('button').first()
-      const checkIcon = button.locator('svg').first()
-      
-      // Check visibility - if visible, it's enabled and we need to disable it
-      const isVisible = await checkIcon.isVisible({ timeout: 2000 }).catch(() => false)
-
-      if (isVisible) {
-        await button.click({ timeout: 5000 })
-        // Wait for menu to close after click
-        await expect(menu).not.toBeVisible({ timeout: 3000 }).catch(() => {})
-        await page.waitForTimeout(200) // Wait for state update
-      } else {
-        // Already disabled, close menu
-        await page.keyboard.press('Escape').catch(() => {})
-        await expect(menu).not.toBeVisible({ timeout: 3000 }).catch(() => {})
-      }
-    } catch (error) {
-      // If page closed, that's okay - operation might have completed
-      if (error.message && error.message.includes('Target page, context or browser has been closed')) {
-        return
-      }
-      throw error
-    }
+    await ensureSettingOptionState(page, 'auto-load-from-selected-nodes-setting', false)
   }
 
   async function ensureAutoLoadIsEnabled(page: Page) {
-    try {
-      const settingsButton = page.getByRole('button', { name: /settings/i })
-      await settingsButton.click({ timeout: 5000 })
-      
-      const menu = page.locator('.popover')
-      await expect(menu).toBeVisible({ timeout: 5000 })
-
-      const autoLoadOption = menu.getByTestId('auto-load-from-selected-nodes-setting')
-      await autoLoadOption.waitFor({ state: 'visible', timeout: 5000 })
-      
-      // Find the button and check if check icon is visible (enabled) or hidden (disabled)
-      const button = autoLoadOption.locator('button').first()
-      const checkIcon = button.locator('svg').first()
-      
-      // Check visibility - if not visible, it's disabled and we need to enable it
-      const isVisible = await checkIcon.isVisible({ timeout: 2000 }).catch(() => false)
-
-      if (!isVisible) {
-        await button.click({ timeout: 5000 })
-        // Wait for menu to close after click
-        await expect(menu).not.toBeVisible({ timeout: 3000 }).catch(() => {})
-        await page.waitForTimeout(200) // Wait for state update
-      } else {
-        // Already enabled, close menu
-        await page.keyboard.press('Escape').catch(() => {})
-        await expect(menu).not.toBeVisible({ timeout: 3000 }).catch(() => {})
-      }
-    } catch (error) {
-      // If page closed, that's okay - operation might have completed
-      if (error.message && error.message.includes('Target page, context or browser has been closed')) {
-        return
-      }
-      throw error
-    }
+    await ensureSettingOptionState(page, 'auto-load-from-selected-nodes-setting', true)
   }
 
   test('one node with preset ID - button should appear when auto-load is disabled', async ({
     page,
   }) => {
-    test.setTimeout(15000) // Give this test more time
+    test.setTimeout(TEST_TIMEOUT) // Give this test more time
     
     const presetId = 'test-preset-id-123'
 

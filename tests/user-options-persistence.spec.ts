@@ -1,5 +1,5 @@
 import { expect, Page, test } from '@playwright/test'
-import { reloadAndWait, setupNewUser } from './helpers'
+import { reloadAndWait, setupNewUser, TEST_TIMEOUT, toggleSettingOption } from './helpers'
 
 test.describe('User Options Persistence', () => {
   test.beforeEach(async ({ page }) => {
@@ -8,7 +8,7 @@ test.describe('User Options Persistence', () => {
     // Wait for app to be fully ready (options + property settings loaded, refs set)
     await page.waitForFunction(
       () => document.documentElement.classList.contains('test-app-fully-ready'),
-      { timeout: 10000 }
+      { timeout: TEST_TIMEOUT }
     )
   })
 
@@ -21,7 +21,7 @@ test.describe('User Options Persistence', () => {
     await page.waitForFunction(
       (name) => document.documentElement.classList.contains(`test-user-option-updated-${name}`),
       optionName,
-      { timeout: 10000 }
+      { timeout: TEST_TIMEOUT }
     )
   }
 
@@ -44,40 +44,7 @@ test.describe('User Options Persistence', () => {
     optionId: string,
     optionName: string,
   ) {
-    try {
-      const settingsButton = page.getByRole('button', { name: /settings/i })
-      await settingsButton.waitFor({ state: 'visible', timeout: 5000 })
-      // Ensure button is not disabled
-      await expect(settingsButton).not.toBeDisabled({ timeout: 2000 })
-      await settingsButton.scrollIntoViewIfNeeded()
-      // Wait a bit for any animations/transitions to complete
-      await page.waitForTimeout(100)
-      
-      // Click the button
-      await settingsButton.click({ timeout: 5000 })
-      
-      // Wait for menu to appear and be stable
-      const menu = page.getByRole('menu', { name: 'Settings' })
-      await expect(menu).toBeVisible({ timeout: 5000 })
-      // Wait a bit longer to ensure menu is fully rendered and stable
-      await page.waitForTimeout(300)
-
-      const option = menu.getByTestId(optionId)
-      await option.waitFor({ state: 'visible', timeout: 5000 })
-      
-      const button = option.locator('button').first()
-      
-      await button.click({ timeout: 5000 })
-
-      // Wait for the menu to close
-      await expect(menu).not.toBeVisible({ timeout: 3000 }).catch(() => {})
-    } catch (error) {
-      // If page closed, that's okay - menu item was clicked
-      if (error.message && error.message.includes('Target page, context or browser has been closed')) {
-        return
-      }
-      throw error
-    }
+    await toggleSettingOption(page, optionId)
   }
 
   async function isUserOptionEnabled(page: Page, optionId: string, expectedEnabled?: boolean): Promise<boolean> {
@@ -197,7 +164,7 @@ test.describe('User Options Persistence', () => {
             wrapperAriaChecked === 'true' || 
             buttonAriaChecked === 'true'
           )
-        }).toPass({ timeout: 10000 })
+        }).toPass({ timeout: TEST_TIMEOUT })
       }
       
       // No expected state - just check current state
@@ -288,121 +255,46 @@ test.describe('User Options Persistence', () => {
     }
   }
 
-  test('auto-scroll option persists across reloads', async ({ page }) => {
-    test.setTimeout(30000)
-    
-    // Initially should be disabled
-    let isEnabled = await isUserOptionEnabled(page, 'auto-scroll-setting')
-    expect(isEnabled).toBe(false)
+  const userOptionTests = [
+    {
+      optionId: 'auto-scroll-setting',
+      signalName: 'isAutoScrollEnabled',
+    },
+    {
+      optionId: 'group-by-status-setting',
+      signalName: 'isGroupedByStatus',
+    },
+    {
+      optionId: 'group-by-type-setting',
+      signalName: 'isGroupedByType',
+    },
+    {
+      optionId: 'auto-load-from-selected-nodes-setting',
+      signalName: 'isAutoLoadFromSelectedNodes',
+    },
+  ]
 
-    // Start listening for the signal BEFORE triggering the action
-    const signalPromise = waitForUserOptionSignal(page, 'isAutoScrollEnabled')
+  for (const { optionId, signalName } of userOptionTests) {
+    test(`${optionId} persists across reloads`, async ({ page }) => {
+      test.setTimeout(30000)
+      
+      let isEnabled = await isUserOptionEnabled(page, optionId)
+      expect(isEnabled).toBe(false)
 
-    // Enable it
-    await toggleUserOption(page, 'auto-scroll-setting', 'isAutoScrollEnabled')
+      const signalPromise = waitForUserOptionSignal(page, signalName)
+      await toggleUserOption(page, optionId, signalName)
+      await signalPromise
 
-    // Wait for persistence signal FIRST (before other assertions)
-    await signalPromise
+      isEnabled = await isUserOptionEnabled(page, optionId)
+      expect(isEnabled).toBe(true)
 
-    // Verify it's enabled
-    isEnabled = await isUserOptionEnabled(page, 'auto-scroll-setting')
-    expect(isEnabled).toBe(true)
+      await reloadAndWait(page)
+      await waitForAppReadyAfterReload(page)
 
-    // Reload
-    await reloadAndWait(page)
-    await waitForAppReadyAfterReload(page)
-
-    // Verify it's still enabled after reload
-    isEnabled = await isUserOptionEnabled(page, 'auto-scroll-setting')
-    expect(isEnabled).toBe(true)
-  })
-
-  test('grouped by status option persists across reloads', async ({ page }) => {
-    test.setTimeout(30000)
-    
-    // Initially should be disabled
-    let isEnabled = await isUserOptionEnabled(page, 'group-by-status-setting')
-    expect(isEnabled).toBe(false)
-
-    // Start listening for the signal BEFORE triggering the action
-    const signalPromise = waitForUserOptionSignal(page, 'isGroupedByStatus')
-
-    // Enable it
-    await toggleUserOption(page, 'group-by-status-setting', 'isGroupedByStatus')
-
-    // Wait for persistence signal FIRST (before other assertions)
-    await signalPromise
-
-    // Verify it's enabled
-    isEnabled = await isUserOptionEnabled(page, 'group-by-status-setting')
-    expect(isEnabled).toBe(true)
-
-    // Reload
-    await reloadAndWait(page)
-    await waitForAppReadyAfterReload(page)
-
-    // Verify it's still enabled after reload
-    isEnabled = await isUserOptionEnabled(page, 'group-by-status-setting')
-    expect(isEnabled).toBe(true)
-  })
-
-  test('grouped by type option persists across reloads', async ({ page }) => {
-    test.setTimeout(30000)
-    
-    // Initially should be disabled
-    let isEnabled = await isUserOptionEnabled(page, 'group-by-type-setting')
-    expect(isEnabled).toBe(false)
-
-    // Start listening for the signal BEFORE triggering the action
-    const signalPromise = waitForUserOptionSignal(page, 'isGroupedByType')
-
-    // Enable it
-    await toggleUserOption(page, 'group-by-type-setting', 'isGroupedByType')
-
-    // Wait for persistence signal FIRST (before other assertions)
-    await signalPromise
-
-    // Verify it's enabled
-    isEnabled = await isUserOptionEnabled(page, 'group-by-type-setting')
-    expect(isEnabled).toBe(true)
-
-    // Reload
-    await reloadAndWait(page)
-    await waitForAppReadyAfterReload(page)
-
-    // Verify it's still enabled after reload
-    isEnabled = await isUserOptionEnabled(page, 'group-by-type-setting')
-    expect(isEnabled).toBe(true)
-  })
-
-  test('auto-load from selection option persists across reloads', async ({ page }) => {
-    test.setTimeout(30000)
-    
-    // Initially should be disabled
-    let isEnabled = await isUserOptionEnabled(page, 'auto-load-from-selected-nodes-setting')
-    expect(isEnabled).toBe(false)
-
-    // Start listening for the signal BEFORE triggering the action
-    const signalPromise = waitForUserOptionSignal(page, 'isAutoLoadFromSelectedNodes')
-
-    // Enable it
-    await toggleUserOption(page, 'auto-load-from-selected-nodes-setting', 'isAutoLoadFromSelectedNodes')
-
-    // Wait for persistence signal FIRST (before other assertions)
-    await signalPromise
-
-    // Verify it's enabled
-    isEnabled = await isUserOptionEnabled(page, 'auto-load-from-selected-nodes-setting')
-    expect(isEnabled).toBe(true)
-
-    // Reload
-    await reloadAndWait(page)
-    await waitForAppReadyAfterReload(page)
-
-    // Verify it's still enabled after reload
-    isEnabled = await isUserOptionEnabled(page, 'auto-load-from-selected-nodes-setting')
-    expect(isEnabled).toBe(true)
-  })
+      isEnabled = await isUserOptionEnabled(page, optionId)
+      expect(isEnabled).toBe(true)
+    })
+  }
 
   test('multiple user options persist together across reloads', async ({ page }) => {
     test.setTimeout(30000)

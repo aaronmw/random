@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { TEST_TIMEOUT } from './tests/helpers'
 
 export default defineConfig({
   testDir: './tests',
@@ -7,14 +8,14 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
-  timeout: 10000,
+  timeout: TEST_TIMEOUT,
   expect: {
-    timeout: 10000,
+    timeout: TEST_TIMEOUT,
   },
   use: {
     baseURL: 'http://localhost:4000',
     trace: 'on-first-retry',
-    actionTimeout: 10000,
+    actionTimeout: TEST_TIMEOUT,
   },
   projects: [
     {

@@ -4,8 +4,10 @@ import {
     isPropertyEnabled,
     reloadAndWait,
     setupNewUser,
+    TEST_TIMEOUT,
     waitForAllDatabaseWrites,
     waitForPropertyPanel,
+    waitForPropertyPanels,
 } from './helpers'
 
 test.describe('Property Enabling Tests', () => {
@@ -39,23 +41,22 @@ test.describe('Property Enabling Tests', () => {
     expect(await isPropertyEnabled(page, 'fillColor')).toBe(true)
 
     // Wait for ALL pending database writes to complete
-    await waitForAllDatabaseWrites(page, 10000)
+    await waitForAllDatabaseWrites(page, TEST_TIMEOUT)
 
     // Reload (page.reload() preserves the URL and query params including user ID)
     await reloadAndWait(page)
 
     // Wait for both property panels to be ready
-    await page.getByTestId('property-panel-opacity').waitFor({ state: 'visible', timeout: 10000 })
-    await page.getByTestId('property-panel-fillColor').waitFor({ state: 'visible', timeout: 10000 })
+    await waitForPropertyPanels(page, ['opacity', 'fillColor'])
 
     // Wait for React to update the aria-pressed attributes after data load
     // Check that opacity is enabled (with retries)
     const opacityToggle = page.getByTestId('property-toggle-opacity')
-    await expect(opacityToggle).toHaveAttribute('aria-pressed', 'true', { timeout: 10000 })
+    await expect(opacityToggle).toHaveAttribute('aria-pressed', 'true', { timeout: TEST_TIMEOUT })
 
     // Check that fillColor is enabled (with retries) - give it more time
     const fillColorToggle = page.getByTestId('property-toggle-fillColor')
-    await expect(fillColorToggle).toHaveAttribute('aria-pressed', 'true', { timeout: 10000 })
+    await expect(fillColorToggle).toHaveAttribute('aria-pressed', 'true', { timeout: TEST_TIMEOUT })
 
     expect(await isPropertyEnabled(page, 'opacity')).toBe(true)
     expect(await isPropertyEnabled(page, 'fillColor')).toBe(true)

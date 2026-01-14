@@ -1,5 +1,7 @@
 import { Page, expect } from '@playwright/test'
 
+export const TEST_TIMEOUT = 15000
+
 export async function setupNewUser(page: Page): Promise<string> {
   const TEST_USER_ID = 'test-user-' + Date.now() + '-' + Math.random().toString(36).substring(7)
 
@@ -16,7 +18,7 @@ export async function setupNewUser(page: Page): Promise<string> {
   })
 
   // Wait for property panel to appear
-  // Use a timeout less than test timeout (10000ms) to leave buffer for other operations
+  // Use a timeout less than test timeout to leave buffer for other operations
   // The panel might be delayed if isFactoryResetting, isUserSettingsChanging, or isPresetLoading is true
   try {
     await page.getByTestId('property-panel-opacity').waitFor({ state: 'visible', timeout: 8000 })
@@ -36,13 +38,13 @@ export async function setupNewUser(page: Page): Promise<string> {
 
 export async function waitForPropertyPanel(page: Page, propertyName: string) {
   const panelHeader = page.getByTestId(`property-panel-${propertyName}`)
-  await expect(panelHeader).toBeVisible({ timeout: 10000 })
+  await expect(panelHeader).toBeVisible({ timeout: TEST_TIMEOUT })
   return panelHeader
 }
 
 export async function getPropertyToggle(page: Page, propertyName: string) {
   const toggle = page.getByTestId(`property-toggle-${propertyName}`)
-  await toggle.waitFor({ state: 'visible', timeout: 10000 })
+  await toggle.waitFor({ state: 'visible', timeout: TEST_TIMEOUT })
   return toggle
 }
 
@@ -61,7 +63,7 @@ export async function enableProperty(page: Page, propertyName: string, waitForDb
     await toggle.click()
 
     // Verify UI state updated (this is synchronous)
-    await expect(toggle).toHaveAttribute('aria-pressed', 'true', { timeout: 10000 })
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true', { timeout: TEST_TIMEOUT })
 
     // Only wait for DB write if explicitly requested (for persistence tests)
     if (waitForDbWrite) {
@@ -86,13 +88,13 @@ export async function switchMode(
   waitForDbWrite = false,
 ) {
   const modeButton = page.getByTestId(`mode-button-${propertyName}-${mode}`)
-  await modeButton.waitFor({ state: 'visible', timeout: 10000 })
+  await modeButton.waitFor({ state: 'visible', timeout: TEST_TIMEOUT })
 
   await modeButton.scrollIntoViewIfNeeded()
   await modeButton.click()
 
   // Verify the mode button is now active (this is synchronous)
-  await expect(modeButton).toHaveAttribute('aria-selected', 'true', { timeout: 10000 })
+  await expect(modeButton).toHaveAttribute('aria-selected', 'true', { timeout: TEST_TIMEOUT })
 
   // Only wait for DB write if explicitly requested
   if (waitForDbWrite) {
@@ -141,7 +143,7 @@ export async function verifyAdditionModeUI(page: Page, propertyName: string) {
   await expect(operatorLabel).toBeVisible({ timeout: 2000 })
 }
 
-export async function waitForAllDatabaseWrites(page: Page, timeout = 10000) {
+export async function waitForAllDatabaseWrites(page: Page, timeout = TEST_TIMEOUT) {
   // Wait for all pending property setting updates to complete
   // We check for test signal classes on <html> element instead of network responses
   const startTime = Date.now()
@@ -202,7 +204,7 @@ export async function reloadAndWait(page: Page) {
 
   // Wait for initial loading to complete
   try {
-    await page.waitForSelector('text=Loading!', { state: 'hidden', timeout: 10000 })
+    await page.waitForSelector('text=Loading!', { state: 'hidden', timeout: TEST_TIMEOUT })
   } catch (error: any) {
     // If page closed, rethrow
     if (error?.message?.includes('Target page, context or browser has been closed')) {
@@ -229,7 +231,7 @@ export async function reloadAndWait(page: Page) {
   // Now wait for property panel to be visible
   // Use a try-catch to handle page closure gracefully
   try {
-    await page.getByTestId('property-panel-opacity').waitFor({ state: 'visible', timeout: 10000 })
+    await page.getByTestId('property-panel-opacity').waitFor({ state: 'visible', timeout: TEST_TIMEOUT })
   } catch (error: any) {
     // If page closed, rethrow
     if (error?.message?.includes('Target page, context or browser has been closed')) {
@@ -264,4 +266,102 @@ export async function waitForModeToBeSet(
   await modeButton.waitFor({ state: 'visible', timeout })
   // Wait for the mode to be selected (might take a moment for React to update)
   await expect(modeButton).toHaveAttribute('aria-selected', 'true', { timeout })
+}
+
+export async function openSettingsMenu(page: Page) {
+  const settingsButton = page.getByRole('button', { name: /settings/i })
+  await settingsButton.waitFor({ state: 'visible', timeout: 5000 })
+  await expect(settingsButton).not.toBeDisabled({ timeout: 2000 })
+  await settingsButton.scrollIntoViewIfNeeded()
+  await page.waitForTimeout(100)
+  await settingsButton.click({ timeout: 5000 })
+  
+  const menu = page.getByRole('menu', { name: 'Settings' }).or(page.locator('.popover')).first()
+  await expect(menu).toBeVisible({ timeout: 5000 })
+  await page.waitForTimeout(300)
+  return menu
+}
+
+export async function closeSettingsMenu(page: Page) {
+  await page.keyboard.press('Escape').catch(() => {})
+  const menu = page.getByRole('menu', { name: 'Settings' }).or(page.locator('.popover')).first()
+  await expect(menu).not.toBeVisible({ timeout: 3000 }).catch(() => {})
+}
+
+export async function toggleSettingOption(page: Page, optionId: string) {
+  try {
+    const menu = await openSettingsMenu(page)
+    const option = menu.getByTestId(optionId)
+    await option.waitFor({ state: 'visible', timeout: 5000 })
+    const button = option.locator('button').first()
+    await button.click({ timeout: 5000 })
+    await closeSettingsMenu(page)
+    await page.waitForTimeout(200)
+  } catch (error: any) {
+    if (error?.message?.includes('Target page, context or browser has been closed')) {
+      return
+    }
+    throw error
+  }
+}
+
+export async function isSettingOptionEnabled(page: Page, optionId: string): Promise<boolean> {
+  try {
+    const menu = await openSettingsMenu(page)
+    const option = menu.getByTestId(optionId)
+    await option.waitFor({ state: 'visible', timeout: 5000 })
+    const button = option.locator('button').first()
+    await button.waitFor({ state: 'attached', timeout: 2000 })
+    
+    const checkIcon = button.locator('svg').first()
+    const isVisible = await checkIcon.isVisible({ timeout: 2000 }).catch(() => false)
+    
+    await closeSettingsMenu(page)
+    return isVisible
+  } catch (error: any) {
+    if (error?.message?.includes('Target page, context or browser has been closed')) {
+      return false
+    }
+    throw error
+  }
+}
+
+export async function ensureSettingOptionState(page: Page, optionId: string, enabled: boolean) {
+  try {
+    const menu = await openSettingsMenu(page)
+    const option = menu.getByTestId(optionId)
+    await option.waitFor({ state: 'visible', timeout: 5000 })
+    const button = option.locator('button').first()
+    const checkIcon = button.locator('svg').first()
+    const isVisible = await checkIcon.isVisible({ timeout: 2000 }).catch(() => false)
+    
+    if (enabled !== isVisible) {
+      await button.click({ timeout: 5000 })
+      await page.waitForTimeout(200)
+    }
+    
+    await closeSettingsMenu(page)
+  } catch (error: any) {
+    if (error?.message?.includes('Target page, context or browser has been closed')) {
+      return
+    }
+    throw error
+  }
+}
+
+export async function verifyModeIsSelected(
+  page: Page,
+  propertyName: string,
+  mode: 'range' | 'list' | 'addition',
+) {
+  const modeButton = page.getByTestId(`mode-button-${propertyName}-${mode}`)
+  await modeButton.waitFor({ state: 'visible', timeout: TEST_TIMEOUT })
+  const isSelected = await modeButton.getAttribute('aria-selected')
+  expect(isSelected).toBe('true')
+}
+
+export async function waitForPropertyPanels(page: Page, propertyNames: string[]) {
+  for (const propertyName of propertyNames) {
+    await page.getByTestId(`property-panel-${propertyName}`).waitFor({ state: 'visible', timeout: TEST_TIMEOUT })
+  }
 }
