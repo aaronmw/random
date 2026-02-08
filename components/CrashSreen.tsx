@@ -1,6 +1,7 @@
 'use client'
 
 import { copyToClipboard } from '@/lib/copyToClipboard'
+import { BUTTON_LABEL_RESET_TIMEOUT } from '@/lib/constants'
 import { useEffect, useState } from 'react'
 
 const initialButtonLabel = 'Copy Old Settings to Clipboard'
@@ -30,7 +31,7 @@ export function CrashScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setButtonLabel(initialButtonLabel)
-    }, 2000)
+    }, BUTTON_LABEL_RESET_TIMEOUT)
 
     return () => {
       clearTimeout(timer)

@@ -30,9 +30,10 @@ const getRandomPropertyValue = ({
 
   switch (mode) {
     case 'range': {
-      invariant(modeOptions.range, `No range options for "${propertyName}"`)
+      invariant(modeOptions?.range, `No range options for "${propertyName}"`)
 
       const { min, max } = modeOptions.range
+      invariant(min !== undefined && max !== undefined, `Invalid range for "${propertyName}"`)
 
       randomValue = random(min, max)
       newPropertyValue = randomValue
@@ -41,12 +42,16 @@ const getRandomPropertyValue = ({
 
     case 'addition':
     case 'multiplication': {
-      invariant(modeOptions.calc, `No calc options for "${propertyName}"`)
+      invariant(modeOptions?.calc, `No calc options for "${propertyName}"`)
 
       const operator = mode === 'addition' ? 'add' : 'multiply'
-      const {
-        [operator]: { min, max },
-      } = modeOptions.calc
+      const calcOptions = modeOptions.calc as {
+        add?: { min: number; max: number }
+        multiply?: { min: number; max: number }
+      }
+      const operatorOptions = calcOptions[operator]
+      invariant(operatorOptions, `No ${operator} options for "${propertyName}"`)
+      const { min, max } = operatorOptions
 
       const currentPropValue =
         propertyName === 'text'
@@ -77,7 +82,8 @@ const getRandomPropertyValue = ({
     }
 
     case 'list': {
-      invariant(modeOptions.list, `No list options for "${propertyName}"`)
+      invariant(modeOptions?.list, `No list options for "${propertyName}"`)
+      invariant(modeOptions.list.options, `No list options array for "${propertyName}"`)
 
       const enabledItems = modeOptions.list.options.filter(
         (listItem: string) => !String(listItem).startsWith('//'),

@@ -14,6 +14,10 @@ export type MenuItemProps<T extends 'button' | 'a' | typeof Link> = Omit<
   iconRight?: IconString
   selected?: boolean
   disabled?: boolean
+  'aria-checked'?: string
+  'data-enabled'?: string
+  ariaChecked?: string
+  dataEnabled?: string
 }
 
 export function MenuItem<T extends 'button' | 'a' | typeof Link>({
