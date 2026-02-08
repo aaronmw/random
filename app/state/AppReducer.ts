@@ -1,16 +1,25 @@
-import { AppState, PropertyName, PropertySettingsRow } from '@/app/types'
+import { AppState, PropertyName } from '@/app/types'
 import {
     PropertySettingsWithDetails,
     deletePreset,
 } from '@/lib/services/propertySettingsService'
+import { UserOptions } from '@/lib/services/userOptionsService'
 import { getPropertiesToDisable } from '@/lib/utils/propertySettingsUtils'
+import { Database } from '@/supabase/generated-types'
 import { produce } from 'immer'
 import filter from 'lodash/filter'
 import findIndex from 'lodash/findIndex'
-import isEqual from 'lodash/isEqual'
 import mapValues from 'lodash/mapValues'
 import omit from 'lodash/omit'
 import set from 'lodash/set'
+
+type PresetRow = Database['public']['Tables']['presets']['Row']
+type PropertySettingsRow = Database['public']['Tables']['property_settings']['Row']
+type NumericPropertySettingsRow = Database['public']['Tables']['numeric_property_settings']['Row']
+type TextPropertySettingsRow = Database['public']['Tables']['text_property_settings']['Row']
+type DimensionPropertySettingsRow = Database['public']['Tables']['dimension_property_settings']['Row']
+type ListPropertySettingsRow = Database['public']['Tables']['list_property_settings']['Row']
+type UserOptionsRow = UserOptions
 
 export const initialState: AppState = {
   currentUserId: null,
@@ -35,10 +44,10 @@ export const initialState: AppState = {
 export const TABLE_HANDLERS = {
   presets: {
     path: 'presets',
-    handleDelete: (state: AppState, oldData: any) => ({
+    handleDelete: (state: AppState, oldData: PresetRow) => ({
       presets: filter(state.presets, (preset) => preset.id !== oldData.id),
     }),
-    handleUpsert: (state: AppState, newData: any) => {
+    handleUpsert: (state: AppState, newData: PresetRow) => {
       console.log('handleUpsert for presets:', {
         presetId: newData.id,
         newLabel: newData.label,
@@ -86,14 +95,14 @@ export const TABLE_HANDLERS = {
   },
   property_settings: {
     path: 'propertySettings',
-    handleDelete: (state: AppState, oldData: any) => ({
+    handleDelete: (state: AppState, oldData: PropertySettingsRow) => ({
       propertySettings: omit(state.propertySettings, [oldData.label]),
     }),
-    handleUpsert: (state: AppState, newData: any, event?: 'INSERT' | 'UPDATE' | 'DELETE') => {
+    handleUpsert: (state: AppState, newData: PropertySettingsRow, event?: 'INSERT' | 'UPDATE' | 'DELETE') => {
       // Property settings are stored by label in state, not by id
       // The real-time payload should include the label field
       if (newData.label && state.propertySettings[newData.label]) {
-        const existing = state.propertySettings[newData.label]
+        const existing = state.propertySettings[newData.label] as PropertySettingsWithDetails
 
         // For INSERT events: if the property setting already exists in state with complete data
         // (has related tables), ignore the INSERT to avoid overwriting complete data with partial data.
@@ -122,6 +131,7 @@ export const TABLE_HANDLERS = {
         // CRITICAL: Always preserve id and preset_id from existing state - these belong to the local preset
         // and should NEVER be overwritten by realtime events (which might have wrong IDs from other presets)
         const { id: existingId, preset_id: existingPresetId } = existing
+        const newDataWithDetails = newData as Partial<PropertySettingsWithDetails>
         return {
           propertySettings: {
             ...state.propertySettings,
@@ -132,10 +142,10 @@ export const TABLE_HANDLERS = {
               id: existingId,
               preset_id: existingPresetId,
               // Preserve detail settings that might not be in the payload
-              text_property_settings: newData.text_property_settings ?? existing.text_property_settings,
-              dimension_property_settings: newData.dimension_property_settings ?? existing.dimension_property_settings,
-              numeric_property_settings: newData.numeric_property_settings ?? existing.numeric_property_settings,
-              list_property_settings: newData.list_property_settings ?? existing.list_property_settings,
+              text_property_settings: newDataWithDetails.text_property_settings ?? existing.text_property_settings,
+              dimension_property_settings: newDataWithDetails.dimension_property_settings ?? existing.dimension_property_settings,
+              numeric_property_settings: newDataWithDetails.numeric_property_settings ?? existing.numeric_property_settings,
+              list_property_settings: newDataWithDetails.list_property_settings ?? existing.list_property_settings,
             },
           },
         }
@@ -147,7 +157,7 @@ export const TABLE_HANDLERS = {
   },
   numeric_property_settings: {
     path: 'propertySettings',
-    handleDelete: (state: AppState, oldData: any) => {
+    handleDelete: (state: AppState, oldData: NumericPropertySettingsRow & { label?: string }) => {
       // Find property setting by label and remove numeric_property_settings
       if (oldData.label && state.propertySettings[oldData.label]) {
         const existing = state.propertySettings[oldData.label]
@@ -161,7 +171,7 @@ export const TABLE_HANDLERS = {
       }
       return { propertySettings: state.propertySettings }
     },
-    handleUpsert: (state: AppState, newData: any) => {
+    handleUpsert: (state: AppState, newData: NumericPropertySettingsRow & { label?: string }) => {
       // Update the merged min/max/operator values in the property setting
       if (newData.label && state.propertySettings[newData.label]) {
         const existing = state.propertySettings[newData.label]
@@ -215,7 +225,7 @@ export const TABLE_HANDLERS = {
   },
   text_property_settings: {
     path: 'propertySettings',
-    handleDelete: (state: AppState, oldData: any) => {
+    handleDelete: (state: AppState, oldData: TextPropertySettingsRow & { label?: string }) => {
       // Find property setting by label and remove text_property_settings
       if (oldData.label && state.propertySettings[oldData.label]) {
         const existing = state.propertySettings[oldData.label]
@@ -235,7 +245,7 @@ export const TABLE_HANDLERS = {
       }
       return { propertySettings: state.propertySettings }
     },
-    handleUpsert: (state: AppState, newData: any) => {
+    handleUpsert: (state: AppState, newData: TextPropertySettingsRow & { label?: string }) => {
       // Update the merged text property settings fields in the property setting
       if (newData.label && state.propertySettings[newData.label]) {
         const existing = state.propertySettings[newData.label]
@@ -277,7 +287,7 @@ export const TABLE_HANDLERS = {
   },
   dimension_property_settings: {
     path: 'propertySettings',
-    handleDelete: (state: AppState, oldData: any) => {
+    handleDelete: (state: AppState, oldData: DimensionPropertySettingsRow & { label?: string }) => {
       // Find property setting by label and remove dimension_property_settings
       if (oldData.label && state.propertySettings[oldData.label]) {
         const existing = state.propertySettings[oldData.label]
@@ -296,7 +306,7 @@ export const TABLE_HANDLERS = {
       }
       return { propertySettings: state.propertySettings }
     },
-    handleUpsert: (state: AppState, newData: any) => {
+    handleUpsert: (state: AppState, newData: DimensionPropertySettingsRow & { label?: string }) => {
       // Update the merged dimension property settings fields in the property setting
       if (newData.label && state.propertySettings[newData.label]) {
         const existing = state.propertySettings[newData.label]
@@ -336,7 +346,7 @@ export const TABLE_HANDLERS = {
   },
   list_property_settings: {
     path: 'propertySettings',
-    handleDelete: (state: AppState, oldData: any) => {
+    handleDelete: (state: AppState, oldData: ListPropertySettingsRow & { label?: string }) => {
       // Find property setting by label and remove list_property_settings
       if (oldData.label && state.propertySettings[oldData.label]) {
         const existing = state.propertySettings[oldData.label]
@@ -350,7 +360,7 @@ export const TABLE_HANDLERS = {
       }
       return { propertySettings: state.propertySettings }
     },
-    handleUpsert: (state: AppState, newData: any) => {
+    handleUpsert: (state: AppState, newData: ListPropertySettingsRow & { label?: string }) => {
       // Update the merged list property settings fields in the property setting
       if (newData.label && state.propertySettings[newData.label]) {
         const existing = state.propertySettings[newData.label]
@@ -394,7 +404,7 @@ export const TABLE_HANDLERS = {
         isAutoLoadFromSelectedNodes: false,
       }
     },
-    handleUpsert: (state: AppState, newData: any) => {
+    handleUpsert: (state: AppState, newData: UserOptionsRow) => {
       return {
         isAutoScrollEnabled: newData.is_auto_scroll_enabled ?? state.isAutoScrollEnabled,
         isGroupedByStatus: newData.is_grouped_by_status ?? state.isGroupedByStatus,
@@ -417,7 +427,7 @@ export type AppAction =
     type: 'setInitialData'
     payload: {
       propertySettings: PropertySettingsWithDetails[]
-      presets: any[]
+      presets: PresetRow[]
       currentUserId: string | null
       userOptions?: {
         isAutoScrollEnabled: boolean
@@ -436,20 +446,20 @@ export type AppAction =
       }
     }
   | {
-      type: 'setStateByPath'
-      payload: {
-        path: string
-        value: any
-      }
+    type: 'setStateByPath'
+    payload: {
+      path: string
+      value: unknown
+    }
     }
   | {
-      type: 'handleDatabaseChange'
-      payload: {
-        table: keyof typeof TABLE_HANDLERS
-        event: 'INSERT' | 'UPDATE' | 'DELETE'
-        new: any
-        old: any
-      }
+    type: 'handleDatabaseChange'
+    payload: {
+      table: keyof typeof TABLE_HANDLERS
+      event: 'INSERT' | 'UPDATE' | 'DELETE'
+      new: unknown
+      old: unknown
+    }
     }
   | {
       type: 'upsertPreset'
@@ -506,8 +516,8 @@ export type AppAction =
     payload: {
       table: 'presets'
       event: 'INSERT' | 'UPDATE' | 'DELETE'
-      new: any
-      old: any
+      new: unknown
+      old: unknown
     }
   }
   | {
@@ -614,8 +624,8 @@ export const AppReducer = (state: AppState, action: AppAction) => {
 
         const updates =
           event === 'DELETE'
-            ? handler.handleDelete(state, oldData)
-            : handler.handleUpsert(state, newData, event)
+            ? handler.handleDelete(state, oldData as PresetRow & PropertySettingsRow & NumericPropertySettingsRow & TextPropertySettingsRow & DimensionPropertySettingsRow & ListPropertySettingsRow & UserOptionsRow)
+            : handler.handleUpsert(state, newData as PresetRow & PropertySettingsRow & NumericPropertySettingsRow & TextPropertySettingsRow & DimensionPropertySettingsRow & ListPropertySettingsRow & UserOptionsRow, event)
 
         // For user_options, update the state fields directly
         if (table === 'user_options' && updates) {
@@ -780,7 +790,7 @@ export const AppReducer = (state: AppState, action: AppAction) => {
           const updates =
             change.event === 'DELETE'
               ? handler.handleDelete(draft, change.old)
-              : (handler.handleUpsert as (state: AppState, newData: any, event?: string) => any)(draft, change.new, change.event)
+              : (handler.handleUpsert as (state: AppState, newData: unknown, event?: string) => Partial<AppState>)(draft, change.new, change.event)
 
           mapValues(updates, (value, key) => {
             set(draft, key, value)
@@ -801,7 +811,10 @@ export const AppReducer = (state: AppState, action: AppAction) => {
     }
   })
 
-  const stateHasChanged = !isEqual(state, newState)
+  // Immer's produce only creates a new object if the draft was modified
+  // We can check if the state reference changed to determine if modifications occurred
+  // If produce didn't modify anything, it returns the original state reference
+  const stateHasChanged = state !== newState
 
   console.log(
     `App action ${action.type} fired${!stateHasChanged ? ', but no state change' : ''}:`,
@@ -812,5 +825,5 @@ export const AppReducer = (state: AppState, action: AppAction) => {
     },
   )
 
-  return stateHasChanged ? newState : state
+  return newState
 }
