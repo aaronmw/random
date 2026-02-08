@@ -1,12 +1,10 @@
 /**
- * Get the admin user ID for development mode.
- * Falls back to a default admin user ID if not set in environment variables.
+ * Get the admin user ID.
+ * Uses environment variable NEXT_PUBLIC_ADMIN_USER_ID if set,
+ * otherwise falls back to default admin user ID.
+ * Works in both development and production modes.
  */
 export function getAdminUserId(): string | null {
-  if (process.env.NODE_ENV !== 'development') {
-    return null
-  }
-
   // Use admin user ID from environment variable, or fall back to default
   const adminUserId =
     process.env.NEXT_PUBLIC_ADMIN_USER_ID || '321070720595916577'
