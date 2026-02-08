@@ -15,14 +15,10 @@ test.describe('Property Enabling Tests', () => {
     await setupNewUser(page)
   })
 
-  test('can enable a single property', async ({ page }) => {
+  test('can enable single and multiple properties', async ({ page }) => {
     await enableProperty(page, 'opacity')
-    const isEnabled = await isPropertyEnabled(page, 'opacity')
-    expect(isEnabled).toBe(true)
-  })
+    expect(await isPropertyEnabled(page, 'opacity')).toBe(true)
 
-  test('can enable multiple properties', async ({ page }) => {
-    await enableProperty(page, 'opacity')
     await enableProperty(page, 'width')
     await enableProperty(page, 'height')
 

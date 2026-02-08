@@ -28,9 +28,9 @@ test.describe('Node Selection with Preset IDs', () => {
           )
         },
         { nodeData: nodes },
-      ).catch((error) => {
+      ).catch((error: unknown) => {
         // If page is closed, re-throw so test fails clearly
-        if (error.message && error.message.includes('Target page, context or browser has been closed')) {
+        if (error instanceof Error && error.message.includes('Target page, context or browser has been closed')) {
           throw error
         }
         // Other errors, ignore and continue
@@ -40,7 +40,7 @@ test.describe('Node Selection with Preset IDs', () => {
       await page.waitForTimeout(200)
     } catch (error) {
       // Re-throw if page is closed - test should fail
-      if (error.message && error.message.includes('Target page, context or browser has been closed')) {
+      if (error instanceof Error && error.message.includes('Target page, context or browser has been closed')) {
         throw error
       }
       // Other errors, continue

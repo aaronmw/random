@@ -18,20 +18,14 @@ test.describe('Mode Switching Tests', () => {
     await enableProperty(page, 'opacity')
   })
 
-  test('can switch to range mode', async ({ page }) => {
-    await switchMode(page, 'opacity', 'range')
-    await verifyModeIsSelected(page, 'opacity', 'range')
-  })
+  const modes: Array<'range' | 'list' | 'addition'> = ['range', 'list', 'addition']
 
-  test('can switch to list mode', async ({ page }) => {
-    await switchMode(page, 'opacity', 'list')
-    await verifyModeIsSelected(page, 'opacity', 'list')
-  })
-
-  test('can switch to addition mode', async ({ page }) => {
-    await switchMode(page, 'opacity', 'addition')
-    await verifyModeIsSelected(page, 'opacity', 'addition')
-  })
+  for (const mode of modes) {
+    test(`can switch to ${mode} mode`, async ({ page }) => {
+      await switchMode(page, 'opacity', mode)
+      await verifyModeIsSelected(page, 'opacity', mode)
+    })
+  }
 
   test('can switch between all modes', async ({ page }) => {
     await switchMode(page, 'opacity', 'range')

@@ -14,30 +14,10 @@ test.describe('Mode UI Updates Tests', () => {
     await enableProperty(page, 'opacity')
   })
 
-  test('range mode shows min and max fields', async ({ page }) => {
-    await switchMode(page, 'opacity', 'range')
-    await verifyRangeModeUI(page, 'opacity')
-  })
-
-  test('list mode hides min/max and operator fields', async ({ page }) => {
-    await switchMode(page, 'opacity', 'list')
-    await verifyListModeUI(page, 'opacity')
-  })
-
-  test('addition mode shows min, max, and operator fields', async ({ page }) => {
-    await switchMode(page, 'opacity', 'addition')
-    await verifyAdditionModeUI(page, 'opacity')
-  })
-
-  test('switching from range to list updates UI correctly', async ({ page }) => {
+  test('each mode shows correct UI fields', async ({ page }) => {
     await switchMode(page, 'opacity', 'range')
     await verifyRangeModeUI(page, 'opacity')
 
-    await switchMode(page, 'opacity', 'list')
-    await verifyListModeUI(page, 'opacity')
-  })
-
-  test('switching from list to addition updates UI correctly', async ({ page }) => {
     await switchMode(page, 'opacity', 'list')
     await verifyListModeUI(page, 'opacity')
 
@@ -45,11 +25,17 @@ test.describe('Mode UI Updates Tests', () => {
     await verifyAdditionModeUI(page, 'opacity')
   })
 
-  test('switching from addition to range updates UI correctly', async ({ page }) => {
-    await switchMode(page, 'opacity', 'addition')
-    await verifyAdditionModeUI(page, 'opacity')
+  test('switching between modes updates UI correctly', async ({ page }) => {
+    const modeTransitions = [
+      { from: 'range' as const, verify: verifyRangeModeUI },
+      { from: 'list' as const, verify: verifyListModeUI },
+      { from: 'addition' as const, verify: verifyAdditionModeUI },
+      { from: 'range' as const, verify: verifyRangeModeUI },
+    ]
 
-    await switchMode(page, 'opacity', 'range')
-    await verifyRangeModeUI(page, 'opacity')
+    for (const { from, verify } of modeTransitions) {
+      await switchMode(page, 'opacity', from)
+      await verify(page, 'opacity')
+    }
   })
 })
