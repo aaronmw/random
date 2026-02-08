@@ -1,5 +1,6 @@
 import { useAppContext } from '@/app/state/AppWrapper'
-import { loadPreset } from '@/lib/services/propertySettingsService'
+import { loadPresetsBatch } from '@/lib/services/propertySettingsService'
+import { getAdminUserId } from '@/lib/utils/getAdminUserId'
 import { useEffect, useMemo, useState } from 'react'
 
 let refreshTrigger = 0
@@ -14,7 +15,7 @@ export function usePresets() {
   const { presets, currentUserId } = useAppContext()
   const [refreshKey, setRefreshKey] = useState(0)
 
-  const isAdmin = currentUserId === '321070720595916577'
+  const isAdmin = currentUserId === getAdminUserId()
 
   const userPresets = useMemo(
     () =>
@@ -77,25 +78,35 @@ export function usePresets() {
         return
       }
 
+      const presetIds = allPresetsToLoad.map((preset) => preset.id)
       const newEnabledProperties: Record<string, string[]> = {}
 
-      await Promise.all(
-        allPresetsToLoad.map(async (preset) => {
+      try {
+        // Batch load all presets in a single query instead of N queries
+        const presetsData = await loadPresetsBatch(presetIds)
+
+        for (const presetId of presetIds) {
           if (cancelled) return
 
-          try {
-            const propertySettings = await loadPreset(preset.id)
-            const enabled = propertySettings.map((ps) => ps.label)
-            newEnabledProperties[preset.id] = enabled
-          } catch (error) {
-            console.error(`Error loading preset ${preset.id}:`, error)
-            newEnabledProperties[preset.id] = []
-          }
-        }),
-      )
+          const propertySettings = presetsData[presetId] || []
+          const enabled = propertySettings
+            .filter((ps) => ps.is_enabled)
+            .map((ps) => ps.label)
+          newEnabledProperties[presetId] = enabled
+        }
 
-      if (!cancelled) {
-        setPresetEnabledProperties(newEnabledProperties)
+        if (!cancelled) {
+          setPresetEnabledProperties(newEnabledProperties)
+        }
+      } catch (error) {
+        console.error('Error loading presets batch:', error)
+        // Fallback: set empty arrays for all presets on error
+        for (const presetId of presetIds) {
+          newEnabledProperties[presetId] = []
+        }
+        if (!cancelled) {
+          setPresetEnabledProperties(newEnabledProperties)
+        }
       }
     }
 
