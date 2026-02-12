@@ -22,8 +22,9 @@ export const ChatGPTQuerySchema = z.object({
   prompt: z
     .string()
     .min(1, 'Prompt is required')
-    .max(10000, 'Prompt must be 10000 characters or less'),
+    .max(100, 'Prompt must be 100 characters or less'),
   isColor: z.boolean().optional().default(false),
+  resultCount: z.number().int().min(2).max(50).default(20),
 })
 
 export type PresetCreateInput = z.infer<typeof PresetCreateSchema>

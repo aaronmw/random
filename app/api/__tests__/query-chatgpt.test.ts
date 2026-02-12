@@ -11,8 +11,9 @@ describe('API Route: /api/query-chatgpt', () => {
       //   method: 'POST',
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify({
-      //     prompt: 'Generate 5 colors',
+      //     prompt: 'colors',
       //     isColor: true,
+      //     resultCount: 5,
       //   }),
       // })
       // expect(response.status).toBe(200)
@@ -30,7 +31,7 @@ describe('API Route: /api/query-chatgpt', () => {
       // expect(response.status).toBe(400)
     })
 
-    it('should reject prompt longer than 10000 characters', async () => {
+    it('should reject prompt longer than 100 characters', async () => {
       // TODO: Implement
     })
 

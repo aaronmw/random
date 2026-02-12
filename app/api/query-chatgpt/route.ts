@@ -70,9 +70,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { prompt, isColor } = validationResult.data
+    const { prompt, isColor, resultCount } = validationResult.data
 
     invariant(process.env.OPENAI_API_KEY, 'Missing OPENAI_API_KEY')
+
+    const fullPrompt = `Give me ${resultCount} random ${prompt}`
+    const safePrompt = isColor
+      ? `${fullPrompt}. Return only hex color codes (format: #RRGGBB), one per line, with no additional text or descriptions.`
+      : fullPrompt
 
     const systemMessage = isColor
       ? "You always respond with a JSON object with a single key named 'results' and it contains an array of hex color codes (format: #RRGGBB). Each result must be a valid hex color code starting with # followed by 6 hexadecimal characters. Do not include any descriptions or additional text, only hex codes."
@@ -90,7 +95,7 @@ export async function POST(request: NextRequest) {
             role: 'system',
             content: systemMessage,
           },
-          { role: 'user', content: prompt },
+          { role: 'user', content: safePrompt },
         ],
         model: 'gpt-3.5-turbo',
         n: 1,

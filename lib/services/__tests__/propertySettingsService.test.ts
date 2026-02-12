@@ -16,14 +16,17 @@ vi.mock('@/lib/utils/networkActivity', () => ({
   endNetworkActivity: vi.fn(),
 }))
 
+import {
+  endNetworkActivity,
+  startNetworkActivity,
+} from '@/lib/utils/networkActivity'
+import { getAdminUserId } from '@/lib/utils/getAdminUserId'
+import { supabaseClient } from '@/supabase/client'
+
 let createPreset: typeof import('../propertySettingsService').createPreset
 let updatePreset: typeof import('../propertySettingsService').updatePreset
 let deletePreset: typeof import('../propertySettingsService').deletePreset
 let updatePresetLabel: typeof import('../propertySettingsService').updatePresetLabel
-let supabaseClient: typeof import('@/supabase/client').supabaseClient
-let getAdminUserId: typeof import('@/lib/utils/getAdminUserId').getAdminUserId
-let startNetworkActivity: typeof import('@/lib/utils/networkActivity').startNetworkActivity
-let endNetworkActivity: typeof import('@/lib/utils/networkActivity').endNetworkActivity
 
 beforeAll(async () => {
   const serviceModule = await import('../propertySettingsService')
@@ -31,13 +34,6 @@ beforeAll(async () => {
   updatePreset = serviceModule.updatePreset
   deletePreset = serviceModule.deletePreset
   updatePresetLabel = serviceModule.updatePresetLabel
-  const supabaseModule = await import('@/supabase/client')
-  supabaseClient = supabaseModule.supabaseClient
-  const getAdminUserIdModule = await import('@/lib/utils/getAdminUserId')
-  getAdminUserId = getAdminUserIdModule.getAdminUserId
-  const networkActivityModule = await import('@/lib/utils/networkActivity')
-  startNetworkActivity = networkActivityModule.startNetworkActivity
-  endNetworkActivity = networkActivityModule.endNetworkActivity
 })
 
 describe('propertySettingsService', () => {
@@ -321,23 +317,6 @@ describe('propertySettingsService', () => {
               }),
             }
           }
-          if (propertySettingsCallCount === 2) {
-            return {
-              delete: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  in: vi.fn().mockResolvedValue({ data: [], error: null }),
-                }),
-              }),
-            }
-          }
-          if (propertySettingsCallCount === 3) {
-            return {
-              insert: vi.fn().mockReturnValue({
-                select: vi.fn().mockResolvedValue(mockUpsertPropertySettings()),
-              }),
-            }
-          }
-          // All subsequent calls should return update method (for each item in toUpdate array)
           return {
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({

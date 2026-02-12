@@ -160,21 +160,76 @@ describe('ChatGPTQuerySchema', () => {
     expect(result.success).toBe(false)
   })
 
-  it('should reject prompt longer than 10000 characters', () => {
+  it('should reject prompt longer than 100 characters', () => {
     const invalidInput = {
-      prompt: 'a'.repeat(10001),
+      prompt: 'a'.repeat(101),
     }
 
     const result = ChatGPTQuerySchema.safeParse(invalidInput)
     expect(result.success).toBe(false)
   })
 
-  it('should accept prompt at exactly 10000 characters', () => {
+  it('should accept prompt at exactly 100 characters', () => {
     const validInput = {
-      prompt: 'a'.repeat(10000),
+      prompt: 'a'.repeat(100),
     }
 
     const result = ChatGPTQuerySchema.safeParse(validInput)
     expect(result.success).toBe(true)
+  })
+
+  it('should default resultCount to 20 when not provided', () => {
+    const validInput = {
+      prompt: 'american cities',
+    }
+
+    const result = ChatGPTQuerySchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.resultCount).toBe(20)
+    }
+  })
+
+  it('should accept resultCount between 2 and 50', () => {
+    const validInput = {
+      prompt: 'cities',
+      resultCount: 25,
+    }
+
+    const result = ChatGPTQuerySchema.safeParse(validInput)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.resultCount).toBe(25)
+    }
+  })
+
+  it('should reject resultCount less than 2', () => {
+    const invalidInput = {
+      prompt: 'cities',
+      resultCount: 1,
+    }
+
+    const result = ChatGPTQuerySchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject resultCount greater than 50', () => {
+    const invalidInput = {
+      prompt: 'cities',
+      resultCount: 51,
+    }
+
+    const result = ChatGPTQuerySchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
+  })
+
+  it('should reject non-integer resultCount', () => {
+    const invalidInput = {
+      prompt: 'cities',
+      resultCount: 20.5,
+    }
+
+    const result = ChatGPTQuerySchema.safeParse(invalidInput)
+    expect(result.success).toBe(false)
   })
 })

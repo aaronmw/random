@@ -8,7 +8,11 @@ import {
 import { supabaseClient } from '@/supabase/client'
 import * as networkActivity from '@/lib/utils/networkActivity'
 
-vi.mock('@/supabase/client')
+vi.mock('@/supabase/client', () => ({
+  supabaseClient: {
+    from: vi.fn(),
+  },
+}))
 vi.mock('@/lib/utils/networkActivity', () => ({
   startNetworkActivity: vi.fn(),
   endNetworkActivity: vi.fn(),

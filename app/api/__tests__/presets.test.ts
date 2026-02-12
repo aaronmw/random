@@ -11,21 +11,18 @@ vi.mock('@/lib/middleware/rateLimit', () => ({
   rateLimit: vi.fn(),
 }))
 
+import { rateLimit } from '@/lib/middleware/rateLimit'
+import { supabaseClient } from '@/supabase/client'
+
 let GET: typeof import('../presets/route').GET
 let POST: typeof import('../presets/route').POST
 let DELETE: typeof import('../presets/route').DELETE
-let supabaseClient: typeof import('@/supabase/client').supabaseClient
-let rateLimit: typeof import('@/lib/middleware/rateLimit').rateLimit
 
 beforeAll(async () => {
   const routeModule = await import('../presets/route')
   GET = routeModule.GET
   POST = routeModule.POST
   DELETE = routeModule.DELETE
-  const supabaseModule = await import('@/supabase/client')
-  supabaseClient = supabaseModule.supabaseClient
-  const rateLimitModule = await import('@/lib/middleware/rateLimit')
-  rateLimit = rateLimitModule.rateLimit
 })
 
 describe('API Route: /api/presets', () => {
