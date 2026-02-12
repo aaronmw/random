@@ -3,6 +3,7 @@ import type {
     PropertyName,
     PropertySettingsRow,
 } from '@/app/types'
+import { FREE_USER_MAX_ENABLED_PROPERTIES } from '@/lib/constants'
 import { getRandomPropertyValue } from '@/lib/getRandomPropertyValue'
 import { PropertySettingsWithDetails } from '@/lib/services/propertySettingsService'
 import { setNodeProperty } from '@/lib/setNodeProperty'
@@ -119,6 +120,16 @@ function transformPropertySettingsForRandomization(
 
 declare const SITE_URL: string
 
+type PaymentStatusType = 'PAID' | 'UNPAID' | 'NOT_SUPPORTED'
+
+function getPaymentStatus(): PaymentStatusType {
+  if (typeof figma.payments === 'undefined') return 'NOT_SUPPORTED'
+  const status = figma.payments.status?.type
+  if (status === 'PAID' || status === 'UNPAID' || status === 'NOT_SUPPORTED') return status
+  return 'NOT_SUPPORTED'
+}
+
+// In development: figma.payments.setPaymentStatusInDevelopment({ type: 'UNPAID' }) or { type: 'PAID' }) to test both tiers.
 const PLUGIN_HEIGHT = 550
 const PLUGIN_WIDTH = 300
 
@@ -191,11 +202,11 @@ function sendCurrentSelection() {
   })
 }
 
-// Send initial data to UI
 figma.ui.postMessage({
   type: 'init',
   payload: {
     figmaUserId: figma.currentUser?.id || null,
+    paymentStatus: getPaymentStatus(),
   },
 })
 
@@ -218,6 +229,24 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
       const { propertySettings } = action.payload
 
       const enabledPropertySettings = pickBy(propertySettings, 'is_enabled')
+      const enabledCount = Object.keys(enabledPropertySettings).length
+      const paymentStatus = getPaymentStatus()
+      const isPaid = paymentStatus === 'PAID'
+
+      if (!isPaid && enabledCount > FREE_USER_MAX_ENABLED_PROPERTIES) {
+        if (typeof figma.payments !== 'undefined') {
+          await figma.payments.initiateCheckoutAsync({
+            interstitial: 'PAID_FEATURE',
+          })
+          if (getPaymentStatus() !== 'PAID') {
+            figma.notify('Upgrade to randomize multiple properties')
+            break
+          }
+        } else {
+          figma.notify('Upgrade to randomize multiple properties')
+          break
+        }
+      }
 
       const { selection } = figma.currentPage
 
@@ -281,30 +310,56 @@ figma.ui.onmessage = async (action: PluginAction, props) => {
     case 'setPluginHeight': {
       const { height } = action.payload
       figma.ui.resize(PLUGIN_WIDTH, height)
+      figma.clientStorage.setAsync('pluginHeight', height)
       break
     }
 
     case 'upgrade': {
-      figma.notify('Upgrade action received')
-
-      if (!figma.payments) {
+      if (typeof figma.payments === 'undefined') {
         figma.notify('Payments API is not available')
         break
       }
-
-      figma.notify('Opening upgrade modal...')
-
       await figma.payments.initiateCheckoutAsync({
         interstitial: 'PAID_FEATURE',
       })
-
-      figma.notify('Upgrade modal should be open??')
       break
     }
 
     case 'getCurrentSelection': {
       console.log('Received getCurrentSelection request')
       sendCurrentSelection()
+      break
+    }
+
+    case 'getInit': {
+      const preferredPluginHeight = await figma.clientStorage.getAsync('pluginHeight')
+      figma.ui.postMessage({
+        type: 'init',
+        payload: {
+          figmaUserId: figma.currentUser?.id ?? null,
+          paymentStatus: getPaymentStatus(),
+          preferredPluginHeight: typeof preferredPluginHeight === 'number' ? preferredPluginHeight : null,
+        },
+      })
+      break
+    }
+
+    case 'getPaymentStatus': {
+      figma.ui.postMessage({
+        type: 'paymentStatus',
+        payload: { paymentStatus: getPaymentStatus() },
+      })
+      break
+    }
+
+    case 'setPaymentStatusInDevelopment': {
+      if (typeof figma.payments !== 'undefined' && figma.payments.setPaymentStatusInDevelopment) {
+        figma.payments.setPaymentStatusInDevelopment({ type: action.payload.type })
+        figma.ui.postMessage({
+          type: 'paymentStatus',
+          payload: { paymentStatus: getPaymentStatus() },
+        })
+      }
       break
     }
 

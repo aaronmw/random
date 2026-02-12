@@ -7,7 +7,7 @@
     "start": "next start",
     "build": "concurrently -n plugin,next 'npm run build:plugin -- --define:SITE_URL=\\\"$npm_package_config_siteURL\\\"' 'next build'",
     "lint": "next lint",
-    "build:plugin": "esbuild plugin/code.ts --bundle --target=es6 --loader:.svg=text --outfile=plugin/dist/code.js",
+    "build:plugin": "esbuild plugin/code.ts --bundle --target=es6 --loader:.svg=text --outfile=plugin/dist/code.js --define:SITE_URL=\\\"$npm_package_config_siteURL\\\"",
     "build:next": "next build",
     "prettier:check": "prettier --check .",
     "prettier:write": "prettier --write .",
