@@ -1,18 +1,20 @@
 'use client'
 
+import { useAppContext } from '@/app/state/AppWrapper'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
 import { MouseEvent, useEffect, useState } from 'react'
 import { useLocalStorage } from 'usehooks-ts'
 
 export function ResizeHandle() {
+  const { preferredPluginHeight } = useAppContext()
   const [storedPluginHeight, setStoredPluginHeight] = useLocalStorage<
     number | null
   >('pluginHeight', null)
 
-  const [hasRestoredPluginHeight, setHasRestoredPluginHeight] = useState(false)
+  const heightToRestore = preferredPluginHeight ?? storedPluginHeight
 
   const [startingWindowHeight, setStartingWindowHeight] =
-    useState(storedPluginHeight)
+    useState(heightToRestore)
 
   const [startingClientY, setStartingClientY] = useState<number | null>(null)
 
@@ -25,15 +27,20 @@ export function ResizeHandle() {
   }
 
   useEffect(() => {
-    if (!hasRestoredPluginHeight && storedPluginHeight) {
+    if (!heightToRestore) return
+
+    function restore() {
       dispatchPluginAction({
         type: 'setPluginHeight',
-        payload: { height: storedPluginHeight },
+        payload: { height: heightToRestore },
       })
-
-      setHasRestoredPluginHeight(true)
     }
-  }, [hasRestoredPluginHeight, storedPluginHeight])
+
+    restore()
+
+    const delay = setTimeout(restore, 1000)
+    return () => clearTimeout(delay)
+  }, [heightToRestore])
 
   useEffect(() => {
     function handleMouseMove(event: MouseEvent) {

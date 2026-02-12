@@ -4,7 +4,7 @@ import { PresetLabel } from '@/components/PresetLabel'
 import { usePresets } from '@/lib/hooks/usePresets'
 import { formatPropertyName } from '@/lib/utils/presetUtils'
 import kebabCase from 'lodash/kebabCase'
-import React, { MouseEvent, useMemo, useState } from 'react'
+import React, { MouseEvent, useCallback, useMemo, useState } from 'react'
 
 type Preset = {
   id: string
@@ -22,6 +22,8 @@ type PresetForMenu = {
 
 type UsePresetMenuItemsParams = {
   pendingPublicPresetChangesCount: number
+  hasCurrentSettingsToSave: boolean
+  publishPresetsEnabled: boolean
   handleClickCreateNew: (event: MouseEvent) => void
   handleClickLoadPreset: (presetId: string) => void
   handleClickRenamePreset: (
@@ -89,6 +91,8 @@ const getEnabledPropertiesText = (
 }
 
 const createActionsMenuItems = (
+  hasCurrentSettingsToSave: boolean,
+  publishPresetsEnabled: boolean,
   preset: Preset,
   setPresetActionsMenuOpen: (id: string | null) => void,
   handleClickRenamePreset: (
@@ -110,20 +114,35 @@ const createActionsMenuItems = (
     event: MouseEvent<HTMLButtonElement>,
   ) => void,
 ): MenuItemProps<'button'>[] => {
-  // Special handling for __default__ preset - only show "Overwrite with Current" action
+  const overwriteItem: MenuItemProps<'button'> = {
+    id: 'overwrite',
+    icon: 'floppy-disk',
+    label: 'Overwrite with Current',
+    disabled: !hasCurrentSettingsToSave,
+    onClick: (e: MouseEvent) => {
+      e.stopPropagation()
+      setPresetActionsMenuOpen(null)
+      handleClickOverwritePreset(preset.id, preset.label || '', e as any)
+    },
+  }
+
   if (preset.label === '__default__') {
-    return [
-      {
-        id: 'overwrite',
-        icon: 'floppy-disk',
-        label: 'Overwrite with Current',
-        onClick: (e: MouseEvent) => {
-          e.stopPropagation()
-          setPresetActionsMenuOpen(null)
-          handleClickOverwritePreset(preset.id, preset.label || '', e as any)
-        },
-      },
-    ]
+    return [overwriteItem]
+  }
+
+  const visibilityItem: MenuItemProps<'button'> = {
+    id: 'visibility',
+    icon: (preset.visibility === 'public' ? 'lock' : 'globe') as IconString,
+    label: preset.visibility === 'public' ? 'Unpublish' : 'Publish',
+    onClick: (e: MouseEvent) => {
+      e.stopPropagation()
+      setPresetActionsMenuOpen(null)
+      handleClickToggleVisibility(
+        preset.id,
+        preset.visibility === 'public' ? 'private' : 'public',
+        e as any,
+      )
+    },
   }
 
   return [
@@ -137,30 +156,8 @@ const createActionsMenuItems = (
         handleClickRenamePreset(preset.label || '', e as any)
       },
     },
-    {
-      id: 'visibility',
-      icon: (preset.visibility === 'public' ? 'lock' : 'globe') as IconString,
-      label: preset.visibility === 'public' ? 'Unpublish' : 'Publish',
-      onClick: (e: MouseEvent) => {
-        e.stopPropagation()
-        setPresetActionsMenuOpen(null)
-        handleClickToggleVisibility(
-          preset.id,
-          preset.visibility === 'public' ? 'private' : 'public',
-          e as any,
-        )
-      },
-    },
-    {
-      id: 'overwrite',
-      icon: 'floppy-disk',
-      label: 'Overwrite with Current',
-      onClick: (e: MouseEvent) => {
-        e.stopPropagation()
-        setPresetActionsMenuOpen(null)
-        handleClickOverwritePreset(preset.id, preset.label || '', e as any)
-      },
-    },
+    ...(publishPresetsEnabled ? [visibilityItem] : []),
+    overwriteItem,
     {
       id: 'delete',
       icon: 'trash',
@@ -209,7 +206,6 @@ const createPresetMenuItem = (
         enabledPropertiesText={enabledPropertiesText}
         isOwnPreset={isOwnPreset}
         actionsMenuItems={actionsMenuItems}
-        presetActionsMenuOpen={presetActionsMenuOpen}
         onToggleActionsMenu={(presetId) =>
           setPresetActionsMenuOpen(
             presetActionsMenuOpen === presetId ? null : presetId,
@@ -222,6 +218,8 @@ const createPresetMenuItem = (
 
 export function usePresetMenuItems({
   pendingPublicPresetChangesCount,
+  hasCurrentSettingsToSave,
+  publishPresetsEnabled,
   handleClickCreateNew,
   handleClickLoadPreset,
   handleClickRenamePreset,
@@ -237,8 +235,61 @@ export function usePresetMenuItems({
     string | null
   >(null)
 
-  const buildPresetMenuItems = (): MenuItemProps<'button'>[] => {
+  const buildPresetMenuItems = useCallback((): MenuItemProps<'button'>[] => {
     const defaultPreset = userPresets.find((p) => p.label === '__default__')
+    const otherUserPresets = userPresets.filter((p) => p.label !== '__default__')
+
+    if (!publishPresetsEnabled) {
+      const hasAnyPresets = userPresets.length > 0
+      if (!hasAnyPresets) return []
+      const items: MenuItemProps<'button'>[] = [createDividerMenuItem()]
+      if (defaultPreset) {
+        items.push(
+          createPresetMenuItem(
+            defaultPreset,
+            presetEnabledProperties,
+            presetActionsMenuOpen,
+            setPresetActionsMenuOpen,
+            handleClickLoadPreset,
+            true,
+            createActionsMenuItems(
+              hasCurrentSettingsToSave,
+              publishPresetsEnabled,
+              defaultPreset,
+              setPresetActionsMenuOpen,
+              handleClickRenamePreset,
+              handleClickToggleVisibility,
+              handleClickOverwritePreset,
+              handleClickDeletePreset,
+            ),
+          ),
+        )
+      }
+      items.push(
+        ...otherUserPresets.map((preset) =>
+          createPresetMenuItem(
+            preset,
+            presetEnabledProperties,
+            presetActionsMenuOpen,
+            setPresetActionsMenuOpen,
+            handleClickLoadPreset,
+            true,
+            createActionsMenuItems(
+              hasCurrentSettingsToSave,
+              publishPresetsEnabled,
+              preset,
+              setPresetActionsMenuOpen,
+              handleClickRenamePreset,
+              handleClickToggleVisibility,
+              handleClickOverwritePreset,
+              handleClickDeletePreset,
+            ),
+          ),
+        ),
+      )
+      return items
+    }
+
     const privatePresets = userPresets.filter(
       (p) => p.visibility !== 'public' && p.label !== '__default__',
     )
@@ -251,21 +302,9 @@ export function usePresetMenuItems({
       publishedPresets.length > 0 ||
       publicPresets.length > 0
 
-    if (!hasAnyPresets) {
-      return []
-    }
+    if (!hasAnyPresets) return []
 
-    const items: MenuItemProps<'button'>[] = []
-
-    if (
-      defaultPreset !== undefined ||
-      privatePresets.length > 0 ||
-      publishedPresets.length > 0
-    ) {
-      items.push(createDividerMenuItem())
-    }
-
-    // Show default preset first if it exists (admin only)
+    const items: MenuItemProps<'button'>[] = [createDividerMenuItem()]
     if (defaultPreset) {
       items.push(
         createPresetMenuItem(
@@ -276,6 +315,8 @@ export function usePresetMenuItems({
           handleClickLoadPreset,
           true,
           createActionsMenuItems(
+            hasCurrentSettingsToSave,
+            publishPresetsEnabled,
             defaultPreset,
             setPresetActionsMenuOpen,
             handleClickRenamePreset,
@@ -286,7 +327,6 @@ export function usePresetMenuItems({
         ),
       )
     }
-
     if (privatePresets.length > 0) {
       items.push(createGroupHeaderMenuItem('Private', 'private-group-header'))
       items.push(
@@ -299,6 +339,8 @@ export function usePresetMenuItems({
             handleClickLoadPreset,
             true,
             createActionsMenuItems(
+              hasCurrentSettingsToSave,
+              publishPresetsEnabled,
               preset,
               setPresetActionsMenuOpen,
               handleClickRenamePreset,
@@ -310,7 +352,6 @@ export function usePresetMenuItems({
         ),
       )
     }
-
     if (publishedPresets.length > 0 || publicPresets.length > 0) {
       items.push(
         createGroupHeaderMenuItem('Published', 'published-group-header'),
@@ -325,6 +366,8 @@ export function usePresetMenuItems({
             handleClickLoadPreset,
             true,
             createActionsMenuItems(
+              hasCurrentSettingsToSave,
+              publishPresetsEnabled,
               preset,
               setPresetActionsMenuOpen,
               handleClickRenamePreset,
@@ -346,11 +389,23 @@ export function usePresetMenuItems({
         ),
       )
     }
-
     return items
-  }
+  }, [
+    userPresets,
+    publicPresets,
+    presetEnabledProperties,
+    presetActionsMenuOpen,
+    hasCurrentSettingsToSave,
+    publishPresetsEnabled,
+    handleClickLoadPreset,
+    handleClickRenamePreset,
+    handleClickToggleVisibility,
+    handleClickOverwritePreset,
+    handleClickDeletePreset,
+  ])
 
-  const buildSyncMenuItems = (): MenuItemProps<'button'>[] => {
+  const buildSyncMenuItems = useCallback((): MenuItemProps<'button'>[] => {
+    if (!publishPresetsEnabled) return []
     const hasAnyPublicPresets = allPresets.some(
       (preset) =>
         preset.visibility === 'public' &&
@@ -395,7 +450,14 @@ export function usePresetMenuItems({
     })
 
     return items
-  }
+  }, [
+    publishPresetsEnabled,
+    allPresets,
+    pendingPublicPresetChangesCount,
+    handleSyncPublicPresetChanges,
+    userPresets,
+    publicPresets,
+  ])
 
   const presetMenuItems: MenuItemProps<'button'>[] = useMemo(
     () => [
@@ -408,21 +470,7 @@ export function usePresetMenuItems({
       ...buildPresetMenuItems(),
       ...buildSyncMenuItems(),
     ],
-    [
-      pendingPublicPresetChangesCount,
-      presetActionsMenuOpen,
-      handleClickCreateNew,
-      handleClickLoadPreset,
-      handleClickRenamePreset,
-      handleClickToggleVisibility,
-      handleClickOverwritePreset,
-      handleClickDeletePreset,
-      handleSyncPublicPresetChanges,
-      userPresets,
-      publicPresets,
-      allPresets,
-      presetEnabledProperties,
-    ],
+    [handleClickCreateNew, buildPresetMenuItems, buildSyncMenuItems],
   )
 
   return { presetMenuItems }

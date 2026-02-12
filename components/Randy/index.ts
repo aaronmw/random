@@ -1,1 +1,0 @@
-export { Randy } from "./Randy"

@@ -1,18 +1,10 @@
+import { useAppContext } from '@/app/state/AppWrapper'
 import { bulkDisableProperties } from '@/lib/services/propertySettingsService'
 import { getEnabledProperties } from '@/lib/utils/propertySettingsUtils'
 import { useCallback, useMemo } from 'react'
 
-type UseToggleAllPropertiesParams = {
-  dispatch: any
-  propertySettings: Record<string, any>
-  currentUserId: string | null
-}
-
-export function useToggleAllProperties({
-  dispatch,
-  propertySettings,
-  currentUserId,
-}: UseToggleAllPropertiesParams) {
+export function useToggleAllProperties() {
+  const { dispatch, propertySettings, currentUserId } = useAppContext()
   const enabledProperties = useMemo(
     () => getEnabledProperties(propertySettings),
     [propertySettings],

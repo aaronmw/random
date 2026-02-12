@@ -2,6 +2,7 @@
 
 import { useAppContext } from '@/app/state/AppWrapper'
 import { tooltips } from '@/app/tooltips'
+import { FREE_USER_MAX_ENABLED_PROPERTIES } from '@/lib/constants'
 import { Icon } from '@/components/Icon'
 import { Tooltip } from '@/components/Tooltip'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
@@ -19,11 +20,18 @@ export function ExecuteButton() {
     selectedNodePluginData,
     currentUserId,
     activePresetId,
+    paymentStatus,
   } = useAppContext()
   const enabledPropertySettings = pickBy(propertySettings, 'is_enabled')
+  const enabledCount = Object.keys(enabledPropertySettings).length
   const hasNodesSelected = selectedNodePluginData.length > 0
-  const hasPropertiesEnabled = Object.keys(enabledPropertySettings).length > 0
-  const canExecute = hasNodesSelected && hasPropertiesEnabled
+  const hasPropertiesEnabled = enabledCount > 0
+  const isUnpaid =
+    paymentStatus === 'UNPAID' || paymentStatus === 'NOT_SUPPORTED'
+  const isBlockedByFreemium =
+    isUnpaid && enabledCount > FREE_USER_MAX_ENABLED_PROPERTIES
+  const canExecute =
+    hasNodesSelected && hasPropertiesEnabled && !isBlockedByFreemium
 
   // Debug logging
   if (typeof window !== 'undefined') {
@@ -117,24 +125,34 @@ export function ExecuteButton() {
     }
   }
 
+  const buttonLabel = !hasNodesSelected
+    ? 'Select at least one node'
+    : !hasPropertiesEnabled
+      ? 'Enable at least one property'
+      : isBlockedByFreemium
+        ? 'Upgrade to randomize multiple properties'
+        : `Randomize ${pluralize(selectedNodePluginData.length, 'node')}`
+
   return (
     <div className="w-full p-3">
-      <Tooltip tipContents={tooltips.execute}>
+      <Tooltip
+        tipContents={
+          isBlockedByFreemium
+            ? 'Upgrade to randomize multiple properties'
+            : tooltips.execute
+        }
+      >
         <button
           className="button-primary w-full"
           data-disabled={!canExecute || undefined}
           disabled={!canExecute}
           onClick={handleClickExecute}
         >
-          {!hasNodesSelected ? (
-            'Select at least one node'
-          ) : !hasPropertiesEnabled ? (
-            'Enable at least one property'
+          {!hasNodesSelected || !hasPropertiesEnabled || isBlockedByFreemium ? (
+            buttonLabel
           ) : (
             <>
-              <span>
-                Randomize {pluralize(selectedNodePluginData.length, 'node')}
-              </span>
+              <span>{buttonLabel}</span>
               <Icon name="shuffle" />
             </>
           )}

@@ -3,7 +3,7 @@ import { AppWrapper } from '@/app/state/AppWrapper'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
-import { ReactNode } from 'react'
+import { ReactNode, Suspense } from 'react'
 import { twJoin } from 'tailwind-merge'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -35,7 +35,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           '**:touch-manipulation',
         )}
       >
-        <AppWrapper>{children}</AppWrapper>
+        <Suspense fallback={<div className="bg-bg-secondary fixed inset-0 flex items-center justify-center text-text">Loading…</div>}>
+          <AppWrapper>{children}</AppWrapper>
+        </Suspense>
       </body>
     </html>
   )

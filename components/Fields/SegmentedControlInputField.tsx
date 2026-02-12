@@ -138,7 +138,7 @@ SegmentedControlInputField.OptionButton = function OptionButton({
   return (
     <button
       role="radio"
-      aria-selected={isSelected}
+      aria-checked={isSelected}
       aria-label={ariaLabel || (typeof value === 'string' ? value : String(value))}
       data-testid={testId}
       className={twMerge(variantClass, className)}

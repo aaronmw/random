@@ -15,7 +15,6 @@ export type PresetLabelProps = {
   enabledPropertiesText: string | null
   isOwnPreset: boolean
   actionsMenuItems?: MenuItemProps<'button'>[]
-  presetActionsMenuOpen: string | null
   onToggleActionsMenu: (presetId: string) => void
 }
 
@@ -24,11 +23,19 @@ export function PresetLabel({
   enabledPropertiesText,
   isOwnPreset,
   actionsMenuItems,
-  presetActionsMenuOpen,
   onToggleActionsMenu,
 }: PresetLabelProps) {
   return (
-    <span className="flex w-full items-baseline justify-between gap-6">
+    <span
+      className={twJoin(
+        'flex',
+        'w-full',
+        'items-baseline',
+        'justify-between',
+        'gap-6',
+        'py-2',
+      )}
+    >
       <span className="flex flex-col items-start">
         <span className={isOwnPreset ? '' : 'whitespace-nowrap'}>
           {getPresetDisplayLabel(preset.label)}

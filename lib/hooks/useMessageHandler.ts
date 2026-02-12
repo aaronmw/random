@@ -1,12 +1,40 @@
 import { AppState, PluginToAppMessage, PropertySettingsRow } from '@/app/types'
 import { AppAction } from '@/app/state/AppReducer'
+import { FREE_USER_MAX_ENABLED_PROPERTIES } from '@/lib/constants'
 import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
-import { getLocalPresetId, loadPreset } from '@/lib/services/propertySettingsService'
+import {
+  bulkDisableProperties,
+  getLocalPresetId,
+  loadPreset,
+} from '@/lib/services/propertySettingsService'
 import { loadPresetFromId } from '@/lib/utils/presetUtils'
 import { useEffect, useRef } from 'react'
 
+function capAndSetPaymentStatus(
+  dispatch: React.Dispatch<AppAction>,
+  propertySettingsRef: React.MutableRefObject<AppState['propertySettings']>,
+  paymentStatus: 'PAID' | 'UNPAID' | 'NOT_SUPPORTED',
+) {
+  const isUnpaid =
+    paymentStatus === 'UNPAID' || paymentStatus === 'NOT_SUPPORTED'
+  if (isUnpaid) {
+    const enabled = Object.entries(propertySettingsRef.current)
+      .filter(([, ps]) => ps?.is_enabled)
+      .sort(([a], [b]) => a.localeCompare(b))
+    const toDisable = enabled.slice(FREE_USER_MAX_ENABLED_PROPERTIES)
+    if (toDisable.length > 0) {
+      const ids = toDisable
+        .map(([, ps]) => ps?.id)
+        .filter((id): id is string => !!id)
+      if (ids.length > 0) {
+        bulkDisableProperties(ids).catch(console.error)
+      }
+    }
+  }
+  dispatch({ type: 'setPaymentStatus', payload: { paymentStatus } })
+}
+
 interface UseMessageHandlerParams {
-  state: AppState
   dispatch: React.Dispatch<AppAction>
   propertySettingsRef: React.MutableRefObject<AppState['propertySettings']>
   currentUserIdRef: React.MutableRefObject<string | null>
@@ -15,7 +43,6 @@ interface UseMessageHandlerParams {
 }
 
 export function useMessageHandler({
-  state,
   dispatch,
   propertySettingsRef,
   currentUserIdRef,
@@ -27,59 +54,52 @@ export function useMessageHandler({
 
   useEffect(
     () => {
-      // Synchronous logging to catch errors before page crashes
+      if (!dispatch) {
+        console.error('[DEBUG] Invalid dispatch in message handler setup')
+        return
+      }
       console.log('[DEBUG] Message handler useEffect starting', {
-        hasState: !!state,
         hasDispatch: !!dispatch,
-        currentUserId: state?.currentUserId,
-        isAutoLoadFromSelectedNodes: state?.isAutoLoadFromSelectedNodes,
+        currentUserId: currentUserIdRef.current,
+        isAutoLoadFromSelectedNodes: isAutoLoadFromSelectedNodesRef.current,
       })
-
-      // Defensive check - ensure state and dispatch are valid
-      if (!state || !dispatch) {
-        console.error(
-          '[DEBUG] Invalid state or dispatch in message handler setup',
-        )
-        return
-      }
-
-      // Ensure refs are initialized with current state values
-      // This prevents using stale values if the effect runs before refs are updated
-      // Use defensive checks to ensure values are valid
-      try {
-        if (state.propertySettings) {
-          propertySettingsRef.current = state.propertySettings
-        }
-        if (state.currentUserId !== undefined && state.currentUserId !== null) {
-          currentUserIdRef.current = state.currentUserId
-        }
-        if (state.isAutoLoadFromSelectedNodes !== undefined) {
-          isAutoLoadFromSelectedNodesRef.current =
-            state.isAutoLoadFromSelectedNodes
-        }
-        if (state.activePresetId !== undefined) {
-          activePresetIdRef.current = state.activePresetId
-        }
-        console.log('[DEBUG] Refs initialized successfully')
-      } catch (error) {
-        console.error('[DEBUG] Error initializing refs:', error)
-        return
-      }
 
       const handleMessage = (event: {
         data: {
           pluginMessage:
             | PluginToAppMessage
-            | { type: 'init'; payload: { figmaUserId: string | null } }
+            | {
+                type: 'init'
+                payload: {
+                  figmaUserId: string | null
+                  paymentStatus?: 'PAID' | 'UNPAID' | 'NOT_SUPPORTED'
+                }
+              }
+            | {
+                type: 'paymentStatus'
+                payload: { paymentStatus: 'PAID' | 'UNPAID' | 'NOT_SUPPORTED' }
+              }
         }
       }) => {
         try {
           switch (event.data?.pluginMessage?.type) {
             case 'init': {
-              const { figmaUserId } = event.data.pluginMessage.payload
+              const payload = event.data.pluginMessage.payload as {
+                figmaUserId?: string | null
+                paymentStatus?: 'PAID' | 'UNPAID' | 'NOT_SUPPORTED'
+                preferredPluginHeight?: number | null
+              }
+              const { figmaUserId, paymentStatus, preferredPluginHeight } = payload
+              if (preferredPluginHeight != null) {
+                dispatch({
+                  type: 'setStateByPath',
+                  payload: {
+                    path: 'preferredPluginHeight',
+                    value: preferredPluginHeight,
+                  },
+                })
+              }
               if (figmaUserId) {
-                // Always update currentUserId if we receive it from plugin
-                // This ensures we have it even if URL doesn't have it
                 dispatch({
                   type: 'setStateByPath',
                   payload: {
@@ -92,6 +112,22 @@ export function useMessageHandler({
                   figmaUserId,
                 )
               }
+              if (paymentStatus !== undefined) {
+                capAndSetPaymentStatus(
+                  dispatch,
+                  propertySettingsRef,
+                  paymentStatus,
+                )
+              }
+              break
+            }
+            case 'paymentStatus': {
+              const { paymentStatus } = event.data.pluginMessage.payload
+              capAndSetPaymentStatus(
+                dispatch,
+                propertySettingsRef,
+                paymentStatus,
+              )
               break
             }
             case 'setSelectedNodePluginData': {
@@ -118,7 +154,7 @@ export function useMessageHandler({
                 })),
                 presetIds,
                 presetIdsLength: presetIds.length,
-                currentUserId: state.currentUserId,
+                currentUserId: currentUserIdRef.current,
               })
 
               if (presetIds.length > 0 && currentUserIdRef.current) {
@@ -163,31 +199,22 @@ export function useMessageHandler({
 
                     // Load the preset and merge into local preset for editing
                     // Wrap in catch to prevent unhandled promise rejections
-                    // Defensive check - ensure we have valid state
-                    if (!state.currentUserId || !state.propertySettings) {
+                    // Use refs for defensive check - handler closes over initial state (effect runs once)
+                    const currentUserId = currentUserIdRef.current
+                    const currentPropertySettings = propertySettingsRef.current
+                    if (!currentUserId || !currentPropertySettings || typeof currentPropertySettings !== 'object') {
                       console.error(
                         'Invalid state when trying to load preset:',
                         {
-                          currentUserId: state.currentUserId,
-                          hasPropertySettings: !!state.propertySettings,
+                          currentUserId,
+                          hasPropertySettings: !!currentPropertySettings,
                         },
-                      )
-                      return
-                    }
-                    // Use ref to get latest propertySettings without including it in dependencies
-                    const currentPropertySettings = propertySettingsRef.current
-                    if (
-                      !currentPropertySettings ||
-                      typeof currentPropertySettings !== 'object'
-                    ) {
-                      console.error(
-                        'Invalid propertySettings when trying to load preset',
                       )
                       return
                     }
                     loadPresetFromId(
                       presetIdToLoad,
-                      currentUserIdRef.current!,
+                      currentUserId,
                       dispatch,
                       currentPropertySettings,
                     ).catch((error) => {
@@ -323,8 +350,12 @@ export function useMessageHandler({
         window.onmessage = handleMessage
         console.log('[DEBUG] window.onmessage handler set successfully')
 
-        // Only request current selection on initial setup, not on every re-run
-        // This prevents excessive message sending when dependencies change
+        try {
+          dispatchPluginAction({ type: 'getInit' })
+        } catch (error) {
+          console.warn('[DEBUG] Failed to dispatch getInit:', error)
+        }
+
         if (
           currentUserIdRef.current &&
           !hasRequestedInitialSelectionRef.current
@@ -335,7 +366,6 @@ export function useMessageHandler({
             hasRequestedInitialSelectionRef.current = true
             console.log('[DEBUG] Initial selection requested')
           } catch (error) {
-            // Ignore errors from dispatchPluginAction (e.g., in test environment)
             console.warn(
               '[DEBUG] Failed to dispatch getCurrentSelection:',
               error,
@@ -364,14 +394,11 @@ export function useMessageHandler({
       }
     },
     [
-      // Note: We intentionally don't include dispatch or state values in dependencies
-      // because:
-      // 1. dispatch from useReducer is stable and doesn't need to be in deps
-      // 2. We use refs to always get the latest state values without causing
-      //    the message handler to be recreated
-      // 3. The refs are updated in a separate useEffect whenever state changes
-      // IMPORTANT: This effect should only run once on mount, not on every state change
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      dispatch,
+      propertySettingsRef,
+      currentUserIdRef,
+      isAutoLoadFromSelectedNodesRef,
+      activePresetIdRef,
     ],
   )
 }

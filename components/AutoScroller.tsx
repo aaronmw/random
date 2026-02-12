@@ -38,7 +38,7 @@ export function AutoScroller() {
         return () => clearTimeout(timer)
       }
     }
-  }, [enabledPropertySettings, isAutoScrollEnabled])
+  }, [enabledPropertySettings, isAutoScrollEnabled, enabledPropertyNames])
 
   return null
 }

@@ -2,7 +2,7 @@ import { useAppContext } from '@/app/state/AppWrapper'
 import { PropertyName } from '@/app/types'
 import { ConditionalWrapper } from '@/components/ConditionalWrapper'
 import { Icon } from '@/components/Icon'
-import { Randy } from '@/components/Randy'
+import { Generator } from '@/components/Generator'
 import { Tooltip } from '@/components/Tooltip'
 import { dataTypes } from '@/lib/dataTypes'
 import { dataTypesByPropertyName } from '@/lib/dataTypesByPropertyName'
@@ -36,12 +36,27 @@ interface LineContext {
 export function ListInputField({ propertyName }: ListInputFieldProps) {
   const { propertySettings, dispatch } = useAppContext()
   const singlePropertySettings = propertySettings[propertyName]
-
-  if (!singlePropertySettings || !dispatch) {
-    return null
-  }
-
-  const { id: propertySettingId, randomization_mode } = singlePropertySettings
+  const propertySettingId = singlePropertySettings?.id
+  const pathToValue = 'list_property_settings.options'
+  const rawOptionsString = get(singlePropertySettings, pathToValue)
+  const optionsString =
+    typeof rawOptionsString === 'string' ? rawOptionsString : ''
+  const values: string[] = optionsString
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+  const dataType = dataTypesByPropertyName[propertyName]
+  const dataTypeConfig = dataTypes[dataType]
+  const { label, min, max, validator } = dataTypeConfig
+  const validationMessagesByLineIndex = values.map((value) =>
+    String(value).startsWith('//') ? true : validator({ value, min, max }),
+  )
+  const numDisabledValues = values.filter((value) =>
+    String(value).startsWith('//'),
+  ).length
+  const errorMessages = validationMessagesByLineIndex.filter(
+    (validationMessage) => typeof validationMessage === 'string',
+  )
+  const randomization_mode = singlePropertySettings?.randomization_mode
 
   const colorPickerElementRef = useRef<HTMLInputElement>(null)
   const scrollingElementRef = useRef<HTMLElement>(null)
@@ -49,36 +64,10 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
 
   const [clickedLineIndex, setClickedLineIndex] = useState<number | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [isShowingRandy, setIsShowingRandy] = useState(false)
+  const [isShowingGenerator, setIsShowingGenerator] = useState(false)
   const [lineContext, setLineContext] = useState<LineContext | null>(null)
   const [scrollTop, setScrollTop] = useState<number | null>(null)
   const [isClient, setIsClient] = useState(false)
-
-  const pathToValue = 'list_property_settings.options'
-  const rawOptionsString = get(singlePropertySettings, pathToValue)
-  const optionsString =
-    typeof rawOptionsString === 'string' ? rawOptionsString : ''
-  // Filter out empty lines to avoid validation errors on empty strings
-  const values: string[] = optionsString
-    .split('\n')
-    .filter((line) => line.trim() !== '')
-  const dataType = dataTypesByPropertyName[propertyName]
-  const dataTypeConfig = dataTypes[dataType]
-  const { label, min, max, validator } = dataTypeConfig
-
-  const validationMessagesByLineIndex = values.map((value) => {
-    return String(value).startsWith('//')
-      ? true
-      : validator({ value, min, max })
-  })
-
-  const numDisabledValues = values.filter((value) =>
-    String(value).startsWith('//'),
-  ).length
-
-  const errorMessages = validationMessagesByLineIndex.filter(
-    (validationMessage) => typeof validationMessage === 'string',
-  )
 
   useOnClickOutside(scrollingElementRef as RefObject<HTMLElement>, () => {
     setLineContext(null)
@@ -144,12 +133,12 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
 
   const setValues = useCallback(
     async (newValues: string[]) => {
+      if (!dispatch || !singlePropertySettings) return
       const currentValues = get(singlePropertySettings, pathToValue)
       const currentString =
         typeof currentValues === 'string' ? currentValues : ''
       const newString = newValues.join('\n')
 
-      // Optimistically update local state immediately
       dispatch({
         type: 'setStateByPath',
         payload: {
@@ -220,6 +209,10 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
     [lineContext],
   )
 
+  if (!singlePropertySettings || !dispatch) {
+    return null
+  }
+
   return (
     <>
       <div className="relative col-span-4 w-full">
@@ -229,13 +222,13 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
               {randomization_mode === 'list' && (
                 <button
                   className="link flex items-center gap-1"
-                  onClick={() => setIsShowingRandy(true)}
+                  onClick={() => setIsShowingGenerator(true)}
                 >
                   <Icon
-                    name="robot"
+                    name="sparkles"
                     variant="solid"
                   />
-                  Randy
+                  Generate
                 </button>
               )}
 
@@ -378,17 +371,17 @@ export function ListInputField({ propertyName }: ListInputFieldProps) {
       </div>
 
       {isClient && (
-        <Randy
-          isOpen={isShowingRandy}
-          onClose={() => setIsShowingRandy(false)}
+        <Generator
+          isOpen={isShowingGenerator}
+          onClose={() => setIsShowingGenerator(false)}
           isColor={dataType === 'color'}
           onResponse={async (response) => {
+            if (!Array.isArray(response)) return
+
             const currentValues = get(singlePropertySettings, pathToValue)
             const currentString =
               typeof currentValues === 'string' ? currentValues : ''
-            const responseString = Array.isArray(response)
-              ? response.join('\n')
-              : String(response)
+            const responseString = response.join('\n')
 
             // Optimistically update local state immediately
             dispatch({

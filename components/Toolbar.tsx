@@ -2,76 +2,55 @@ import { useAppContext } from '@/app/state/AppWrapper'
 import { tooltips } from '@/app/tooltips'
 import { Icon } from '@/components/Icon'
 import { MenuButton } from '@/components/MenuButton'
+import { LoadPresetConfirmModal } from '@/components/LoadPresetConfirmModal'
 import { PresetConfigModal } from '@/components/PresetConfigModal'
 import { Tooltip } from '@/components/Tooltip'
-import { getSettingsMenuItems } from '@/components/Toolbar/settingsMenuItems'
+import { useSettingsMenuItems } from '@/components/Toolbar/settingsMenuItems'
+import { dispatchPluginAction } from '@/lib/dispatchPluginAction'
 import { useFactoryReset } from '@/lib/hooks/useFactoryReset'
 import { useLoadPresetFromNodes } from '@/lib/hooks/useLoadPresetFromNodes'
 import { usePresetHandlers } from '@/lib/hooks/usePresetHandlers'
 import { usePresetMenuItems } from '@/lib/hooks/usePresetMenuItems'
 import { useToggleAllProperties } from '@/lib/hooks/useToggleAllProperties'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { twJoin } from 'tailwind-merge'
 
 export function Toolbar() {
-  const {
-    dispatch,
-    propertySettings,
-    presets,
-    isGroupedByStatus,
-    isGroupedByType,
-    isAutoScrollEnabled,
-    isLightMode,
-    isAutoLoadFromSelectedNodes,
-    currentUserId,
-    pendingPublicPresetChanges,
-  } = useAppContext()
+  const { dispatch, presets, pendingPublicPresetChanges, paymentStatus, publishPresetsEnabled } =
+    useAppContext()
+  const showUpgrade = paymentStatus !== 'PAID' && paymentStatus !== null
 
   const [isPresetConfigModalOpen, setIsPresetConfigModalOpen] = useState(false)
   const [nameOfPresetBeingEdited, setNameOfPresetBeingEdited] = useState<
     string | null
   >(null)
+  const [loadConfirmOpen, setLoadConfirmOpen] = useState(false)
+  const [loadConfirmPresetId, setLoadConfirmPresetId] = useState<string | null>(null)
 
-  // Debug: Log context values
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search)
-    const figmaUserIdFromUrl = searchParams.get('figmaUserId')
-    console.log('Toolbar - currentUserId from context:', currentUserId)
-    console.log('Toolbar - figmaUserIdFromUrl from hook:', figmaUserIdFromUrl)
-  }, [currentUserId])
+  const { handleClickFactoryReset } = useFactoryReset()
 
-  // Debug: Log presets changes
-  useEffect(() => {
-    console.log('Toolbar - presets changed:', {
-      count: presets.length,
-      labels: presets.map((p) => ({ id: p.id, label: p.label })),
-    })
-  }, [presets])
-
-  const { handleClickFactoryReset } = useFactoryReset({
-    dispatch,
-    currentUserId,
-  })
+  const { handleClickDisableAll, hasAnyEnabled } = useToggleAllProperties()
 
   const {
     saveCurrentSettingsAsPreset,
     handleClickCreateNew,
     handleClickLoadPreset,
+    executeLoadPreset,
     handleClickOverwritePreset,
     handleClickToggleVisibility,
     handleClickRenamePreset,
     handleClickDeletePreset,
   } = usePresetHandlers({
-    dispatch,
-    propertySettings,
-    presets,
-    currentUserId,
-    isAutoScrollEnabled,
-    isGroupedByStatus,
-    isGroupedByType,
-    isLightMode,
     onOpenModal: () => setIsPresetConfigModalOpen(true),
     onSetPresetBeingEdited: setNameOfPresetBeingEdited,
+    onOpenLoadConfirmModal: (presetId) => {
+      if (hasAnyEnabled) {
+        setLoadConfirmPresetId(presetId)
+        setLoadConfirmOpen(true)
+      } else {
+        executeLoadPreset(presetId)
+      }
+    },
   })
 
   const handleSyncPublicPresetChanges = () => {
@@ -82,8 +61,18 @@ export function Toolbar() {
     }
   }
 
+  const handleToggleUpgradedStatus = () => {
+    const next = paymentStatus === 'PAID' ? 'UNPAID' : 'PAID'
+    dispatchPluginAction({
+      type: 'setPaymentStatusInDevelopment',
+      payload: { type: next },
+    })
+  }
+
   const { presetMenuItems } = usePresetMenuItems({
     pendingPublicPresetChangesCount: pendingPublicPresetChanges.length,
+    hasCurrentSettingsToSave: hasAnyEnabled,
+    publishPresetsEnabled,
     handleClickCreateNew,
     handleClickLoadPreset,
     handleClickRenamePreset,
@@ -93,22 +82,11 @@ export function Toolbar() {
     handleSyncPublicPresetChanges,
   })
 
-  const { handleClickDisableAll, hasAnyEnabled } = useToggleAllProperties({
-    dispatch,
-    propertySettings,
-    currentUserId,
-  })
-
   const { foundPresetId, loadPresetFromFoundId } = useLoadPresetFromNodes()
 
-  const settingsMenuItems = getSettingsMenuItems({
-    isGroupedByStatus,
-    isGroupedByType,
-    isAutoScrollEnabled,
-    isAutoLoadFromSelectedNodes,
-    dispatch,
+  const settingsMenuItems = useSettingsMenuItems({
     handleFactoryReset: handleClickFactoryReset,
-    currentUserId,
+    onToggleUpgradedStatus: handleToggleUpgradedStatus,
   })
 
   async function handleSavePreset(presetName: string) {
@@ -146,6 +124,24 @@ export function Toolbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {showUpgrade && (
+          <Tooltip tipContents="Subscribe to randomize multiple properties">
+            <button
+              type="button"
+              className="button-icon text-text-brand"
+              onClick={() => {
+                dispatchPluginAction({ type: 'upgrade' })
+                setTimeout(
+                  () => dispatchPluginAction({ type: 'getPaymentStatus' }),
+                  3000,
+                )
+              }}
+            >
+              <Icon name="solid:circle-up" />
+              <span>Upgrade</span>
+            </button>
+          </Tooltip>
+        )}
         <Tooltip
           tipContents={
             !hasAnyEnabled ? tooltips.disableAllDisabled : tooltips.disableAll
@@ -179,6 +175,27 @@ export function Toolbar() {
         onPresetNameChange={setNameOfPresetBeingEdited}
         onSave={handleSavePreset}
       />
+
+      {loadConfirmPresetId && (
+        <LoadPresetConfirmModal
+          isOpen={loadConfirmOpen}
+          onClose={() => {
+            setLoadConfirmOpen(false)
+            setLoadConfirmPresetId(null)
+          }}
+          presetId={loadConfirmPresetId}
+          presetName={presets.find((p) => p.id === loadConfirmPresetId)?.label ?? 'this preset'}
+          isDefaultPreset={presets.find((p) => p.id === loadConfirmPresetId)?.label === '__default__'}
+          hasCurrentSettingsToSave={hasAnyEnabled}
+          onConfirmLoad={async () => {
+            await executeLoadPreset(loadConfirmPresetId)
+          }}
+          onSaveAndLoad={async (newPresetName) => {
+            await saveCurrentSettingsAsPreset({ newPresetName })
+            await executeLoadPreset(loadConfirmPresetId)
+          }}
+        />
+      )}
     </div>
   )
 }

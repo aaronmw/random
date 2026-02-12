@@ -1,3 +1,5 @@
+import { useAppContext } from '@/app/state/AppWrapper'
+import { FREE_USER_MAX_ENABLED_PROPERTIES } from '@/lib/constants'
 import { triggerPresetPropertiesRefresh } from '@/lib/hooks/usePresets'
 import {
     createPreset,
@@ -16,35 +18,27 @@ import {
 import { MouseEvent, useCallback } from 'react'
 
 type UsePresetHandlersParams = {
-  dispatch: any
-  propertySettings: Record<string, any>
-  presets: Array<{
-    id: string
-    label: string | null
-    figma_user_id: string
-    visibility?: 'public' | 'private' | 'hidden'
-  }>
-  currentUserId: string | null
-  isAutoScrollEnabled: boolean
-  isGroupedByStatus: boolean
-  isGroupedByType: boolean
-  isLightMode: boolean
   onOpenModal: () => void
   onSetPresetBeingEdited: (name: string | null) => void
+  onOpenLoadConfirmModal: (presetId: string) => void
 }
 
 export function usePresetHandlers({
-  dispatch,
-  propertySettings,
-  presets,
-  currentUserId,
-  isAutoScrollEnabled,
-  isGroupedByStatus,
-  isGroupedByType,
-  isLightMode,
   onOpenModal,
   onSetPresetBeingEdited,
+  onOpenLoadConfirmModal,
 }: UsePresetHandlersParams) {
+  const {
+    dispatch,
+    propertySettings,
+    presets,
+    currentUserId,
+    paymentStatus,
+    isAutoScrollEnabled,
+    isGroupedByStatus,
+    isGroupedByType,
+    isLightMode,
+  } = useAppContext()
   const saveCurrentSettingsAsPreset = useCallback(
     async ({
       presetName,
@@ -113,66 +107,68 @@ export function usePresetHandlers({
     [onOpenModal, onSetPresetBeingEdited],
   )
 
-  const handleClickLoadPreset = useCallback(
+  const executeLoadPreset = useCallback(
     async (presetId: string) => {
       if (!currentUserId || !dispatch) return
 
-      // Find preset name for confirmation message
-      const preset = presets.find((p) => p.id === presetId)
-      const presetName = preset?.label || 'this preset'
-      const isDefaultPreset = preset?.label === '__default__'
-
-      // Ask for confirmation before loading
-      const confirmMessage = isDefaultPreset
-        ? 'Are you sure you want to factory reset? This will restore all settings to their default values and overwrite your current settings. This action cannot be undone.'
-        : `Are you sure you want to load "${presetName}"? This will overwrite your current settings. ` +
-          `If you want to preserve your current settings, save them as a new preset first.`
-
-      if (!confirm(confirmMessage)) {
-        return
-      }
-
-      // Set loading state
       dispatch({
         type: 'setPresetLoading',
         payload: { isLoading: true },
       })
 
       try {
-        // Load preset from database (only contains enabled properties)
         const presetPropertySettings = await loadPreset(presetId)
-
-        // Get local preset ID
+        const enabledFromPreset = presetPropertySettings.filter(
+          (ps) => ps.is_enabled === true,
+        )
+        const isUnpaid =
+          paymentStatus === 'UNPAID' || paymentStatus === 'NOT_SUPPORTED'
+        const cappedEnabled =
+          isUnpaid && enabledFromPreset.length > FREE_USER_MAX_ENABLED_PROPERTIES
+            ? enabledFromPreset.slice(0, FREE_USER_MAX_ENABLED_PROPERTIES)
+            : enabledFromPreset
+        const selectedEnabledLabels = new Set(cappedEnabled.map((ps) => ps.label))
+        const cappedPresetSettings = presetPropertySettings.map((ps) =>
+          selectedEnabledLabels.has(ps.label)
+            ? ps
+            : { ...ps, is_enabled: false },
+        )
         const localPresetId = await getLocalPresetId(currentUserId)
         if (!localPresetId) {
           console.error('Local preset ID not found')
           return
         }
-
-        // Update local preset to match loaded preset (merge operation)
-        await updatePresetMerge(localPresetId, currentUserId, presetPropertySettings)
-
-        // Reload property settings from local preset to get correct IDs
+        await updatePresetMerge(localPresetId, currentUserId, cappedPresetSettings)
         const localPresetPropertySettings = await loadPreset(localPresetId)
-
-        // Dispatch action to load preset with correct IDs from local preset
+        const mergedForDispatch = localPresetPropertySettings.map((ps) =>
+          selectedEnabledLabels.has(ps.label)
+            ? ps
+            : { ...ps, is_enabled: false },
+        )
         dispatch({
           type: 'loadPreset',
           payload: {
-            presetPropertySettings: localPresetPropertySettings,
+            presetPropertySettings: mergedForDispatch,
           },
         })
       } catch (error) {
         console.error('Error loading preset:', error)
       } finally {
-        // Clear loading state
         dispatch({
           type: 'setPresetLoading',
           payload: { isLoading: false },
         })
       }
     },
-    [currentUserId, dispatch, presets],
+    [currentUserId, dispatch, paymentStatus],
+  )
+
+  const handleClickLoadPreset = useCallback(
+    (presetId: string) => {
+      if (!currentUserId || !dispatch) return
+      onOpenLoadConfirmModal(presetId)
+    },
+    [currentUserId, dispatch, onOpenLoadConfirmModal],
   )
 
   const handleClickOverwritePreset = useCallback(
@@ -356,6 +352,7 @@ export function usePresetHandlers({
     saveCurrentSettingsAsPreset,
     handleClickCreateNew,
     handleClickLoadPreset,
+    executeLoadPreset,
     handleClickOverwritePreset,
     handleClickToggleVisibility,
     handleClickRenamePreset,

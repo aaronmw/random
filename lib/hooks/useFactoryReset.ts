@@ -1,3 +1,4 @@
+import { useAppContext } from '@/app/state/AppWrapper'
 import {
   deletePreset,
   getLocalPresetId,
@@ -10,15 +11,8 @@ import { getAdminUserId } from '@/lib/utils/getAdminUserId'
 import { useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
 
-type UseFactoryResetParams = {
-  dispatch: any
-  currentUserId: string | null
-}
-
-export function useFactoryReset({
-  dispatch,
-  currentUserId,
-}: UseFactoryResetParams) {
+export function useFactoryReset() {
+  const { dispatch, currentUserId } = useAppContext()
   const searchParams = useSearchParams()
   const figmaUserIdFromUrl = searchParams.get('figmaUserId')
 
