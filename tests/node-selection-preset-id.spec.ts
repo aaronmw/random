@@ -6,6 +6,30 @@ test.describe('Node Selection with Preset IDs', () => {
     await setupNewUser(page)
   })
 
+  async function mockInitWithPaymentStatus(
+    page: Page,
+    paymentStatus: 'PAID' | 'UNPAID' | 'NOT_SUPPORTED',
+  ) {
+    await page.evaluate(
+      ({ status }) => {
+        window.postMessage(
+          {
+            pluginMessage: {
+              type: 'init',
+              payload: {
+                figmaUserId: 'test-user-payment',
+                paymentStatus: status,
+              },
+            },
+          },
+          '*',
+        )
+      },
+      { status: paymentStatus },
+    )
+    await page.waitForTimeout(200)
+  }
+
   /**
    * Mocks a node selection by posting a message to the window
    * This simulates what the Figma plugin would send
@@ -193,6 +217,22 @@ test.describe('Node Selection with Preset IDs', () => {
     // Button should NOT be visible (auto-load is enabled, so it loads automatically)
     const isVisible = await isLoadFromSelectionButtonVisible(page)
     expect(isVisible).toBe(false)
+  })
+
+  test('freemium: when paymentStatus is UNPAID, Upgrade button is visible', async ({
+    page,
+  }) => {
+    await mockInitWithPaymentStatus(page, 'UNPAID')
+    const upgradeButton = page.getByRole('button', { name: /upgrade/i })
+    await expect(upgradeButton).toBeVisible({ timeout: 3000 })
+  })
+
+  test('freemium: when paymentStatus is PAID, Upgrade button is not visible', async ({
+    page,
+  }) => {
+    await mockInitWithPaymentStatus(page, 'PAID')
+    const upgradeButton = page.getByRole('button', { name: /upgrade/i })
+    await expect(upgradeButton).not.toBeVisible({ timeout: 2000 })
   })
 
   test('selection changes from nodes with preset ID to nodes without - button should disappear', async ({
