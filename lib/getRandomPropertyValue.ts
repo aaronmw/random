@@ -36,7 +36,10 @@ const getRandomPropertyValue = ({
       invariant(min !== undefined && max !== undefined, `Invalid range for "${propertyName}"`)
 
       randomValue = random(min, max)
-      newPropertyValue = randomValue
+      newPropertyValue =
+        propertyName === 'rotation' && hasProp(node, 'rotation')
+          ? (node.rotation as number) + randomValue
+          : randomValue
       break
     }
 

@@ -4,7 +4,7 @@ import type {
     PropertySettingsRow,
 } from '@/app/types'
 import { hasProperty } from '@/lib/hasProperty'
-import { rotateOriginXY } from '@/lib/rotateOriginXY'
+import { rotateNodeAroundOrigin } from '@/lib/rotateOriginXY'
 import type { PropertySettingsWithDetails } from '@/lib/services/propertySettingsService'
 import { setCharacters } from '@/lib/setCharacters'
 import { toDegrees } from '@/lib/toDegrees'
@@ -70,17 +70,27 @@ export async function setNodeProperty({
 
     case 'height':
     case 'width': {
+      const dim = propertySettings.dimension_property_settings
+      const preserve_aspect_ratio =
+        propertySettings.preserve_aspect_ratio ??
+        dim?.preserve_aspect_ratio ??
+        false
+      const anchor_position =
+        propertySettings.anchor_position ??
+        dim?.anchor_position ??
+        'center-center'
+
       const oppositeDimension = propertyName === 'width' ? 'height' : 'width'
       const currentValue = node[propertyName]
       const currentOppositeValue = node[oppositeDimension]
       const newValue = Number(value)
       const scaleFactor = newValue / currentValue
       const newOppositeValue =
-        propertySettings.preserve_aspect_ratio === true
+        preserve_aspect_ratio === true
           ? currentOppositeValue * scaleFactor
           : currentOppositeValue
       const [verticalOriginName, horizontalOriginName] =
-        (propertySettings.anchor_position || 'center-center').split('-')
+        anchor_position.split('-')
       const currentWidth = node.width
       const currentHeight = node.height
       const newWidth = propertyName === 'width' ? newValue : newOppositeValue
@@ -101,9 +111,9 @@ export async function setNodeProperty({
 
       const newNodeY =
         verticalOriginName === 'center'
-          ? node.y + (newHeight - currentHeight) / 2
-          : verticalOriginName === 'top'
-            ? node.y + (newHeight - currentHeight)
+          ? node.y - (newHeight - currentHeight) / 2
+          : verticalOriginName === 'bottom'
+            ? node.y - (newHeight - currentHeight)
             : node.y
 
       node.x = newNodeX
@@ -336,9 +346,13 @@ export async function setNodeProperty({
     }
 
     case 'rotation': {
-      const anchorPosition = (propertySettings.anchor_position || 'center-center') as AnchorPosition
+      const rotationAnchor =
+        propertySettings.anchor_position ??
+        propertySettings.dimension_property_settings?.anchor_position ??
+        'center-center'
+      const anchorPosition = rotationAnchor as AnchorPosition
 
-      const [xOffset, yOffset] = (
+      const [pivotXFrac, pivotYFrac] = (
         {
           'top-left': [0, 0],
           'top-center': [0.5, 0],
@@ -352,7 +366,7 @@ export async function setNodeProperty({
         } as Record<AnchorPosition, [number, number]>
       )[anchorPosition]
 
-      rotateOriginXY([node], Number(value), xOffset, yOffset, '%', '%')
+      rotateNodeAroundOrigin(node, Number(value), pivotXFrac, pivotYFrac)
       break
     }
 

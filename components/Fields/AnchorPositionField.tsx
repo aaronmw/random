@@ -23,22 +23,18 @@ const AnchorPositionField = ({
 }: AnchorPositionFieldProps) => {
   const { propertySettings, dispatch } = useAppContext()
   const singlePropertySettings = propertySettings[propertyName]
-
-  if (!singlePropertySettings || !dispatch) {
-    return null
-  }
-
-  const { id: propertySettingId, dimension_property_settings } =
-    singlePropertySettings
+  const propertySettingId = singlePropertySettings?.id
+  const dimension_property_settings = singlePropertySettings?.dimension_property_settings
   const anchorPosition = dimension_property_settings?.anchor_position
   const preserveAspectRatio = dimension_property_settings?.preserve_aspect_ratio
-
   const axis =
-    propertyName === 'width' && !preserveAspectRatio
-      ? 'x'
-      : propertyName === 'height' && !preserveAspectRatio
-        ? 'y'
-        : 'all'
+    propertyName === 'rotation'
+      ? 'all'
+      : propertyName === 'width' && !preserveAspectRatio
+        ? 'x'
+        : propertyName === 'height' && !preserveAspectRatio
+          ? 'y'
+          : 'all'
 
   const handleClickAnchor = useCallback(
     async (
@@ -62,6 +58,7 @@ const AnchorPositionField = ({
 
       try {
         await updateDimensionPropertySettings(propertySettingId, {
+          dimension: propertyName,
           anchor_position: newValue,
         })
       } catch (error) {
@@ -80,6 +77,10 @@ const AnchorPositionField = ({
     },
     [propertySettingId, propertyName, anchorPosition, dispatch],
   )
+
+  if (!singlePropertySettings || !dispatch) {
+    return null
+  }
 
   return (
     <FieldContainer

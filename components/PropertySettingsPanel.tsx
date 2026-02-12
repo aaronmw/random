@@ -10,9 +10,11 @@ import { ListInputField } from '@/components/Fields/ListInputField'
 import { SegmentedControlInputField } from '@/components/Fields/SegmentedControlInputField'
 import { Icon, IconString } from '@/components/Icon'
 import { Tooltip } from '@/components/Tooltip'
+import { FREE_USER_MAX_ENABLED_PROPERTIES } from '@/lib/constants'
 import { dataTypes } from '@/lib/dataTypes'
 import { dataTypesByPropertyName } from '@/lib/dataTypesByPropertyName'
 import {
+  bulkDisableProperties,
   updateDimensionPropertySettings,
   updateNumericPropertySettings,
   updatePropertySettingEnabled,
@@ -23,6 +25,7 @@ import {
 import { Database } from '@/supabase/generated-types'
 import { dispatchTestSignal } from '@/lib/utils/testSignals'
 import get from 'lodash/get'
+import pickBy from 'lodash/pickBy'
 import {
   ChangeEvent,
   memo,
@@ -51,7 +54,16 @@ function PreMemoPropertySettingsPanel({
   className?: string
   propertyName: PropertyName
 }) {
-  const { propertySettings, dispatch, currentUserId } = useAppContext()
+  const { propertySettings, dispatch, currentUserId, paymentStatus } =
+    useAppContext()
+  const isUnpaid =
+    paymentStatus === 'UNPAID' || paymentStatus === 'NOT_SUPPORTED'
+  const enabledCount = Object.keys(pickBy(propertySettings, 'is_enabled')).length
+  const propertySetting = propertySettings[propertyName]
+  const isEnabled = propertySetting?.is_enabled ?? false
+  const wouldBeSecond =
+    isUnpaid && !isEnabled && enabledCount >= FREE_USER_MAX_ENABLED_PROPERTIES
+
   const [, startTransition] = useTransition()
   const dbUpdateTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
@@ -59,32 +71,23 @@ function PreMemoPropertySettingsPanel({
   const stateUpdateTimeoutRef = useRef<
     ReturnType<typeof setTimeout> | undefined
   >(undefined)
-  const propertySetting = propertySettings[propertyName]
 
-  if (!propertySetting) {
-    return null
-  }
-
-  const {
-    id: propertySettingId,
-    is_enabled: isEnabled = false,
-    randomization_mode: mode = 'range',
-    text_property_settings: textSettings,
-    dimension_property_settings: dimensionSettings,
-    numeric_property_settings: numericSettings,
-  } = propertySetting
-
+  const propertySettingId = propertySetting?.id
+  const mode = (propertySetting?.randomization_mode ?? 'range') as RandomizationMode
+  const textSettings = propertySetting?.text_property_settings
+  const dimensionSettings = propertySetting?.dimension_property_settings
+  const numericSettings = propertySetting?.numeric_property_settings
   const sortOrderMap: Partial<
     Record<
       RandomizationMode,
       Database['public']['Enums']['post_randomization_sort_order'] | undefined
     >
   > = {
-    range: (propertySetting as any).post_range_randomization_sort_order,
-    list: (propertySetting as any).post_list_randomization_sort_order,
-    addition: (propertySetting as any).post_addition_randomization_sort_order,
+    range: (propertySetting as any)?.post_range_randomization_sort_order,
+    list: (propertySetting as any)?.post_list_randomization_sort_order,
+    addition: (propertySetting as any)?.post_addition_randomization_sort_order,
     multiplication: (propertySetting as any)
-      .post_multiplication_randomization_sort_order,
+      ?.post_multiplication_randomization_sort_order,
   }
   const sortOrder = (sortOrderMap[mode as keyof typeof sortOrderMap] ??
     'none') as Database['public']['Enums']['post_randomization_sort_order']
@@ -97,7 +100,6 @@ function PreMemoPropertySettingsPanel({
   const dataType = dataTypesByPropertyName[propertyName]
   const dataTypeConfig = dataTypes[dataType]
 
-  // Local state for input values to keep typing responsive
   const [localMin, setLocalMin] = useState<number | null>(
     numericSettings?.min ?? null,
   )
@@ -224,7 +226,7 @@ function PreMemoPropertySettingsPanel({
         throw error
       }
     },
-    [propertySettingId, propertySetting],
+    [propertySettingId],
   )
 
   const revertStateOnError = useCallback(
@@ -373,10 +375,12 @@ function PreMemoPropertySettingsPanel({
         })
       } else if (path.startsWith('dimension_property_settings.')) {
         const field = extractFieldName(path, 'dimension_property_settings')
+        const updates: Record<string, unknown> = { [field]: newValue }
+        if (propertyName === 'width' || propertyName === 'height') {
+          updates.dimension = propertyName
+        }
         await updateWithOptimisticState(path, newValue, async () => {
-          await updateDimensionPropertySettings(propertySettingId, {
-            [field]: newValue,
-          })
+          await updateDimensionPropertySettings(propertySettingId, updates)
         })
       } else if (path.startsWith('numeric_property_settings.')) {
         const field = extractFieldName(path, 'numeric_property_settings')
@@ -387,20 +391,57 @@ function PreMemoPropertySettingsPanel({
         })
       }
     },
-    [propertySettingId, updateWithOptimisticState],
+    [propertySettingId, propertyName, updateWithOptimisticState, mode],
   )
 
   const handleClickSetIsEnabled = useCallback(
     async (newIsEnabled: boolean) => {
-      // Defensive check: log property setting info for debugging
-      // This helps identify if we're trying to update a default preset property
+      if (
+        newIsEnabled &&
+        isUnpaid &&
+        enabledCount >= FREE_USER_MAX_ENABLED_PROPERTIES
+      ) {
+        const othersEnabled = Object.entries(propertySettings).filter(
+          ([name, ps]) => name !== propertyName && ps?.is_enabled,
+        )
+        if (othersEnabled.length > 0) {
+          const otherIds = othersEnabled.map(([, ps]) => ps.id)
+          othersEnabled.forEach(([otherName]) => {
+            if (dispatch) {
+              dispatch({
+                type: 'setStateByPath',
+                payload: {
+                  path: `propertySettings.${otherName}.is_enabled`,
+                  value: false,
+                },
+              })
+            }
+          })
+          try {
+            await bulkDisableProperties(otherIds)
+          } catch (error) {
+            console.error('Error disabling other properties:', error)
+            othersEnabled.forEach(([otherName]) => {
+              if (dispatch) {
+                dispatch({
+                  type: 'setStateByPath',
+                  payload: {
+                    path: `propertySettings.${otherName}.is_enabled`,
+                    value: true,
+                  },
+                })
+              }
+            })
+            return
+          }
+        }
+      }
       console.log('handleClickSetIsEnabled - property setting:', {
         label: propertyName,
         id: propertySettingId,
         preset_id: propertySetting.preset_id,
         currentUserId,
       })
-
       await updateWithOptimisticState('is_enabled', newIsEnabled, async () => {
         await updatePropertySettingEnabled(propertySettingId, newIsEnabled)
       })
@@ -409,10 +450,18 @@ function PreMemoPropertySettingsPanel({
       propertySettingId,
       propertySetting,
       propertyName,
+      propertySettings,
+      dispatch,
       currentUserId,
+      isUnpaid,
+      enabledCount,
       updateWithOptimisticState,
     ],
   )
+
+  if (!propertySetting) {
+    return null
+  }
 
   return (
     <div
@@ -458,7 +507,11 @@ function PreMemoPropertySettingsPanel({
 
         <Tooltip
           tipContents={
-            isEnabled ? 'Disable randomization' : 'Enable randomization'
+            wouldBeSecond
+              ? 'Enable randomization (will switch from other property)'
+              : isEnabled
+                ? 'Disable randomization'
+                : 'Enable randomization'
           }
         >
           <button
@@ -674,14 +727,14 @@ function PreMemoPropertySettingsPanel({
 
           {mode === 'list' && <ListInputField propertyName={propertyName} />}
 
-          {dimensionSettings?.preserve_aspect_ratio !== undefined && (
+          {(propertyName === 'width' || propertyName === 'height') && (
             <SegmentedControlInputField
               label={
                 propertyName === 'width'
                   ? 'auto-scale height'
                   : 'auto-scale width'
               }
-              value={dimensionSettings.preserve_aspect_ratio || false}
+              value={dimensionSettings?.preserve_aspect_ratio ?? false}
               variant="full"
               variantForButton="button.icon.togglable.secondary"
               onChange={handleSegmentedControlChange.bind(
@@ -711,7 +764,9 @@ function PreMemoPropertySettingsPanel({
             </SegmentedControlInputField>
           )}
 
-          {dimensionSettings?.anchor_position !== undefined && (
+          {(propertyName === 'width' ||
+            propertyName === 'height' ||
+            propertyName === 'rotation') && (
             <AnchorPositionField
               label="transform origin"
               propertyName={propertyName}

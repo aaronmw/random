@@ -1,3 +1,36 @@
+// Rotates a node around a pivot point using relativeTransform.
+// Pivot is specified as fractional offset from top-left (0-1 range).
+// Keeps the pivot fixed in place while the node rotates around it.
+export function rotateNodeAroundOrigin(
+  node: SceneNode & { width?: number; height?: number },
+  angleDegrees: number,
+  pivotXFrac: number,
+  pivotYFrac: number,
+): void {
+  if (!('relativeTransform' in node) || !('width' in node) || !('height' in node)) {
+    return
+  }
+
+  const angleRad = (angleDegrees * Math.PI) / 180
+  const cos = Math.cos(angleRad)
+  const sin = Math.sin(angleRad)
+
+  const px = node.width * pivotXFrac
+  const py = node.height * pivotYFrac
+
+  const [[a, b, tx], [c, d, ty]] = node.relativeTransform
+  const pivotX = a * px + b * py + tx
+  const pivotY = c * px + d * py + ty
+
+  const txNew = pivotX - (cos * px + sin * py)
+  const tyNew = pivotY - (-sin * px + cos * py)
+
+  node.relativeTransform = [
+    [cos, sin, txNew],
+    [-sin, cos, tyNew],
+  ]
+}
+
 // nodes: SceneNode[]
 
 // The rotation of the node in degrees

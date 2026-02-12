@@ -86,7 +86,8 @@ INSERT INTO public.text_property_settings (property_setting_id, decimal_places, 
 -- Insert dimension property settings for layout properties
 INSERT INTO public.dimension_property_settings (property_setting_id, dimension, anchor_position, preserve_aspect_ratio) VALUES
 ((SELECT id FROM public.property_settings WHERE label = 'width' AND preset_id = (SELECT id FROM public.presets WHERE label = '__default__' AND figma_user_id = 'default' LIMIT 1)), 'width', 'center-center', false),
-((SELECT id FROM public.property_settings WHERE label = 'height' AND preset_id = (SELECT id FROM public.presets WHERE label = '__default__' AND figma_user_id = 'default' LIMIT 1)), 'height', 'center-center', false);
+((SELECT id FROM public.property_settings WHERE label = 'height' AND preset_id = (SELECT id FROM public.presets WHERE label = '__default__' AND figma_user_id = 'default' LIMIT 1)), 'height', 'center-center', false),
+((SELECT id FROM public.property_settings WHERE label = 'rotation' AND preset_id = (SELECT id FROM public.presets WHERE label = '__default__' AND figma_user_id = 'default' LIMIT 1)), 'rotation', 'center-center', false);
 
 -- Insert numeric property settings for range-based properties
 INSERT INTO public.numeric_property_settings (property_setting_id, min, max, operator) VALUES

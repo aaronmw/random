@@ -671,12 +671,18 @@ export async function createPreset(
       })
     }
 
-    if (originalPs.dimension_property_settings) {
+    if (
+      originalPs.dimension_property_settings ||
+      (originalPs.label === 'width' ||
+        originalPs.label === 'height' ||
+        originalPs.label === 'rotation')
+    ) {
+      const dim = originalPs.dimension_property_settings
       dimensionSettingsToInsert.push({
         property_setting_id: newPs.id,
-        dimension: originalPs.dimension_property_settings.dimension,
-        anchor_position: originalPs.dimension_property_settings.anchor_position,
-        preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+        dimension: dim?.dimension ?? originalPs.label,
+        anchor_position: dim?.anchor_position ?? 'center-center',
+        preserve_aspect_ratio: dim?.preserve_aspect_ratio ?? false,
       })
     }
 
@@ -1043,12 +1049,18 @@ export async function bulkPopulatePreset(
       })
       }
 
-      if (originalPs.dimension_property_settings) {
+      if (
+        originalPs.dimension_property_settings ||
+        originalPs.label === 'width' ||
+        originalPs.label === 'height' ||
+        originalPs.label === 'rotation'
+      ) {
+        const dim = originalPs.dimension_property_settings
         dimensionSettingsToInsert.push({
           property_setting_id: insertedPs.id,
-          dimension: originalPs.dimension_property_settings.dimension,
-          anchor_position: originalPs.dimension_property_settings.anchor_position,
-          preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+          dimension: dim?.dimension ?? originalPs.label,
+          anchor_position: dim?.anchor_position ?? 'center-center',
+          preserve_aspect_ratio: dim?.preserve_aspect_ratio ?? false,
         })
       }
 
@@ -1319,12 +1331,18 @@ export async function updatePreset(
         })
       }
 
-      if (originalPs.dimension_property_settings) {
+      if (
+        originalPs.dimension_property_settings ||
+        originalPs.label === 'width' ||
+        originalPs.label === 'height' ||
+        originalPs.label === 'rotation'
+      ) {
+        const dim = originalPs.dimension_property_settings
         dimensionSettingsToUpsert.push({
           property_setting_id: upsertedPs.id,
-          dimension: originalPs.dimension_property_settings.dimension,
-          anchor_position: originalPs.dimension_property_settings.anchor_position,
-          preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+          dimension: dim?.dimension ?? originalPs.label,
+          anchor_position: dim?.anchor_position ?? 'center-center',
+          preserve_aspect_ratio: dim?.preserve_aspect_ratio ?? false,
         })
       }
 
@@ -1558,12 +1576,18 @@ export async function updatePresetMerge(
         })
       }
 
-      if (originalPs.dimension_property_settings) {
+      if (
+        originalPs.dimension_property_settings ||
+        originalPs.label === 'width' ||
+        originalPs.label === 'height' ||
+        originalPs.label === 'rotation'
+      ) {
+        const dim = originalPs.dimension_property_settings
         dimensionSettingsToUpsert.push({
           property_setting_id: upsertedPs.id,
-          dimension: originalPs.dimension_property_settings.dimension,
-          anchor_position: originalPs.dimension_property_settings.anchor_position,
-          preserve_aspect_ratio: originalPs.dimension_property_settings.preserve_aspect_ratio,
+          dimension: dim?.dimension ?? originalPs.label,
+          anchor_position: dim?.anchor_position ?? 'center-center',
+          preserve_aspect_ratio: dim?.preserve_aspect_ratio ?? false,
         })
       }
 
