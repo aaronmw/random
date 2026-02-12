@@ -14,3 +14,6 @@ export const RATE_LIMIT_MAX_REQUESTS = 60 // 60 requests per minute
 
 // User options change detection
 export const USER_OPTIONS_CHANGE_DETECTION_WINDOW = 2000 // 2 seconds
+
+// Freemium: max concurrent randomized properties for unpaid users
+export const FREE_USER_MAX_ENABLED_PROPERTIES = 1

@@ -38,6 +38,9 @@ export interface AppState {
   activePresetId: string | null // ID of the preset currently being edited (null = local preset)
   foundPresetId: string | null // ID of preset found on selected nodes (for manual loading)
   ignoreRealtimeUntil?: number // Timestamp - ignore realtime events until this time
+  paymentStatus: 'PAID' | 'UNPAID' | 'NOT_SUPPORTED' | null
+  publishPresetsEnabled: boolean
+  preferredPluginHeight: number | null
   pendingPublicPresetChanges: Array<{
     table: 'presets'
     event: 'INSERT' | 'UPDATE' | 'DELETE'
@@ -81,6 +84,16 @@ export type PluginAction =
     }
   | {
       type: 'getCurrentSelection'
+    }
+  | {
+      type: 'getInit'
+    }
+  | {
+      type: 'getPaymentStatus'
+    }
+  | {
+      type: 'setPaymentStatusInDevelopment'
+      payload: { type: 'PAID' | 'UNPAID' }
     }
   | {
       type: 'setPresetIdOnNodes'

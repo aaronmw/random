@@ -182,7 +182,6 @@ export function AppWrapper({ children }: { children: ReactNode }) {
   })
 
   useMessageHandler({
-    state,
     dispatch,
     propertySettingsRef,
     currentUserIdRef,

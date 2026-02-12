@@ -1,7 +1,8 @@
 import { AppState, PropertyName } from '@/app/types'
+import { FREE_USER_MAX_ENABLED_PROPERTIES } from '@/lib/constants'
 import {
-    PropertySettingsWithDetails,
-    deletePreset,
+  PropertySettingsWithDetails,
+  deletePreset,
 } from '@/lib/services/propertySettingsService'
 import { UserOptions } from '@/lib/services/userOptionsService'
 import { getPropertiesToDisable } from '@/lib/utils/propertySettingsUtils'
@@ -38,6 +39,9 @@ export const initialState: AppState = {
   activePresetId: null,
   foundPresetId: null,
   ignoreRealtimeUntil: undefined,
+  paymentStatus: null,
+  publishPresetsEnabled: false,
+  preferredPluginHeight: null,
   pendingPublicPresetChanges: [],
 }
 
@@ -535,6 +539,19 @@ export type AppAction =
       presetId: string | null
     }
   }
+  | {
+    type: 'setPaymentStatus'
+    payload: {
+      paymentStatus: 'PAID' | 'UNPAID' | 'NOT_SUPPORTED' | null
+    }
+  }
+  | {
+    type: 'setPublishPresetsEnabled'
+    payload: {
+      publishPresetsEnabled: boolean
+    }
+  }
+
 
 export const AppReducer = (state: AppState, action: AppAction) => {
   if (typeof action === 'undefined') {
@@ -679,12 +696,15 @@ export const AppReducer = (state: AppState, action: AppAction) => {
       case 'loadPreset': {
         const { presetPropertySettings } = action.payload
 
-        // 1. Disable only currently enabled properties that are NOT in the loaded preset
-        // (optimization: only process enabled properties instead of all 41)
-        const loadedLabels = new Set(presetPropertySettings.map((ps) => ps.label))
+        // 1. Disable only currently enabled properties that are NOT enabled in the loaded preset
+        const loadedEnabledLabels = new Set(
+          presetPropertySettings
+            .filter((ps) => ps.is_enabled === true)
+            .map((ps) => ps.label),
+        )
         const propertiesToDisable = getPropertiesToDisable(
           draft.propertySettings,
-          loadedLabels,
+          loadedEnabledLabels,
         )
         propertiesToDisable.forEach((ps) => {
           ps.is_enabled = false
@@ -701,6 +721,24 @@ export const AppReducer = (state: AppState, action: AppAction) => {
             Object.assign(localPs, presetPs)
           }
         })
+
+        // 3. Freemium: unpaid users get at most FREE_USER_MAX_ENABLED_PROPERTIES
+        const isUnpaid =
+          draft.paymentStatus === 'UNPAID' ||
+          draft.paymentStatus === 'NOT_SUPPORTED'
+        if (isUnpaid) {
+          const keepEnabledLabels = new Set(
+            presetPropertySettings
+              .filter((ps) => ps.is_enabled === true)
+              .slice(0, FREE_USER_MAX_ENABLED_PROPERTIES)
+              .map((ps) => ps.label),
+          )
+          Object.entries(draft.propertySettings).forEach(([label, ps]) => {
+            if (ps.is_enabled && !keepEnabledLabels.has(label)) {
+              ps.is_enabled = false
+            }
+          })
+        }
         break
       }
 
@@ -806,6 +844,32 @@ export const AppReducer = (state: AppState, action: AppAction) => {
 
       case 'setFoundPresetId': {
         draft.foundPresetId = action.payload.presetId
+        break
+      }
+
+      case 'setPaymentStatus': {
+        draft.paymentStatus = action.payload.paymentStatus
+        const isUnpaid =
+          draft.paymentStatus === 'UNPAID' ||
+          draft.paymentStatus === 'NOT_SUPPORTED'
+        if (isUnpaid) {
+          const keepEnabledLabels = new Set(
+            Object.entries(draft.propertySettings)
+              .filter(([, ps]) => ps?.is_enabled)
+              .slice(0, FREE_USER_MAX_ENABLED_PROPERTIES)
+              .map(([label]) => label),
+          )
+          Object.entries(draft.propertySettings).forEach(([label, ps]) => {
+            if (ps?.is_enabled && !keepEnabledLabels.has(label)) {
+              ps.is_enabled = false
+            }
+          })
+        }
+        break
+      }
+
+      case 'setPublishPresetsEnabled': {
+        draft.publishPresetsEnabled = action.payload.publishPresetsEnabled
         break
       }
     }
