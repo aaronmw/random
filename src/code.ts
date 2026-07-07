@@ -169,6 +169,14 @@ const migratePluginState = clientData => {
     return migratedState;
 };
 
+const getRunConfig = msg => {
+    if (!isPlainObject(msg.params) || !isPlainObject(msg.params.config)) {
+        return null;
+    }
+
+    return msg.params.config;
+};
+
 const retrieveClientData = async key => {
     const clientData = await figma.clientStorage.getAsync(key);
     return migratePluginState(clientData);
@@ -592,7 +600,14 @@ figma.ui.onmessage = async msg => {
             return;
         }
 
-        const { config } = msg.params;
+        const config = getRunConfig(msg);
+
+        if (!config) {
+            figma.notify(
+                'Could not read randomizer settings. Reopen the plugin and try again.',
+            );
+            return;
+        }
 
         for (const propName of Object.keys(config)) {
             const propConfig = config[propName];
