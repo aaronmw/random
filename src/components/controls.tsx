@@ -360,7 +360,7 @@ export const IconButton = styled(
         className,
         iconName,
         label = null,
-        onClick = () => null,
+        onClick = evt => null,
         ...otherProps
     }) => (
         <StyledIconButton

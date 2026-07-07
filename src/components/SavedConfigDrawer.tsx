@@ -15,7 +15,6 @@ import {
     FlexBox,
     FONT_WEIGHT_BOLD,
 } from './layout';
-import { sendMessage } from '../ui';
 import migrateData from '../migrateData';
 
 const DRAWER_Z_INDEX_BASE = 100;
@@ -192,9 +191,9 @@ const SavedConfigEditor = ({ savedConfig, onCancel, onSave }) => {
 
 const SavedConfigDrawer = ({ pluginState, onUpdateState }) => {
     const [drawerHeight, setDrawerHeight] = React.useState(0);
-    const [isCreatingNew, setIsCreatingNew] = React.useState(false);
     const [isEditingConfigId, setIsEditingConfigId] = React.useState(null);
     const [isOpen, setIsOpen] = React.useState(false);
+    const isCreatingNewRef = React.useRef(false);
     const drawerElementRef = React.useRef(null);
     const savedConfigs = pluginState.savedConfigs;
 
@@ -256,9 +255,9 @@ const SavedConfigDrawer = ({ pluginState, onUpdateState }) => {
     };
 
     const handleClickCancel = () => {
-        if (isCreatingNew) {
+        if (isCreatingNewRef.current) {
             handleClickDelete({ id: isEditingConfigId });
-            setIsCreatingNew(false);
+            isCreatingNewRef.current = false;
         }
         setIsEditingConfigId(null);
     };
@@ -272,7 +271,7 @@ const SavedConfigDrawer = ({ pluginState, onUpdateState }) => {
             label: newLabel,
         });
         setIsEditingConfigId(null);
-        setIsCreatingNew(false);
+        isCreatingNewRef.current = false;
     };
 
     const handleSync = id => {
@@ -297,8 +296,8 @@ const SavedConfigDrawer = ({ pluginState, onUpdateState }) => {
         });
 
         setIsEditingConfigId(id);
-        setIsCreatingNew(true);
-    }, [pluginState, savedConfigs]);
+        isCreatingNewRef.current = true;
+    }, [onUpdateState, pluginState, savedConfigs]);
 
     return (
         <>

@@ -12,11 +12,16 @@ const migrateListData = list => {
         .join('\n');
 };
 
-const migrateData = configObj =>
-    mapValues(configObj, propDefinition =>
+const migrateData = configObj => {
+    if (!configObj || typeof configObj !== 'object') {
+        return configObj;
+    }
+
+    return mapValues(configObj, propDefinition =>
         mapValues(propDefinition, (value, key) =>
             key !== 'list' ? value : migrateListData(value),
         ),
     );
+};
 
 export default migrateData;

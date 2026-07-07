@@ -5,7 +5,6 @@ import get from 'lodash/get';
 import isArray from 'lodash/isArray';
 import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
-import range from 'lodash/range';
 import sample from 'lodash/sample';
 import { LIST_DELIMETER } from './config';
 import parseCSSColor from './css-color-parser';
@@ -14,6 +13,7 @@ import migrateData from './migrateData';
 
 const WINDOW_WIDTH = 290;
 const WINDOW_HEIGHT = 600;
+const VALID_ACTIVE_ROUTES = ['randomizer', 'about'];
 
 const RANDOM_THINGS = [
     'a camera 📸',
@@ -127,14 +127,51 @@ const storeClientData = async (key, val) => {
     await figma.clientStorage.setAsync(key, val);
 };
 
-const retrieveClientData = async key => {
-    const clientData = await figma.clientStorage.getAsync(key);
-    clientData.config = migrateData(clientData.config);
-    return clientData;
+const isPlainObject = value =>
+    value !== null && typeof value === 'object' && !isArray(value);
+
+const migrateSavedConfig = savedConfig => {
+    if (!isPlainObject(savedConfig)) {
+        return savedConfig;
+    }
+
+    return {
+        ...savedConfig,
+        data: migrateData(savedConfig.data),
+    };
 };
 
-const resetState = async () => {
-    await storeClientData('pluginState', {});
+const migratePluginState = clientData => {
+    if (!isPlainObject(clientData)) {
+        return {};
+    }
+
+    const migratedState = { ...clientData };
+
+    if (isPlainObject(migratedState.config)) {
+        migratedState.config = migrateData(migratedState.config);
+    } else {
+        delete migratedState.config;
+    }
+
+    if (isArray(migratedState.savedConfigs)) {
+        migratedState.savedConfigs = migratedState.savedConfigs.map(
+            migrateSavedConfig,
+        );
+    } else {
+        delete migratedState.savedConfigs;
+    }
+
+    if (!VALID_ACTIVE_ROUTES.includes(migratedState.activeRoute)) {
+        delete migratedState.activeRoute;
+    }
+
+    return migratedState;
+};
+
+const retrieveClientData = async key => {
+    const clientData = await figma.clientStorage.getAsync(key);
+    return migratePluginState(clientData);
 };
 
 const anyColorStringToRGB = color => {
@@ -202,9 +239,13 @@ const generateRandomValue = ({ node, propConfig, propName }) => {
             break;
 
         case 'list':
-            const enabledItems = propConfig['list']
+            const enabledItems = String(propConfig['list'] || '')
                 .split(LIST_DELIMETER)
-                .filter(listItem => !listItem.includes('[disabled]'));
+                .filter(
+                    listItem =>
+                        listItem.trim() !== '' &&
+                        !listItem.includes('[disabled]'),
+                );
             randomValue = sample(enabledItems);
             newPropValue = randomValue;
             break;
@@ -225,30 +266,130 @@ const showMessage = message => {
         notificationHandler.current = null;
     }
 
-    notificationHandler.current = (figma as any).notify(message);
+    notificationHandler.current = figma.notify(message);
 };
 
-const hasStrokeOrFill = (arr, type) => {
-    if (arr.length === 0) {
-        showMessage(
-            `🤔️ At least one of your selected elements doesn't have a ${type} to change...`,
-        );
-        return false;
-    }
-    return true;
-};
-
-const isSupportedColor = color => {
+const isSupportedColor = (color, rawColor) => {
     if (!color) {
         showMessage(
-            `🤔️ "${color}" doesn't look a color, so we'll just ignore that one...`,
+            `🤔️ "${rawColor}" doesn't look like a color, so we'll ignore that one.`,
         );
         return false;
     }
     return true;
+};
+
+const formatPropName = propName =>
+    propName.replace(/([A-Z])/g, ' $1').toLowerCase();
+
+const getPaints = (node, propName) => {
+    if (!(propName in node)) {
+        return null;
+    }
+
+    const paints = node[propName];
+    return isArray(paints) ? paints : null;
+};
+
+const getUnsupportedReason = (node, propName) => {
+    switch (propName) {
+        case 'text':
+            return node.type !== 'TEXT' ? 'not text' : null;
+
+        case 'width':
+        case 'height':
+            return typeof node.resize !== 'function' ||
+                !('width' in node) ||
+                !('height' in node) ||
+                !('x' in node) ||
+                !('y' in node)
+                ? 'not resizable'
+                : null;
+
+        case 'cornerRadius':
+        case 'topLeftRadius':
+        case 'topRightRadius':
+        case 'bottomRightRadius':
+        case 'bottomLeftRadius':
+        case 'layerBlur':
+        case 'strokeWeight':
+        case 'opacity':
+        case 'x':
+        case 'y':
+            return propName in node ? null : `no editable ${formatPropName(propName)}`;
+
+        case 'fillColor':
+        case 'fillOpacity': {
+            const fills = getPaints(node, 'fills');
+            if (!fills) return 'no editable fills';
+            if (fills.length === 0) return 'no fills';
+            if (propName === 'fillColor' && fills[0].type !== 'SOLID') {
+                return 'first fill is not solid';
+            }
+            return null;
+        }
+
+        case 'strokeColor':
+        case 'strokeOpacity': {
+            const strokes = getPaints(node, 'strokes');
+            if (!strokes) return 'no editable strokes';
+            if (strokes.length === 0) return 'no strokes';
+            if (propName === 'strokeColor' && strokes[0].type !== 'SOLID') {
+                return 'first stroke is not solid';
+            }
+            return null;
+        }
+
+        case 'arcStartingAngle':
+        case 'arcEndingAngle':
+            return 'arcData' in node ? null : 'not an ellipse arc';
+
+        case 'rotation':
+            return 'rotation' in node &&
+                'width' in node &&
+                'height' in node &&
+                node.parent
+                ? null
+                : 'not rotatable';
+
+        default:
+            return null;
+    }
+};
+
+const getEligibleNodes = (nodes, propName) => {
+    const eligibleNodes = [];
+    const skipReasons = [];
+
+    nodes.forEach(node => {
+        const unsupportedReason = getUnsupportedReason(node, propName);
+
+        if (unsupportedReason) {
+            if (!skipReasons.includes(unsupportedReason)) {
+                skipReasons.push(unsupportedReason);
+            }
+            return;
+        }
+
+        eligibleNodes.push(node);
+    });
+
+    return {
+        eligibleNodes,
+        skipReasons,
+    };
 };
 
 const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
+    const unsupportedReason = getUnsupportedReason(node, propName);
+
+    if (unsupportedReason) {
+        showMessage(
+            `Skipped ${formatPropName(propName)}: ${unsupportedReason}.`,
+        );
+        return false;
+    }
+
     switch (propName) {
         case 'text':
             const chars = node.characters;
@@ -268,6 +409,9 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
 
             for (let i = 0; i < numChars; i++) {
                 const fontName = await node.getRangeFontName(i, i + 1);
+                if (fontName === figma.mixed) {
+                    continue;
+                }
                 const cacheKey = `${fontName.family}-${fontName.style}`;
                 const isLoaded = fontNameLoadHistory[cacheKey];
 
@@ -285,11 +429,11 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
             const oppositeDimension = propName === 'width' ? 'height' : 'width';
             const currentValue = node[propName];
             const currentOppositeValue = node[oppositeDimension];
-            const newValue = toInteger(newPropValue);
+            const newValue = Math.max(1, toInteger(newPropValue));
             const scaleFactor = newValue / currentValue;
             const newOppositeValue =
                 propConfig.preserveAspectRatio === true
-                    ? currentOppositeValue * scaleFactor
+                    ? Math.max(1, currentOppositeValue * scaleFactor)
                     : currentOppositeValue;
             const [verticalOriginName, horizontalOriginName] =
                 propConfig.selectedOrigin.split('-');
@@ -321,14 +465,14 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
         case 'topRightRadius':
         case 'bottomRightRadius':
         case 'bottomLeftRadius':
-            node[propName] = toInteger(newPropValue);
+            node[propName] = Math.max(0, toInteger(newPropValue));
             break;
 
         case 'layerBlur':
             const effects = cloneDeep(node.effects);
             effects[0] = {
                 type: 'LAYER_BLUR',
-                radius: toInteger(newPropValue),
+                radius: Math.max(0, toInteger(newPropValue)),
                 visible: true,
             };
             node.effects = effects;
@@ -337,30 +481,40 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
         case 'fillColor':
             const fillsForColor = cloneDeep(node.fills);
             const colorAsRGB = anyColorStringToRGB(newPropValue);
-            if (!hasStrokeOrFill(fillsForColor, 'fill')) break;
-            if (!isSupportedColor(colorAsRGB)) break;
-            fillsForColor[0].color = colorAsRGB;
+            if (!isSupportedColor(colorAsRGB, newPropValue)) return false;
+            fillsForColor[0] = {
+                ...fillsForColor[0],
+                color: colorAsRGB,
+            };
             node.fills = fillsForColor;
             break;
 
         case 'strokeColor':
             const strokesForColor = cloneDeep(node.strokes);
-            if (!hasStrokeOrFill(strokesForColor, 'stroke')) break;
-            strokesForColor[0].color = anyColorStringToRGB(newPropValue);
+            const strokeColorAsRGB = anyColorStringToRGB(newPropValue);
+            if (!isSupportedColor(strokeColorAsRGB, newPropValue)) return false;
+            strokesForColor[0] = {
+                ...strokesForColor[0],
+                color: strokeColorAsRGB,
+            };
             node.strokes = strokesForColor;
             break;
 
         case 'fillOpacity':
             const fillsForOpacity = cloneDeep(node.fills);
-            if (!hasStrokeOrFill(fillsForOpacity, 'fill')) break;
-            fillsForOpacity[0].opacity = toPercentage(newPropValue);
+            fillsForOpacity[0] = {
+                ...fillsForOpacity[0],
+                opacity: toPercentage(newPropValue),
+            };
             node.fills = fillsForOpacity;
             break;
 
         case 'strokeOpacity':
             const strokesForOpacity = cloneDeep(node.strokes);
-            if (!hasStrokeOrFill(strokesForOpacity, 'stroke')) break;
-            strokesForOpacity[0].opacity = toPercentage(newPropValue);
+            strokesForOpacity[0] = {
+                ...strokesForOpacity[0],
+                opacity: toPercentage(newPropValue),
+            };
             node.strokes = strokesForOpacity;
             break;
 
@@ -390,12 +544,21 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
             node[propName] = toPercentage(newPropValue);
             break;
     }
+
+    return true;
 };
 
 figma.ui.onmessage = async msg => {
     if (msg.type === 'init') {
         const newState = {};
-        const savedState = await retrieveClientData('pluginState');
+        let savedState = {};
+
+        try {
+            savedState = await retrieveClientData('pluginState');
+        } catch (error) {
+            figma.notify('Could not load saved presets. Starting fresh.');
+        }
+
         mergeWith(
             newState,
             msg.initialState,
@@ -410,14 +573,17 @@ figma.ui.onmessage = async msg => {
     }
 
     if (msg.type === 'saveState') {
-        await storeClientData('pluginState', msg.params);
+        try {
+            await storeClientData('pluginState', migratePluginState(msg.params));
+        } catch (error) {
+            figma.notify('Could not save presets for next time.');
+        }
     }
 
     if (msg.type === 'run') {
         const selectedNodes = figma.currentPage.selection;
 
         if (selectedNodes.length === 0) {
-            // STILL no idea why I need to cast this...
             showMessage(
                 `You have nothing selected, but here's a random thing anyway: ${sample(
                     RANDOM_THINGS,
@@ -428,10 +594,34 @@ figma.ui.onmessage = async msg => {
 
         const { config } = msg.params;
 
-        Object.keys(config).map(propName => {
+        for (const propName of Object.keys(config)) {
             const propConfig = config[propName];
             if (propConfig.isActive) {
-                const randomValues = selectedNodes.map(node => {
+                const { eligibleNodes, skipReasons } = getEligibleNodes(
+                    selectedNodes,
+                    propName,
+                );
+
+                if (eligibleNodes.length === 0) {
+                    showMessage(
+                        `No selected layers support ${formatPropName(
+                            propName,
+                        )}.`,
+                    );
+                    continue;
+                }
+
+                if (skipReasons.length > 0) {
+                    showMessage(
+                        `Skipped ${selectedNodes.length - eligibleNodes.length} layer${
+                            selectedNodes.length - eligibleNodes.length === 1
+                                ? ''
+                                : 's'
+                        } for ${formatPropName(propName)}.`,
+                    );
+                }
+
+                const randomValues = eligibleNodes.map(node => {
                     return generateRandomValue({
                         node,
                         propConfig,
@@ -447,16 +637,52 @@ figma.ui.onmessage = async msg => {
                     }
                 }
 
-                selectedNodes.map(async (node, index) => {
-                    await transformProp({
-                        node,
-                        propConfig,
-                        propName,
-                        newPropValue: randomValues[index],
-                    });
-                });
+                let skippedEmptyValues = 0;
+                let failedTransforms = 0;
+
+                await Promise.all(
+                    eligibleNodes.map(async (node, index) => {
+                        const newPropValue = randomValues[index];
+
+                        if (newPropValue === undefined) {
+                            skippedEmptyValues += 1;
+                            return;
+                        }
+
+                        try {
+                            const didTransform = await transformProp({
+                                node,
+                                propConfig,
+                                propName,
+                                newPropValue,
+                            });
+
+                            if (!didTransform) {
+                                failedTransforms += 1;
+                            }
+                        } catch (error) {
+                            failedTransforms += 1;
+                        }
+                    }),
+                );
+
+                if (skippedEmptyValues > 0) {
+                    showMessage(
+                        `Skipped ${formatPropName(
+                            propName,
+                        )}: no enabled list values.`,
+                    );
+                }
+
+                if (failedTransforms > 0) {
+                    showMessage(
+                        `Skipped ${failedTransforms} layer${
+                            failedTransforms === 1 ? '' : 's'
+                        } while changing ${formatPropName(propName)}.`,
+                    );
+                }
             }
-        });
+        }
     }
 
     if (msg.type === 'close') {
