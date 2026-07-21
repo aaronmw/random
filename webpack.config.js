@@ -44,6 +44,8 @@ module.exports = (env, argv) => ({
             template: './src/ui.html',
             filename: 'ui.html',
             chunks: ['ui'],
+            inject: 'body',
+            scriptLoading: 'blocking',
         }),
         new HtmlInlineScriptPlugin({
             scriptMatchPattern: [/ui\.js$/],

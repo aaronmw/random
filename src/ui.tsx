@@ -117,8 +117,17 @@ export const App = () => {
     );
 };
 
-const rootElement = document.getElementById('react-page');
+const mountApp = () => {
+    const rootElement = document.getElementById('react-page');
 
-if (rootElement) {
-    createRoot(rootElement).render(<App />);
+    if (rootElement) {
+        createRoot(rootElement).render(<App />);
+        return true;
+    }
+
+    return false;
+};
+
+if (!mountApp() && document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', mountApp, { once: true });
 }
