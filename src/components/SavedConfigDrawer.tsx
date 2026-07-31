@@ -16,6 +16,7 @@ import {
     FONT_WEIGHT_BOLD,
 } from './layout';
 import migrateData from '../migrateData';
+import { RESIZE_HANDLE_HEIGHT } from '../config';
 
 const DRAWER_Z_INDEX_BASE = 100;
 
@@ -41,7 +42,7 @@ const DrawerContainer = styled.div(
         right: 0;
         top: ${
             props.isOpen
-                ? `calc(100% - 30px - ${props.drawerHeight}px)`
+                ? `calc(100% - ${BUTTON_HEIGHT} - ${RESIZE_HANDLE_HEIGHT}px - ${props.drawerHeight}px)`
                 : '100%'
         };
         transition: all 0.25s ease-in-out;

@@ -1,5 +1,10 @@
 export const LIST_DELIMETER = '\n';
 export const MAX_LIST_TEXTAREA_ROWS = 20;
+export const UI_WIDTH = 290;
+export const DEFAULT_UI_HEIGHT = 600;
+export const MIN_UI_HEIGHT = 250;
+export const MAX_UI_HEIGHT = 2000;
+export const RESIZE_HANDLE_HEIGHT = 12;
 
 export const STRING = {
     method: 'list',

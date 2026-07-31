@@ -1,5 +1,6 @@
 import * as React from 'react';
 import styled from 'styled-components';
+import { RESIZE_HANDLE_HEIGHT } from '../config';
 import {
     COLOR_BLUE,
     COLOR_HOVER_BG,
@@ -305,7 +306,7 @@ export const Icon = ({
 
 export const RunButton = styled(Button)`
     position: fixed;
-    bottom: 0;
+    bottom: ${RESIZE_HANDLE_HEIGHT}px;
     right: 0;
     width: calc(100vw - 31px);
     display: flex;

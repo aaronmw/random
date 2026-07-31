@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { createGlobalStyle } from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 import PropConfigBuilder from './PropConfigBuilder';
-import { Icon, RunButton } from './controls';
+import { BUTTON_HEIGHT, Icon, RunButton } from './controls';
 import { Columns } from './layout';
 import SavedConfigDrawer from './SavedConfigDrawer';
-import { DEFAULT_CONFIG } from '../config';
+import { DEFAULT_CONFIG, RESIZE_HANDLE_HEIGHT } from '../config';
 
 const GlobalStyles = createGlobalStyle(
     props => `
@@ -19,6 +19,10 @@ const FALLBACK_PLUGIN_STATE = {
     savedConfigs: [],
     activeRoute: 'randomizer',
 };
+
+const BottomChromeSpacer = styled.div`
+    height: calc(${BUTTON_HEIGHT} + ${RESIZE_HANDLE_HEIGHT}px);
+`;
 
 const getSafePluginState = pluginState => {
     const safeState =
@@ -71,6 +75,7 @@ const ConfigBuilder = ({ pluginState, sendMessage, onUpdateState }) => {
                         onUpdateState={onUpdateState}
                     />
                 ))}
+                <BottomChromeSpacer aria-hidden="true" />
                 <RunButton title="Make it happen, capt'n!" type="submit">
                     <Columns justify="center" spacing="tight">
                         <span>Run Randomization</span>

@@ -5,17 +5,32 @@ import setWith from 'lodash/setWith';
 import About from './components/About';
 import { GlobalStyles, StyledAppContainer } from './components/layout';
 import { NavBar } from './components/Navigation';
-import { DEFAULT_CONFIG } from './config';
+import {
+    DEFAULT_CONFIG,
+    DEFAULT_UI_HEIGHT,
+    MAX_UI_HEIGHT,
+    MIN_UI_HEIGHT,
+} from './config';
 import ConfigBuilder from './components/ConfigBuilder';
+import ResizeHandle from './components/ResizeHandle';
 import { sendMessage } from './pluginMessage';
 
 const INITIAL_STATE = {
     config: DEFAULT_CONFIG,
     savedConfigs: [],
     activeRoute: 'randomizer',
+    uiHeight: DEFAULT_UI_HEIGHT,
 };
 
 const VALID_ACTIVE_ROUTES = ['randomizer', 'about'];
+
+const toUiHeight = value => {
+    if (!Number.isFinite(value)) {
+        return INITIAL_STATE.uiHeight;
+    }
+
+    return Math.round(Math.max(MIN_UI_HEIGHT, Math.min(MAX_UI_HEIGHT, value)));
+};
 
 const sanitizePluginState = state => {
     const safeState =
@@ -36,6 +51,8 @@ const sanitizePluginState = state => {
     if (!Array.isArray(nextState.savedConfigs)) {
         nextState.savedConfigs = INITIAL_STATE.savedConfigs;
     }
+
+    nextState.uiHeight = toUiHeight(nextState.uiHeight);
 
     return nextState;
 };
@@ -93,11 +110,21 @@ export const App = () => {
         });
     }, [isLoaded, pluginState]);
 
-    const onUpdateState = ({ path, newValue }) => {
+    const onUpdateState = React.useCallback(({ path, newValue }) => {
         setPluginState(pluginState =>
             setWith(clone(pluginState), path, newValue, clone),
         );
-    };
+    }, []);
+
+    const handleResizeHeight = React.useCallback(
+        height => {
+            onUpdateState({
+                path: ['uiHeight'],
+                newValue: toUiHeight(height),
+            });
+        },
+        [onUpdateState],
+    );
 
     const activeRoute = pluginState.activeRoute;
 
@@ -113,6 +140,7 @@ export const App = () => {
                 />
             )}
             {activeRoute === 'about' && <About />}
+            <ResizeHandle onResizeHeight={handleResizeHeight} />
         </StyledAppContainer>
     );
 };

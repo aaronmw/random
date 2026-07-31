@@ -6,13 +6,17 @@ import isArray from 'lodash/isArray';
 import mergeWith from 'lodash/mergeWith';
 import random from 'lodash/random';
 import sample from 'lodash/sample';
-import { LIST_DELIMETER } from './config';
+import {
+    DEFAULT_UI_HEIGHT,
+    LIST_DELIMETER,
+    MAX_UI_HEIGHT,
+    MIN_UI_HEIGHT,
+    UI_WIDTH,
+} from './config';
 import parseCSSColor from './css-color-parser';
 import rotateOriginXY from './helpers';
 import migrateData from './migrateData';
 
-const WINDOW_WIDTH = 290;
-const WINDOW_HEIGHT = 600;
 const VALID_ACTIVE_ROUTES = ['randomizer', 'about'];
 
 const RANDOM_THINGS = [
@@ -119,8 +123,8 @@ const RANDOM_THINGS = [
 ];
 
 figma.showUI(__html__, {
-    width: WINDOW_WIDTH,
-    height: WINDOW_HEIGHT,
+    width: UI_WIDTH,
+    height: DEFAULT_UI_HEIGHT,
 });
 
 const storeClientData = async (key, val) => {
@@ -129,6 +133,14 @@ const storeClientData = async (key, val) => {
 
 const isPlainObject = value =>
     value !== null && typeof value === 'object' && !isArray(value);
+
+const toUiHeight = value => {
+    if (!Number.isFinite(value)) {
+        return null;
+    }
+
+    return clamp(Math.round(value), MIN_UI_HEIGHT, MAX_UI_HEIGHT);
+};
 
 const migrateSavedConfig = savedConfig => {
     if (!isPlainObject(savedConfig)) {
@@ -166,6 +178,13 @@ const migratePluginState = clientData => {
         delete migratedState.activeRoute;
     }
 
+    const uiHeight = toUiHeight(migratedState.uiHeight);
+    if (uiHeight === null) {
+        delete migratedState.uiHeight;
+    } else {
+        migratedState.uiHeight = uiHeight;
+    }
+
     return migratedState;
 };
 
@@ -175,6 +194,10 @@ const getRunConfig = msg => {
     }
 
     return msg.params.config;
+};
+
+const getResizeHeight = msg => {
+    return toUiHeight(msg.height);
 };
 
 const retrieveClientData = async key => {
@@ -368,12 +391,14 @@ const getUnsupportedReason = (node, propName) => {
 const getEligibleNodes = (nodes, propName) => {
     const eligibleNodes = [];
     const skipReasons = [];
+    const skipReasonSet = new Set();
 
     nodes.forEach(node => {
         const unsupportedReason = getUnsupportedReason(node, propName);
 
         if (unsupportedReason) {
-            if (!skipReasons.includes(unsupportedReason)) {
+            if (!skipReasonSet.has(unsupportedReason)) {
+                skipReasonSet.add(unsupportedReason);
                 skipReasons.push(unsupportedReason);
             }
             return;
@@ -577,7 +602,20 @@ figma.ui.onmessage = async msg => {
                 }
             },
         );
+        const uiHeight = toUiHeight(get(newState, 'uiHeight'));
+        if (uiHeight !== null) {
+            figma.ui.resize(UI_WIDTH, uiHeight);
+        }
         figma.ui.postMessage(newState);
+    }
+
+    if (msg.type === 'ui-resize') {
+        const height = getResizeHeight(msg);
+
+        if (height !== null) {
+            figma.ui.resize(UI_WIDTH, height);
+        }
+        return;
     }
 
     if (msg.type === 'saveState') {
