@@ -97,17 +97,21 @@ const EditButton = styled(IconButton).attrs({
 const ListBuilder = ({ propName, list, onUpdateState }) => {
     const [isEditing, setIsEditing] = React.useState(false);
     const [uncommittedList, setUncomittedList] = React.useState('');
+    const safeList = typeof list === 'string' ? list : '';
     const renderableList = React.useMemo(
-        () => list.split(LIST_DELIMETER),
-        [list],
+        () => safeList.split(LIST_DELIMETER),
+        [safeList],
     );
 
-    const updateListInState = React.useCallback(newList => {
-        onUpdateState({
-            path: ['config', propName, 'list'],
-            newValue: newList,
-        });
-    }, []);
+    const updateListInState = React.useCallback(
+        newList => {
+            onUpdateState({
+                path: ['config', propName, 'list'],
+                newValue: newList,
+            });
+        },
+        [onUpdateState, propName],
+    );
 
     const handleClickSave = React.useCallback(() => {
         const cleanedOfEmpties = compact(
@@ -116,7 +120,7 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
         updateListInState(cleanedOfEmpties);
         setUncomittedList('');
         setIsEditing(false);
-    }, [uncommittedList]);
+    }, [uncommittedList, updateListInState]);
 
     const handleChange = React.useCallback(evt => {
         setUncomittedList(evt.currentTarget.value);
@@ -131,13 +135,13 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
                         index !== targetIndex
                             ? listItem
                             : listItem.includes('[disabled]')
-                            ? listItem.replace(/\s*\[disabled]\s*/, '')
-                            : `${listItem} [disabled]`,
+                              ? listItem.replace(/\s*\[disabled]\s*/, '')
+                              : `${listItem} [disabled]`,
                     )
                     .join(LIST_DELIMETER),
             );
         },
-        [renderableList],
+        [renderableList, updateListInState],
     );
 
     const handleClickDelete = React.useCallback(
@@ -149,13 +153,13 @@ const ListBuilder = ({ propName, list, onUpdateState }) => {
                     .join(LIST_DELIMETER),
             );
         },
-        [renderableList],
+        [renderableList, updateListInState],
     );
 
     const handleClickEdit = React.useCallback(() => {
-        setUncomittedList(list);
+        setUncomittedList(safeList);
         setIsEditing(true);
-    }, [list]);
+    }, [safeList]);
 
     const handleClickCancel = React.useCallback(() => {
         setUncomittedList('');

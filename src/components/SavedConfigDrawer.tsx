@@ -15,8 +15,8 @@ import {
     FlexBox,
     FONT_WEIGHT_BOLD,
 } from './layout';
-import migrateData from '../migrateData';
 import { RESIZE_HANDLE_HEIGHT } from '../config';
+import { sanitizePluginConfig } from '../pluginState';
 
 const DRAWER_Z_INDEX_BASE = 100;
 
@@ -235,7 +235,7 @@ const SavedConfigDrawer = ({ pluginState, onUpdateState }) => {
     const handleClickRandomize = savedConfig => {
         onUpdateState({
             path: ['config'],
-            newValue: migrateData(savedConfig.data),
+            newValue: sanitizePluginConfig(savedConfig.data),
         });
         setIsOpen(false);
     };

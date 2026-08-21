@@ -7,7 +7,9 @@ const migrateListData = list => {
     }
     return list
         .map(listItem =>
-            typeof listItem === 'object' ? listItem.value : listItem,
+            listItem !== null && typeof listItem === 'object'
+                ? listItem.value
+                : listItem,
         )
         .join('\n');
 };

@@ -1,6 +1,7 @@
 {
     "name": "property-randomizer",
     "version": "1.0.1",
+    "packageManager": "pnpm@11.22.0",
     "description": "A Figma plugin to randomize one or more properties of your selected elements",
     "main": "dist/code.js",
     "scripts": {

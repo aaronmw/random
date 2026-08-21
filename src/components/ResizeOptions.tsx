@@ -3,6 +3,11 @@ import styled from 'styled-components';
 import { Checkbox, Field } from './controls';
 import { COLOR_TEXT, COLOR_TEXT_LIGHT, Columns } from './layout';
 
+const DEFAULT_ORIGIN = 'middle-center';
+const ORIGIN_PATTERN = /^(top|middle|bottom)-(left|center|right)$/;
+const VERTICAL_ORIGIN_NAMES = ['top', 'middle', 'bottom'];
+const HORIZONTAL_ORIGIN_NAMES = ['left', 'center', 'right'];
+
 const StyledResizeOriginContainer = styled.div`
     display: flex;
     flex-direction: column;
@@ -62,8 +67,6 @@ const ResizeOriginSelector = ({
 }) => {
     const isWidth = propName === 'width';
     const isHeight = propName === 'height';
-    const verticalOriginNames = ['top', 'middle', 'bottom'];
-    const horizontalOriginNames = ['left', 'center', 'right'];
 
     const handleSaveTransformOrigin = originName => {
         onUpdateState({
@@ -74,9 +77,9 @@ const ResizeOriginSelector = ({
 
     return (
         <StyledResizeOriginContainer>
-            {verticalOriginNames.map(verticalOriginName => (
+            {VERTICAL_ORIGIN_NAMES.map(verticalOriginName => (
                 <StyledResizeOriginRow key={verticalOriginName}>
-                    {horizontalOriginNames.map(horizontalOriginName => {
+                    {HORIZONTAL_ORIGIN_NAMES.map(horizontalOriginName => {
                         const originName = `${verticalOriginName}-${horizontalOriginName}`;
                         const isSelectable =
                             (isWidth && verticalOriginName === 'middle') ||
@@ -113,11 +116,16 @@ const ResizeOptions = ({
     selectedOrigin,
     onUpdateState,
 }) => {
+    const safeSelectedOrigin =
+        typeof selectedOrigin === 'string' &&
+        ORIGIN_PATTERN.test(selectedOrigin)
+            ? selectedOrigin
+            : DEFAULT_ORIGIN;
+
     const updatePreserveAspectRatio = () => {
         const newPreserveAspectRatio = !preserveAspectRatio;
-        const [verticalOriginName, horizontalOriginName] = selectedOrigin.split(
-            '-',
-        );
+        const [verticalOriginName, horizontalOriginName] =
+            safeSelectedOrigin.split('-');
         const newVerticalOriginName =
             !newPreserveAspectRatio &&
             propName === 'width' &&
@@ -138,7 +146,7 @@ const ResizeOptions = ({
             newValue: newPreserveAspectRatio,
         });
 
-        if (newSelectedOrigin !== selectedOrigin) {
+        if (newSelectedOrigin !== safeSelectedOrigin) {
             onUpdateState({
                 path: ['config', propName, 'selectedOrigin'],
                 newValue: newSelectedOrigin,
@@ -171,7 +179,7 @@ const ResizeOptions = ({
                 <ResizeOriginSelector
                     preserveAspectRatio={preserveAspectRatio}
                     propName={propName}
-                    selectedOrigin={selectedOrigin}
+                    selectedOrigin={safeSelectedOrigin}
                     onUpdateState={onUpdateState}
                 />
             </Field>

@@ -8,12 +8,7 @@ import {
     UI_WIDTH,
 } from '../config';
 import { sendMessage } from '../pluginMessage';
-import {
-    COLOR_BG,
-    COLOR_BLUE,
-    COLOR_BORDER,
-    COLOR_TEXT_LIGHT,
-} from './layout';
+import { COLOR_BG, COLOR_BLUE, COLOR_BORDER, COLOR_TEXT_LIGHT } from './layout';
 
 const KEYBOARD_RESIZE_STEP = 40;
 
@@ -151,7 +146,9 @@ const ResizeHandle = ({ onResizeHeight }) => {
         }
 
         try {
-            handleElementRef.current.releasePointerCapture(pointerIdRef.current);
+            handleElementRef.current.releasePointerCapture(
+                pointerIdRef.current,
+            );
         } catch (_error) {
             // Pointer capture may already be released by the browser.
         }
@@ -198,7 +195,12 @@ const ResizeHandle = ({ onResizeHeight }) => {
 
     const handlePointerDown = React.useCallback(evt => {
         evt.preventDefault();
-        evt.currentTarget.setPointerCapture(evt.pointerId);
+
+        try {
+            evt.currentTarget.setPointerCapture(evt.pointerId);
+        } catch (_error) {
+            // Document-level listeners still allow resizing without capture.
+        }
 
         const currentHeight = readWindowHeight();
         startRef.current = { y: evt.clientY, height: currentHeight };

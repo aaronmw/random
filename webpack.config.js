@@ -2,6 +2,8 @@ const HtmlInlineScriptPlugin = require('html-inline-script-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
+const webpack = require('webpack');
+const pluginVersion = require('./package.json').version;
 
 module.exports = (env, argv) => ({
     mode: argv.mode === 'production' ? 'production' : 'development',
@@ -46,6 +48,10 @@ module.exports = (env, argv) => ({
             chunks: ['ui'],
             inject: 'body',
             scriptLoading: 'blocking',
+            pluginVersion,
+        }),
+        new webpack.DefinePlugin({
+            __PLUGIN_VERSION__: JSON.stringify(pluginVersion),
         }),
         new HtmlInlineScriptPlugin({
             scriptMatchPattern: [/ui\.js$/],

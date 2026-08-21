@@ -7,8 +7,8 @@ A Figma plugin for randomizing text, size, position, rotation, opacity, fills, s
 ## Development
 
 ```bash
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 In the Figma desktop app, open a Figma Design file, run **Import plugin from manifest...**, and choose `manifest.json`.
@@ -16,8 +16,8 @@ In the Figma desktop app, open a Figma Design file, run **Import plugin from man
 ## Build
 
 ```bash
-npm run typecheck
-npm run build
+pnpm typecheck
+pnpm build
 ```
 
 The plugin uses `dist/code.js` as the controller and `dist/ui.html` as the inline React UI bundle.

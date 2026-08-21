@@ -1,3 +1,6 @@
 node_modules
+.next/
+next-env.d.ts
+plugin/dist/
 .idea
 .DS_Store

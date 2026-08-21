@@ -14,10 +14,13 @@ import {
     UI_WIDTH,
 } from './config';
 import parseCSSColor from './css-color-parser';
+import { createErrorReport, ErrorReport } from './errorReporting';
 import rotateOriginXY from './helpers';
-import migrateData from './migrateData';
-
-const VALID_ACTIVE_ROUTES = ['randomizer', 'about'];
+import {
+    isPlainObject,
+    sanitizePluginConfig,
+    sanitizePluginState,
+} from './pluginState';
 
 const RANDOM_THINGS = [
     'a camera 📸',
@@ -131,9 +134,6 @@ const storeClientData = async (key, val) => {
     await figma.clientStorage.setAsync(key, val);
 };
 
-const isPlainObject = value =>
-    value !== null && typeof value === 'object' && !isArray(value);
-
 const toUiHeight = value => {
     if (!Number.isFinite(value)) {
         return null;
@@ -142,58 +142,12 @@ const toUiHeight = value => {
     return clamp(Math.round(value), MIN_UI_HEIGHT, MAX_UI_HEIGHT);
 };
 
-const migrateSavedConfig = savedConfig => {
-    if (!isPlainObject(savedConfig)) {
-        return savedConfig;
-    }
-
-    return {
-        ...savedConfig,
-        data: migrateData(savedConfig.data),
-    };
-};
-
-const migratePluginState = clientData => {
-    if (!isPlainObject(clientData)) {
-        return {};
-    }
-
-    const migratedState = { ...clientData };
-
-    if (isPlainObject(migratedState.config)) {
-        migratedState.config = migrateData(migratedState.config);
-    } else {
-        delete migratedState.config;
-    }
-
-    if (isArray(migratedState.savedConfigs)) {
-        migratedState.savedConfigs = migratedState.savedConfigs.map(
-            migrateSavedConfig,
-        );
-    } else {
-        delete migratedState.savedConfigs;
-    }
-
-    if (!VALID_ACTIVE_ROUTES.includes(migratedState.activeRoute)) {
-        delete migratedState.activeRoute;
-    }
-
-    const uiHeight = toUiHeight(migratedState.uiHeight);
-    if (uiHeight === null) {
-        delete migratedState.uiHeight;
-    } else {
-        migratedState.uiHeight = uiHeight;
-    }
-
-    return migratedState;
-};
-
 const getRunConfig = msg => {
     if (!isPlainObject(msg.params) || !isPlainObject(msg.params.config)) {
         return null;
     }
 
-    return msg.params.config;
+    return sanitizePluginConfig(msg.params.config);
 };
 
 const getResizeHeight = msg => {
@@ -202,7 +156,7 @@ const getResizeHeight = msg => {
 
 const retrieveClientData = async key => {
     const clientData = await figma.clientStorage.getAsync(key);
-    return migratePluginState(clientData);
+    return sanitizePluginState(clientData);
 };
 
 const anyColorStringToRGB = color => {
@@ -259,8 +213,8 @@ const generateRandomValue = ({ node, propConfig, propName }) => {
                 currentPropValue === undefined
                     ? randomValue
                     : operator === 'add'
-                    ? currentPropValue + randomValue
-                    : currentPropValue * randomValue;
+                      ? currentPropValue + randomValue
+                      : currentPropValue * randomValue;
 
             if (propName === 'text') {
                 newPropValue = newPropValue.toFixed(
@@ -293,11 +247,60 @@ const notificationHandler = {
 
 const showMessage = message => {
     if (notificationHandler.current !== null) {
-        notificationHandler.current.cancel();
-        notificationHandler.current = null;
+        try {
+            notificationHandler.current.cancel();
+        } catch (error) {
+            console.warn('Could not dismiss the previous notification.', error);
+        } finally {
+            notificationHandler.current = null;
+        }
     }
 
     notificationHandler.current = figma.notify(message);
+};
+
+const sendErrorReportToUi = (report: ErrorReport) => {
+    try {
+        figma.ui.postMessage({
+            type: 'pluginError',
+            report,
+        });
+    } catch (error) {
+        console.error(
+            'Could not send the error report to the plugin UI.',
+            error,
+        );
+    }
+};
+
+const reportPluginError = ({
+    error,
+    context = {},
+    userMessage = 'Something went wrong.',
+}: {
+    error: unknown;
+    context?: Record<string, unknown>;
+    userMessage?: string;
+}) => {
+    const report = createErrorReport({
+        source: 'plugin',
+        error,
+        context,
+    });
+
+    console.error(`[Property Randomizer ${report.id}]`, report);
+    sendErrorReportToUi(report);
+
+    try {
+        figma.notify(`${userMessage} Error ID: ${report.id}`, {
+            error: true,
+            timeout: 10000,
+        });
+    } catch (notifyError) {
+        console.error('Could not display the error notification.', notifyError);
+    }
+
+    return report;
 };
 
 const isSupportedColor = (color, rawColor) => {
@@ -347,7 +350,9 @@ const getUnsupportedReason = (node, propName) => {
         case 'opacity':
         case 'x':
         case 'y':
-            return propName in node ? null : `no editable ${formatPropName(propName)}`;
+            return propName in node
+                ? null
+                : `no editable ${formatPropName(propName)}`;
 
         case 'fillColor':
         case 'fillOpacity': {
@@ -482,15 +487,15 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
                 horizontalOriginName === 'center'
                     ? node.x + (newWidth - currentWidth) / -2
                     : horizontalOriginName === 'right'
-                    ? node.x + (newWidth - currentWidth) / -1
-                    : node.x;
+                      ? node.x + (newWidth - currentWidth) / -1
+                      : node.x;
 
             node.y =
                 verticalOriginName === 'middle'
                     ? node.y + (newHeight - currentHeight) / -2
                     : verticalOriginName === 'bottom'
-                    ? node.y + (newHeight - currentHeight) / -1
-                    : node.y;
+                      ? node.y + (newHeight - currentHeight) / -1
+                      : node.y;
             break;
 
         case 'cornerRadius':
@@ -581,7 +586,15 @@ const transformProp = async ({ node, propConfig, propName, newPropValue }) => {
     return true;
 };
 
-figma.ui.onmessage = async msg => {
+const handleUiMessage = async msg => {
+    if (msg.type === 'uiError') {
+        console.error(
+            `[Property Randomizer ${msg.report?.id || 'UI error'}]`,
+            msg.report,
+        );
+        return;
+    }
+
     if (msg.type === 'init') {
         const newState = {};
         let savedState = {};
@@ -620,7 +633,10 @@ figma.ui.onmessage = async msg => {
 
     if (msg.type === 'saveState') {
         try {
-            await storeClientData('pluginState', migratePluginState(msg.params));
+            await storeClientData(
+                'pluginState',
+                sanitizePluginState(msg.params),
+            );
         } catch (error) {
             figma.notify('Could not save presets for next time.');
         }
@@ -692,6 +708,7 @@ figma.ui.onmessage = async msg => {
 
                 let skippedEmptyValues = 0;
                 let failedTransforms = 0;
+                let firstTransformError = null;
 
                 await Promise.all(
                     eligibleNodes.map(async (node, index) => {
@@ -715,6 +732,20 @@ figma.ui.onmessage = async msg => {
                             }
                         } catch (error) {
                             failedTransforms += 1;
+
+                            if (firstTransformError === null) {
+                                firstTransformError = {
+                                    error,
+                                    context: {
+                                        propertyName: propName,
+                                        method: propConfig.method || null,
+                                        nodeId: node.id,
+                                        nodeName: node.name,
+                                        nodeType: node.type,
+                                        selectionCount: selectedNodes.length,
+                                    },
+                                };
+                            }
                         }
                     }),
                 );
@@ -728,11 +759,19 @@ figma.ui.onmessage = async msg => {
                 }
 
                 if (failedTransforms > 0) {
-                    showMessage(
-                        `Skipped ${failedTransforms} layer${
+                    reportPluginError({
+                        ...firstTransformError,
+                        context: {
+                            ...firstTransformError.context,
+                            failedTransforms,
+                        },
+                        userMessage: `Could not change ${formatPropName(
+                            propName,
+                        )} on ${failedTransforms} layer${
                             failedTransforms === 1 ? '' : 's'
-                        } while changing ${formatPropName(propName)}.`,
-                    );
+                        }.`,
+                    });
+                    return;
                 }
             }
         }
@@ -740,5 +779,20 @@ figma.ui.onmessage = async msg => {
 
     if (msg.type === 'close') {
         figma.closePlugin();
+    }
+};
+
+figma.ui.onmessage = async msg => {
+    try {
+        await handleUiMessage(msg);
+    } catch (error) {
+        reportPluginError({
+            error,
+            context: {
+                messageType: msg?.type || null,
+                selectionCount: figma.currentPage.selection.length,
+            },
+            userMessage: 'Property Randomizer could not finish that action.',
+        });
     }
 };

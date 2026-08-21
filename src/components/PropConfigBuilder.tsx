@@ -77,7 +77,10 @@ const PropMethodTab = styled.button`
 `;
 
 const PropConfigBuilder = ({ name, config, onUpdateState }) => {
-    const propConfig = config[name];
+    const propConfig =
+        config[name] !== null && typeof config[name] === 'object'
+            ? config[name]
+            : {};
     const humanReadableName = startCase(name);
     const operator = get(propConfig, ['calc', 'operator']);
     const calcMax = get(propConfig, ['calc', operator, 'max']);
@@ -105,7 +108,7 @@ const PropConfigBuilder = ({ name, config, onUpdateState }) => {
         if (['height', 'width'].indexOf(name) !== -1) {
             const oppositePropName = name === 'width' ? 'height' : 'width';
             const oppositeIsPreservingAspectRatio =
-                config[oppositePropName].preserveAspectRatio === true;
+                config[oppositePropName]?.preserveAspectRatio === true;
 
             if (oppositeIsPreservingAspectRatio) {
                 onUpdateState({

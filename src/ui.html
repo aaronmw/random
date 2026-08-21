@@ -5,6 +5,263 @@
         <title>Property Randomizer</title>
     </head>
     <body>
-        <div id="react-page"></div>
+        <div id="react-page">
+            <div
+                style="
+                    box-sizing: border-box;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    min-height: 100vh;
+                    padding: 20px;
+                    background: #fff;
+                    color: #222;
+                    font-family:
+                        Inter,
+                        -apple-system,
+                        BlinkMacSystemFont,
+                        sans-serif;
+                    font-size: 12px;
+                    line-height: 1.45;
+                "
+            >
+                <strong style="font-size: 14px"
+                    >Loading Property Randomizer…</strong
+                >
+                <span
+                    >If this message stays here, reopen the plugin and include
+                    any error report it displays when you reach out.</span
+                >
+            </div>
+        </div>
+        <script>
+            (function () {
+                var errorHandler;
+                var rejectionHandler;
+                var hasReportedStartupError = false;
+                var pluginVersion =
+                    '<%= htmlWebpackPlugin.options.pluginVersion %>';
+
+                var safeText = function (value, fallback) {
+                    try {
+                        return String(value == null ? fallback : value);
+                    } catch (_error) {
+                        return fallback;
+                    }
+                };
+
+                var readErrorField = function (error, key, fallback) {
+                    try {
+                        return error && error[key] != null
+                            ? safeText(error[key], fallback)
+                            : fallback;
+                    } catch (_error) {
+                        return fallback;
+                    }
+                };
+
+                var fallbackCopy = function (text) {
+                    var textarea = document.createElement('textarea');
+                    textarea.value = text;
+                    textarea.style.position = 'fixed';
+                    textarea.style.opacity = '0';
+                    document.body.appendChild(textarea);
+                    textarea.select();
+
+                    try {
+                        return document.execCommand('copy');
+                    } finally {
+                        textarea.remove();
+                    }
+                };
+
+                var tryFallbackCopy = function (text) {
+                    try {
+                        return fallbackCopy(text);
+                    } catch (error) {
+                        console.error(
+                            'Could not copy the error report.',
+                            error,
+                        );
+                        return false;
+                    }
+                };
+
+                var copyReport = function (text, button) {
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        try {
+                            navigator.clipboard.writeText(text).then(
+                                function () {
+                                    button.textContent = 'Copied';
+                                },
+                                function () {
+                                    button.textContent = tryFallbackCopy(text)
+                                        ? 'Copied'
+                                        : 'Copy failed';
+                                },
+                            );
+                        } catch (error) {
+                            console.error(
+                                'Clipboard API failed; trying fallback copy.',
+                                error,
+                            );
+                            button.textContent = tryFallbackCopy(text)
+                                ? 'Copied'
+                                : 'Copy failed';
+                        }
+                        return;
+                    }
+
+                    button.textContent = tryFallbackCopy(text)
+                        ? 'Copied'
+                        : 'Copy failed';
+                };
+
+                var showStartupError = function (error, context) {
+                    if (hasReportedStartupError) {
+                        return;
+                    }
+                    hasReportedStartupError = true;
+
+                    var report = {
+                        id:
+                            'PR-' +
+                            Date.now().toString(36).toUpperCase() +
+                            '-' +
+                            Math.random()
+                                .toString(36)
+                                .slice(2, 7)
+                                .toUpperCase(),
+                        timestamp: new Date().toISOString(),
+                        version: pluginVersion,
+                        source: 'ui-startup',
+                        name: readErrorField(error, 'name', 'Error'),
+                        message: readErrorField(
+                            error,
+                            'message',
+                            safeText(error, 'Unknown startup error'),
+                        ),
+                        stack: readErrorField(error, 'stack', null),
+                        context: {
+                            phase: context || 'startup',
+                            path: window.location.href,
+                            userAgent: navigator.userAgent,
+                        },
+                    };
+                    var reportText =
+                        'Property Randomizer error report\n\n' +
+                        JSON.stringify(report, null, 2);
+                    var root = document.getElementById('react-page');
+
+                    if (!root) {
+                        root = document.createElement('div');
+                        root.id = 'react-page';
+                        document.body.appendChild(root);
+                    }
+
+                    var container = document.createElement('div');
+                    container.style.cssText =
+                        'box-sizing:border-box;display:flex;flex-direction:column;gap:12px;min-height:100vh;padding:20px;background:#fff;color:#222;font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;font-size:12px;line-height:1.45';
+
+                    var title = document.createElement('strong');
+                    title.style.fontSize = '14px';
+                    title.textContent = 'Property Randomizer could not start';
+
+                    var instructions = document.createElement('span');
+                    instructions.textContent =
+                        'Copy this report and include it when you reach out.';
+
+                    var summary = document.createElement('code');
+                    summary.style.cssText =
+                        'padding:10px;border-radius:4px;background:#f2f2f2;user-select:text;word-break:break-word';
+                    summary.textContent = report.id + ': ' + report.message;
+
+                    var actions = document.createElement('div');
+                    actions.style.cssText = 'display:flex;gap:8px';
+
+                    var copyButton = document.createElement('button');
+                    copyButton.type = 'button';
+                    copyButton.style.cssText =
+                        'border:0;border-radius:4px;padding:8px 10px;background:#0d99ff;color:#fff;cursor:pointer';
+                    copyButton.textContent = 'Copy error report';
+                    copyButton.addEventListener('click', function () {
+                        copyReport(reportText, copyButton);
+                    });
+
+                    var reloadButton = document.createElement('button');
+                    reloadButton.type = 'button';
+                    reloadButton.style.cssText =
+                        'border:1px solid #ddd;border-radius:4px;padding:8px 10px;background:#fff;color:#222;cursor:pointer';
+                    reloadButton.textContent = 'Reload plugin UI';
+                    reloadButton.addEventListener('click', function () {
+                        window.location.reload();
+                    });
+
+                    actions.appendChild(copyButton);
+                    actions.appendChild(reloadButton);
+                    container.appendChild(title);
+                    container.appendChild(instructions);
+                    container.appendChild(summary);
+                    container.appendChild(actions);
+                    try {
+                        root.replaceChildren(container);
+                    } catch (renderError) {
+                        root.textContent =
+                            'Property Randomizer could not start. ' +
+                            report.id +
+                            ': ' +
+                            report.message;
+                        console.error(
+                            'Could not render the startup error screen.',
+                            renderError,
+                        );
+                    }
+
+                    console.error(
+                        '[Property Randomizer ' + report.id + ']',
+                        report,
+                    );
+
+                    try {
+                        parent.postMessage(
+                            {
+                                pluginMessage: {
+                                    type: 'uiError',
+                                    report: report,
+                                },
+                            },
+                            '*',
+                        );
+                    } catch (postError) {
+                        console.error(
+                            'Could not send startup error report.',
+                            postError,
+                        );
+                    }
+                };
+
+                errorHandler = function (event) {
+                    showStartupError(
+                        event.error || event.message,
+                        'window-error',
+                    );
+                };
+                rejectionHandler = function (event) {
+                    showStartupError(event.reason, 'unhandled-rejection');
+                };
+
+                window.__propertyRandomizerShowStartupError = showStartupError;
+                window.__propertyRandomizerStartupReady = function () {
+                    window.removeEventListener('error', errorHandler);
+                    window.removeEventListener(
+                        'unhandledrejection',
+                        rejectionHandler,
+                    );
+                };
+
+                window.addEventListener('error', errorHandler);
+                window.addEventListener('unhandledrejection', rejectionHandler);
+            })();
+        </script>
     </body>
 </html>

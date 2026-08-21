@@ -20,26 +20,23 @@ const FadedOverflow = ({ children, height = null, maxHeight = null }) => {
     React.useEffect(() => {
         const currentEl = scrollingElementRef.current;
 
+        if (!currentEl) {
+            return;
+        }
+
         const throttledSetScrollTop = throttle(evt => {
             setScrollTop(evt.target.scrollTop);
         }, 50);
 
-        if (currentEl) {
-            setScrollHeight(currentEl.scrollHeight);
-            setElementHeight(currentEl.offsetHeight);
-            scrollingElementRef.current.addEventListener(
-                'scroll',
-                throttledSetScrollTop,
-            );
-        }
+        setScrollHeight(currentEl.scrollHeight);
+        setElementHeight(currentEl.offsetHeight);
+        currentEl.addEventListener('scroll', throttledSetScrollTop);
 
         return () => {
-            scrollingElementRef.current.removeEventListener(
-                'scroll',
-                throttledSetScrollTop,
-            );
+            currentEl.removeEventListener('scroll', throttledSetScrollTop);
+            throttledSetScrollTop.cancel();
         };
-    }, [children, scrollingElementRef.current]);
+    }, [children]);
 
     const isScrolledToTop = scrollTop === 0;
     const isScrolledToBottom =
